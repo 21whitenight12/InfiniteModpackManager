@@ -1,7 +1,10 @@
 using System.IO;
 using System.Windows;
 using System.Windows.Threading;
+using Imm.App.Services;
 using Imm.Core.IO;
+using Imm.Core.Library;
+using Imm.Core.Scanning;
 using Imm.App.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
@@ -9,7 +12,6 @@ using Microsoft.Extensions.Logging;
 using Serilog;
 using Wpf.Ui;
 using Wpf.Ui.Extensions;
-using Wpf.Ui.Abstractions;
 
 namespace Imm.App;
 
@@ -20,6 +22,7 @@ namespace Imm.App;
 public partial class App : Application
 {
     private readonly IHost _host = BuildHost();
+    private volatile bool _startupCompleted;
 
     public App()
     {
@@ -36,6 +39,8 @@ public partial class App : Application
             .WriteTo.File(
                 Path.Combine(paths.LogsDirectory, "imm-.log"),
                 rollingInterval: RollingInterval.Day,
+                rollOnFileSizeLimit: true,
+                fileSizeLimitBytes: 20_000_000,
                 retainedFileCountLimit: 10,
                 outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {SourceContext} {Message:lj}{NewLine}{Exception}")
             .CreateLogger();
@@ -43,8 +48,13 @@ public partial class App : Application
         var builder = Host.CreateApplicationBuilder();
         builder.Logging.ClearProviders();
         builder.Logging.AddSerilog(dispose: true);
+        builder.Services.AddSingleton(Log.Logger);
 
         builder.Services.AddSingleton(paths);
+        builder.Services.AddSingleton<IRegistryService, WindowsRegistryService>();
+        builder.Services.AddSingleton<SystemGameLocator>();
+        builder.Services.AddSingleton<IModpackScanner, ModpackScanner>();
+        builder.Services.AddSingleton<ILibraryService, LibraryService>();
         builder.Services.AddSingleton<IContentDialogService, ContentDialogService>();
         builder.Services.AddSingleton<ISnackbarService, SnackbarService>();
         builder.Services.AddTransient<MainViewModel>();
@@ -61,7 +71,10 @@ public partial class App : Application
             _host.Services.GetRequiredService<ImmPaths>().LibraryFilePath);
 
         _host.Start();
-        _host.Services.GetRequiredService<MainWindow>().Show();
+        var mainWindow = _host.Services.GetRequiredService<MainWindow>();
+        MainWindow = mainWindow;
+        mainWindow.Show();
+        _startupCompleted = true;
     }
 
     protected override async void OnExit(ExitEventArgs e)
@@ -78,6 +91,13 @@ public partial class App : Application
         Log.Fatal(args.Exception, "Unhandled UI-thread exception.");
         ShowFatalDialog("UI error", args.Exception);
         args.Handled = true;
+
+        // Anti-zombie: fatal before startup completes → an invisible process is pointless.
+        if (_startupCompleted is false)
+        {
+            Log.Fatal("Startup was not completed — shutting down with code 1.");
+            Shutdown(1);
+        }
     }
 
     private void OnAppDomainUnhandledException(object? sender, UnhandledExceptionEventArgs args)
