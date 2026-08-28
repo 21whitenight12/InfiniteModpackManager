@@ -19,10 +19,11 @@
   <!-- Force canon accent over the Windows system accent (WPF-UI greens otherwise). -->
   <Color x:Key="SystemAccentColor">#2E8BFF</Color>
 
+  <!-- Translucent panels: acrylic glow comes through (Win11); Win10 degrades to solid via WPF-UI -->
   <SolidColorBrush x:Key="ImmBgBaseBrush" Color="{StaticResource ImmBgBaseColor}" />
-  <SolidColorBrush x:Key="ImmBgSidebarBrush" Color="#0A101B" />
-  <SolidColorBrush x:Key="ImmBgCardBrush" Color="{StaticResource ImmBgCardColor}" />
-  <SolidColorBrush x:Key="ImmBgCardHoverBrush" Color="{StaticResource ImmBgCardHoverColor}" />
+  <SolidColorBrush x:Key="ImmBgSidebarBrush" Color="#E60A101B" />
+  <SolidColorBrush x:Key="ImmBgCardBrush" Color="#D9151D2E" />
+  <SolidColorBrush x:Key="ImmBgCardHoverBrush" Color="#F21A2438" />
   <SolidColorBrush x:Key="ImmAccentBrush" Color="{StaticResource ImmAccentColor}" />
   <SolidColorBrush x:Key="ImmAccentCyanBrush" Color="{StaticResource ImmAccentCyanColor}" />
   <SolidColorBrush x:Key="ImmAccentHoverBrush" Color="#4D9DFF" />
@@ -32,13 +33,6 @@
   <SolidColorBrush x:Key="ImmSuccessBrush" Color="#2ECC71" />
   <SolidColorBrush x:Key="ImmWarnBrush" Color="#E67E22" />
   <SolidColorBrush x:Key="ImmBorderBrush" Color="#223048" />
-
-  <!-- Subtle depth: lighter top-center fading to near-black edges (reference backdrop). -->
-  <RadialGradientBrush x:Key="ImmBgVignetteBrush" GradientOrigin="0.5,0.08" Center="0.5,0.08"
-                       RadiusX="1.15" RadiusY="1.05">
-    <GradientStop Color="#121C30" Offset="0" />
-    <GradientStop Color="#0B111C" Offset="1" />
-  </RadialGradientBrush>
 
   <CornerRadius x:Key="ImmCardCornerRadius">10</CornerRadius>
   <Thickness x:Key="ImmCardPadding">14</Thickness>

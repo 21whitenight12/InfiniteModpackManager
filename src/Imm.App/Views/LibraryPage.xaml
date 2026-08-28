@@ -190,21 +190,46 @@
           <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Logo -->
-        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="4,0,0,24">
-          <Border Width="40" Height="40" CornerRadius="20" Background="#0D1526"
-                  BorderBrush="{StaticResource ImmAccentCyanBrush}" BorderThickness="2">
-            <TextBlock Text="∞" FontSize="22" FontWeight="Bold"
-                       Foreground="#E8B84B"
-                       HorizontalAlignment="Center" VerticalAlignment="Center" />
-          </Border>
-          <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+        <!-- Logo: gradient ring + glow (reference mark) -->
+        <Grid Grid.Row="0" Margin="4,0,0,24">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+          <Grid Grid.Column="0" Width="44" Height="44" Margin="0,0,12,0">
+            <Ellipse Fill="{StaticResource ImmAccentBrush}" Opacity="0.18">
+              <Ellipse.Effect>
+                <BlurEffect Radius="14" />
+              </Ellipse.Effect>
+            </Ellipse>
+            <Border Width="40" Height="40" CornerRadius="20">
+              <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                  <GradientStop Color="#16324F" Offset="0" />
+                  <GradientStop Color="#0D1B33" Offset="1" />
+                </LinearGradientBrush>
+              </Border.Background>
+              <Border.BorderBrush>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
+                  <GradientStop Color="{StaticResource ImmAccentCyanColor}" Offset="0" />
+                  <GradientStop Color="{StaticResource ImmAccentColor}" Offset="0.55" />
+                  <GradientStop Color="#E8B84B" Offset="1" />
+                </LinearGradientBrush>
+              </Border.BorderBrush>
+              <Border BorderThickness="2" CornerRadius="19">
+                <TextBlock Text="∞" FontSize="21" FontWeight="Bold" Margin="0,-2,0,0"
+                           Foreground="#F2D06B"
+                           HorizontalAlignment="Center" VerticalAlignment="Center" />
+              </Border>
+            </Border>
+          </Grid>
+          <StackPanel Grid.Column="1" VerticalAlignment="Center">
             <TextBlock Text="IMM" FontSize="20" FontWeight="Bold"
                        Foreground="{StaticResource ImmTextPrimaryBrush}" />
             <TextBlock Text="Infinite Modpack Manager" FontSize="10"
                        Foreground="{StaticResource ImmTextSecondaryBrush}" />
           </StackPanel>
-        </StackPanel>
+        </Grid>
 
         <!-- Nav -->
         <StackPanel Grid.Row="1">
