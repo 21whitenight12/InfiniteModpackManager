@@ -1,0 +1,63 @@
+# ===== .NET / C# =====
+bin/
+obj/
+*.user
+*.suo
+*.userprefs
+*.csproj.user
+*.dbmdl
+*.cache
+.vs/
+test-*/
+
+# Build results
+[Dd]ebug/
+[Rr]elease/
+x64/
+x86/
+[Ww][Ii][Nn]32/
+[Aa][Rr][Mm]/
+[Aa][Rr][Mm]64/
+bld/
+publish/
+artifacts/
+
+# NuGet
+packages/
+**/[Pp]ackages/*
+*.nupkg
+
+# Test results
+TestResults/
+[Ll]ogs/
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*.sln.DotSettings.user
+
+# OS
+Thumbs.db
+.DS_Store
+Desktop.ini
+
+# Binaries / builds
+*.exe
+
+# ===== Python (aux tooling) =====
+venv/
+worker-venv/
+__pycache__/
+*.pyc
+
+# ===== Runtime / local data (НЕ коммитим) =====
+config.json
+.env
+state.json
+*.log
+_research/
+
+# ===== Hermes auxiliary — агентские хвосты, НЕ коммитим =====
+.hermes/
