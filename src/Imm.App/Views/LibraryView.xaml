@@ -301,7 +301,6 @@
         <RowDefinition Height="Auto" />
         <RowDefinition Height="Auto" />
         <RowDefinition Height="*" />
-        <RowDefinition Height="Auto" />
       </Grid.RowDefinitions>
 
       <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,2">
@@ -421,11 +420,6 @@
           </Style>
         </ListBox.Style>
       </ListBox>
-
-      <!-- Footer counter -->
-      <TextBlock Grid.Row="3" FontSize="12" Margin="2,4,0,0"
-                 Foreground="{StaticResource ImmTextSecondaryBrush}"
-                 Text="{Binding Entries.Count, StringFormat='Всего сборок: {0}'}" />
 
       <!-- Empty state -->
       <StackPanel Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center"

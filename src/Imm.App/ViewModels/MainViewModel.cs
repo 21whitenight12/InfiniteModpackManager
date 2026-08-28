@@ -124,9 +124,7 @@ public partial class MainViewModel : ObservableObject
 
         SelectedEntry = Entries.FirstOrDefault();
         OnPropertyChanged(nameof(HasNoEntries));
-        StatusText = Entries.Count == 0
-            ? "Библиотека пуста — добавьте сборку"
-            : $"Сборок в библиотеке: {Entries.Count}";
+        StatusText = "Готово";
     }
 
     [RelayCommand]
@@ -161,7 +159,7 @@ public partial class MainViewModel : ObservableObject
             var viewModel = new LibraryEntryViewModel(entry, manifest);
             Entries.Add(viewModel);
             SelectedEntry = viewModel;
-            StatusText = $"Сборок в библиотеке: {Entries.Count}";
+            StatusText = "Готово";
             _snackbar.Show(
                 "Библиотека",
                 $"Сборка «{viewModel.Name}» добавлена",
@@ -254,7 +252,7 @@ public partial class MainViewModel : ObservableObject
                 SelectedEntry = Entries.FirstOrDefault();
             }
 
-            StatusText = $"Сборок в библиотеке: {Entries.Count}";
+            StatusText = "Готово";
             _snackbar.Show(
                 "Библиотека",
                 "Сборка убрана из библиотеки (папка не тронута)",
