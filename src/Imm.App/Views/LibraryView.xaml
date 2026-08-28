@@ -189,8 +189,18 @@
     </Grid.ColumnDefinitions>
 
     <!-- ============ LEFT COLUMN ============ -->
-    <Border Grid.Column="0" Background="{StaticResource ImmBgSidebarBrush}"
-            BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="0,0,1,0">
+    <Border Grid.Column="0">
+      <Grid>
+        <!-- Soft tint: opaque at window edge, dissolves toward center (no hard edge) -->
+        <Rectangle Fill="{StaticResource ImmBgSidebarBrush}" IsHitTestVisible="False">
+          <Rectangle.OpacityMask>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+              <GradientStop Color="#FF000000" Offset="0" />
+              <GradientStop Color="#FF000000" Offset="0.72" />
+              <GradientStop Color="#00000000" Offset="1" />
+            </LinearGradientBrush>
+          </Rectangle.OpacityMask>
+        </Rectangle>
       <Grid Margin="20,24,20,16">
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
@@ -292,6 +302,7 @@
                        TextTrimming="CharacterEllipsis" />
           </StackPanel>
         </StackPanel>
+      </Grid>
       </Grid>
     </Border>
 
@@ -436,8 +447,18 @@
     </Grid>
 
     <!-- ============ RIGHT COLUMN ============ -->
-    <Border Grid.Column="2" Background="{StaticResource ImmBgPanelBrush}"
-            BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1,0,0,0">
+    <Border Grid.Column="2">
+      <Grid>
+        <!-- Soft tint: opaque at window edge, dissolves toward center (no hard edge) -->
+        <Rectangle Fill="{StaticResource ImmBgPanelBrush}" IsHitTestVisible="False">
+          <Rectangle.OpacityMask>
+            <LinearGradientBrush StartPoint="0,0" EndPoint="1,0">
+              <GradientStop Color="#00000000" Offset="0" />
+              <GradientStop Color="#FF000000" Offset="0.28" />
+              <GradientStop Color="#FF000000" Offset="1" />
+            </LinearGradientBrush>
+          </Rectangle.OpacityMask>
+        </Rectangle>
       <ContentControl Content="{Binding SelectedEntry}" Margin="20,20,20,16">
         <ContentControl.Resources>
           <DataTemplate DataType="{x:Type vm:LibraryEntryViewModel}">
@@ -580,6 +601,7 @@
           </DataTemplate>
         </ContentControl.Resources>
       </ContentControl>
+      </Grid>
     </Border>
   </Grid>
 </Page>
