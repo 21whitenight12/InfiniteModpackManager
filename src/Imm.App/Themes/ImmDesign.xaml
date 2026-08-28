@@ -6,7 +6,9 @@
   <!-- IMM design canon (design/DESIGN.md): cold navy dark theme -->
 
   <conv:NullToCollapsedConverter x:Key="NullToCollapsedConverter" />
+  <conv:NullToVisibleConverter x:Key="NullToVisibleConverter" />
   <conv:BoolToVisibleConverter x:Key="BoolToVisibleConverter" />
+  <conv:BoolToOpacityConverter x:Key="BoolToOpacityConverter" />
 
   <Color x:Key="ImmBgBaseColor">#0D1420</Color>
   <Color x:Key="ImmBgCardColor">#151D2E</Color>
@@ -14,18 +16,117 @@
   <Color x:Key="ImmAccentColor">#2E8BFF</Color>
   <Color x:Key="ImmAccentCyanColor">#38BDF8</Color>
 
+  <!-- Force canon accent over the Windows system accent (WPF-UI greens otherwise). -->
+  <Color x:Key="SystemAccentColor">#2E8BFF</Color>
+
   <SolidColorBrush x:Key="ImmBgBaseBrush" Color="{StaticResource ImmBgBaseColor}" />
   <SolidColorBrush x:Key="ImmBgSidebarBrush" Color="#0A101B" />
   <SolidColorBrush x:Key="ImmBgCardBrush" Color="{StaticResource ImmBgCardColor}" />
   <SolidColorBrush x:Key="ImmBgCardHoverBrush" Color="{StaticResource ImmBgCardHoverColor}" />
   <SolidColorBrush x:Key="ImmAccentBrush" Color="{StaticResource ImmAccentColor}" />
   <SolidColorBrush x:Key="ImmAccentCyanBrush" Color="{StaticResource ImmAccentCyanColor}" />
+  <SolidColorBrush x:Key="ImmAccentHoverBrush" Color="#4D9DFF" />
+  <SolidColorBrush x:Key="ImmAccentPressedBrush" Color="#1E6FD9" />
   <SolidColorBrush x:Key="ImmTextPrimaryBrush" Color="#F5F7FA" />
   <SolidColorBrush x:Key="ImmTextSecondaryBrush" Color="#8A94A6" />
   <SolidColorBrush x:Key="ImmSuccessBrush" Color="#2ECC71" />
   <SolidColorBrush x:Key="ImmWarnBrush" Color="#E67E22" />
   <SolidColorBrush x:Key="ImmBorderBrush" Color="#223048" />
 
-  <CornerRadius x:Key="ImmCardCornerRadius">8</CornerRadius>
+  <!-- Subtle depth: lighter top-center fading to near-black edges (reference backdrop). -->
+  <RadialGradientBrush x:Key="ImmBgVignetteBrush" GradientOrigin="0.5,0.08" Center="0.5,0.08"
+                       RadiusX="1.15" RadiusY="1.05">
+    <GradientStop Color="#121C30" Offset="0" />
+    <GradientStop Color="#0B111C" Offset="1" />
+  </RadialGradientBrush>
+
+  <CornerRadius x:Key="ImmCardCornerRadius">10</CornerRadius>
   <Thickness x:Key="ImmCardPadding">14</Thickness>
+
+  <!-- Canon accent button (independent from WPF-UI system-accent styles). -->
+  <Style x:Key="ImmPrimaryButtonStyle" TargetType="{x:Type Button}">
+    <Setter Property="Background" Value="{StaticResource ImmAccentBrush}" />
+    <Setter Property="Foreground" Value="White" />
+    <Setter Property="FontSize" Value="14" />
+    <Setter Property="FontWeight" Value="SemiBold" />
+    <Setter Property="Padding" Value="16,0" />
+    <Setter Property="Height" Value="38" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type Button}">
+          <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="7">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                              Margin="{TemplateBinding Padding}" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Bd" Property="Background" Value="{StaticResource ImmAccentHoverBrush}" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+              <Setter TargetName="Bd" Property="Background" Value="{StaticResource ImmAccentPressedBrush}" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter Property="Opacity" Value="0.45" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Neutral bordered button (toolbar, secondary actions). -->
+  <Style x:Key="ImmGhostButtonStyle" TargetType="{x:Type Button}">
+    <Setter Property="Background" Value="{StaticResource ImmBgCardBrush}" />
+    <Setter Property="Foreground" Value="{StaticResource ImmTextPrimaryBrush}" />
+    <Setter Property="FontSize" Value="13" />
+    <Setter Property="Padding" Value="12,0" />
+    <Setter Property="Height" Value="36" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type Button}">
+          <Border x:Name="Bd" Background="{TemplateBinding Background}"
+                  BorderBrush="{StaticResource ImmBorderBrush}" BorderThickness="1" CornerRadius="7">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                              Margin="{TemplateBinding Padding}" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Bd" Property="Background" Value="{StaticResource ImmBgCardHoverBrush}" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+              <Setter TargetName="Bd" Property="Background" Value="#202C44" />
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter Property="Opacity" Value="0.45" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <!-- Flat icon segment (grid/list switch). -->
+  <Style x:Key="ImmSegmentButtonStyle" TargetType="{x:Type Button}">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{StaticResource ImmTextSecondaryBrush}" />
+    <Setter Property="Width" Value="34" />
+    <Setter Property="Height" Value="28" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type Button}">
+          <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="5">
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Bd" Property="Background" Value="{StaticResource ImmBgCardHoverBrush}" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
 </ResourceDictionary>

@@ -1,5 +1,7 @@
 using System.Collections.ObjectModel;
+using System.ComponentModel;
 using System.IO;
+using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Imm.Core.Domain;
@@ -27,9 +29,42 @@ public partial class MainViewModel : ObservableObject
         _snackbar = snackbar;
         _logger = logger.ForContext<MainViewModel>();
         Entries.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasNoEntries));
+        EntriesView = CollectionViewSource.GetDefaultView(Entries);
+        ApplySort();
     }
 
     public ObservableCollection<LibraryEntryViewModel> Entries { get; } = [];
+
+    /// <summary>Sorted view fed to the ItemsControl (Entries is the source of truth).</summary>
+    public ICollectionView EntriesView { get; }
+
+    public IReadOnlyList<string> SortOptions { get; } = ["По названию", "По последнему запуску", "По времени игры"];
+
+    [ObservableProperty]
+    private string _selectedSortOption = "По названию";
+
+    [ObservableProperty]
+    private bool _isGridView = true;
+
+    [RelayCommand]
+    private void SetGridView() => IsGridView = true;
+
+    [RelayCommand]
+    private void SetListView() => IsGridView = false;
+
+    partial void OnSelectedSortOptionChanged(string value) => ApplySort();
+
+    private void ApplySort()
+    {
+        EntriesView.SortDescriptions.Clear();
+        SortDescription description = SelectedSortOption switch
+        {
+            "По последнему запуску" => new(nameof(LibraryEntryViewModel.LastPlayedAtUtc), ListSortDirection.Descending),
+            "По времени игры" => new(nameof(LibraryEntryViewModel.PlaytimeMinutes), ListSortDirection.Descending),
+            _ => new(nameof(LibraryEntryViewModel.Name), ListSortDirection.Ascending),
+        };
+        EntriesView.SortDescriptions.Add(description);
+    }
 
     [ObservableProperty]
     private LibraryEntryViewModel? _selectedEntry;

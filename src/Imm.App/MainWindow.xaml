@@ -7,7 +7,7 @@
                  MinWidth="1100" MinHeight="640"
                  ExtendsContentIntoTitleBar="True"
                  WindowBackdropType="Auto"
-                 Background="{StaticResource ImmBgBaseBrush}">
+                 Background="{StaticResource ImmBgVignetteBrush}">
 
   <Grid>
     <Grid.RowDefinitions>

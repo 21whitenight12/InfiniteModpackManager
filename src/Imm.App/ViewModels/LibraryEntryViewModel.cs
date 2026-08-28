@@ -68,6 +68,12 @@ public partial class LibraryEntryViewModel : ObservableObject
         ? "—"
         : _entry.LastPlayedAtUtc.Value.ToLocalTime().ToString("dd.MM.yyyy");
 
+    /// <summary>Raw sort key (CollectionView SortDescriptions binds this).</summary>
+    public DateTime? LastPlayedAtUtc => _entry.LastPlayedAtUtc;
+
+    /// <summary>Raw sort key.</summary>
+    public int PlaytimeMinutes => _entry.PlaytimeMinutes;
+
     public string PlaytimeText
     {
         get
@@ -76,6 +82,25 @@ public partial class LibraryEntryViewModel : ObservableObject
             return minutes < 60 ? $"{minutes} мин" : $"{minutes / 60} ч {minutes % 60} мин";
         }
     }
+
+    /// <summary>User notes from library.json; null → section hidden.</summary>
+    public string? NotesText => string.IsNullOrWhiteSpace(_entry.Notes) ? null : _entry.Notes;
+
+    /// <summary>MO2 profile name from manifest; null → row hidden.</summary>
+    public string? ProfileText => string.IsNullOrWhiteSpace(_manifest?.Mo2?.ProfileName)
+        ? null
+        : _manifest.Mo2.ProfileName;
+
+    /// <summary>Portable pack vs detected system game copy.</summary>
+    public string SourceText => Source switch
+    {
+        PackSource.Portable => "Портативная",
+        PackSource.System => "Системная игра",
+        _ => "—",
+    };
+
+    /// <summary>Sort key by game title.</summary>
+    public string GameSortKey => GameDisplayName;
 
     /// <summary>MO2 present but no profile resolved by the scanner → needs user attention (IMM.md: no silent guesses).</summary>
     public bool HasWarnings => HasMo2Files() && _manifest?.Mo2 is null;
