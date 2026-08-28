@@ -1,6 +1,6 @@
 # Infinite Modpack Manager — Agent Rules
 
-Десктоп-приложение: C# (.NET), WinForms/WPF — точный фреймворк фиксируем при скаффолдинге.
+Десктоп-приложение: C# / .NET 10, WPF + WPF-UI (lepoco, Fluent). **Библия проекта — `IMM.md` в корне, опираться строго на неё.**
 Память проекта: `.hermes.md` (автозагрузка Hermes).
 
 ## Git (строго)
