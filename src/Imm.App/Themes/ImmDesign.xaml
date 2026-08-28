@@ -36,12 +36,19 @@
   <SolidColorBrush x:Key="ImmWarnBrush" Color="#E67E22" />
   <SolidColorBrush x:Key="ImmBorderBrush" Color="#223048" />
 
-  <!-- Fluent window gradient (base + side columns glow through translucent tints) -->
+  <!-- Fluent window gradient: visible diagonal wash, canon navy endpoints -->
   <LinearGradientBrush x:Key="ImmBgGradientBrush" StartPoint="0,0" EndPoint="1,1">
-    <GradientStop Color="#121C30" Offset="0" />
-    <GradientStop Color="#0D1420" Offset="0.55" />
-    <GradientStop Color="#0A101B" Offset="1" />
+    <GradientStop Color="#1E3050" Offset="0" />
+    <GradientStop Color="#101C30" Offset="0.45" />
+    <GradientStop Color="#0A1220" Offset="1" />
   </LinearGradientBrush>
+
+  <!-- Soft accent aurora over the base gradient (top-center glow) -->
+  <RadialGradientBrush x:Key="ImmAccentGlowBrush" Center="0.5,0" GradientOrigin="0.5,0"
+                       RadiusX="0.85" RadiusY="0.6">
+    <GradientStop Color="#332E8BFF" Offset="0" />
+    <GradientStop Color="#002E8BFF" Offset="1" />
+  </RadialGradientBrush>
 
   <CornerRadius x:Key="ImmCardCornerRadius">10</CornerRadius>
   <Thickness x:Key="ImmCardPadding">14</Thickness>
