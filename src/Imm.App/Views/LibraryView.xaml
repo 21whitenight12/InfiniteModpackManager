@@ -1,4 +1,4 @@
-<Page x:Class="Imm.App.Views.LibraryPage"
+<Page x:Class="Imm.App.Views.LibraryView"
       xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
@@ -6,16 +6,16 @@
       Background="Transparent">
 
   <Page.Resources>
-    <!-- ============ GRID CARD (design canon: tall cover, tabular meta rows, ··· menu) ============ -->
+    <!-- ============ GRID CARD (concept: cover, engine badge-pill, tabular meta rows) ============ -->
     <DataTemplate x:Key="PackCardTemplate" DataType="{x:Type vm:LibraryEntryViewModel}">
       <Border x:Name="CardRoot"
               Background="{StaticResource ImmBgCardBrush}"
-              BorderBrush="Transparent" BorderThickness="2"
+              BorderBrush="{StaticResource ImmCardBorderBrush}" BorderThickness="1"
               CornerRadius="10" Padding="0"
               Cursor="Hand">
         <Border.InputBindings>
           <MouseBinding Gesture="LeftClick"
-                        Command="{Binding DataContext.SelectEntryCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                        Command="{Binding DataContext.SelectEntryCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
                         CommandParameter="{Binding}" />
         </Border.InputBindings>
         <Grid Margin="0">
@@ -25,7 +25,7 @@
           </Grid.RowDefinitions>
 
           <!-- Cover -->
-          <Grid Grid.Row="0" Height="168" ClipToBounds="True">
+          <Grid Grid.Row="0" Height="164" ClipToBounds="True">
             <Border CornerRadius="9,9,0,0">
               <Border.Background>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
@@ -42,8 +42,8 @@
                                HorizontalAlignment="Center" VerticalAlignment="Center" />
               </Grid>
             </Border>
-            <!-- Selection badge (reference: accent circle + checkmark, top-right) -->
-            <Border x:Name="SelectionBadge" Width="26" Height="26" CornerRadius="13"
+            <!-- Selection badge -->
+            <Border Width="26" Height="26" CornerRadius="13"
                     Background="{StaticResource ImmAccentBrush}" BorderBrush="#0D1420" BorderThickness="2"
                     HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,8,8,0"
                     Visibility="{Binding IsSelected, Converter={StaticResource BoolToVisibleConverter}}"
@@ -56,22 +56,38 @@
           </Grid>
 
           <!-- Card body -->
-          <StackPanel Grid.Row="1" Margin="14,10,14,10">
-            <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold"
-                       Foreground="{StaticResource ImmTextPrimaryBrush}"
-                       TextTrimming="CharacterEllipsis" />
-            <StackPanel Orientation="Horizontal" Margin="0,5,0,0">
-              <ui:SymbolIcon Symbol="Rocket24" FontSize="13"
-                             Foreground="{StaticResource ImmAccentCyanBrush}" />
-              <TextBlock Text="{Binding GameDisplayName}" FontSize="12" Margin="6,0,0,0"
-                         Foreground="{StaticResource ImmTextSecondaryBrush}" />
+          <StackPanel Grid.Row="1" Margin="12,10,12,10">
+            <Grid>
+              <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+              </Grid.ColumnDefinitions>
+              <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold"
+                         Foreground="{StaticResource ImmTextPrimaryBrush}"
+                         TextTrimming="CharacterEllipsis" />
+              <ui:Button Grid.Column="1" Appearance="Secondary" Padding="4,1" Margin="6,0,0,0"
+                         Icon="{ui:SymbolIcon MoreHorizontal24}"
+                         Command="{Binding DataContext.RemoveEntryCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
+                         CommandParameter="{Binding}"
+                         ToolTip="Убрать из библиотеки" />
+            </Grid>
+
+            <!-- Engine badge pill + game row -->
+            <StackPanel Orientation="Horizontal" Margin="0,7,0,0">
+              <Border Background="#262E8BFF" CornerRadius="4" Padding="7,2">
+                <TextBlock Text="{Binding EngineDisplayName}" FontSize="11" FontWeight="Medium"
+                           Foreground="{StaticResource ImmAccentCyanBrush}" />
+              </Border>
+              <StackPanel Orientation="Horizontal" Margin="8,0,0,0" VerticalAlignment="Center">
+                <ui:SymbolIcon Symbol="Rocket24" FontSize="13" Foreground="{StaticResource ImmTextSecondaryBrush}" />
+                <TextBlock Text="{Binding GameDisplayName}" FontSize="11" Margin="5,0,0,0"
+                           Foreground="{StaticResource ImmTextSecondaryBrush}" VerticalAlignment="Center" />
+              </StackPanel>
             </StackPanel>
-            <TextBlock Text="{Binding EngineDisplayName}" FontSize="12" Margin="19,3,0,0"
-                       Foreground="{StaticResource ImmTextSecondaryBrush}" />
 
             <Separator Background="{StaticResource ImmBorderBrush}" Margin="0,10,0,8" />
 
-            <!-- Tabular meta rows (label left, value right — reference style) -->
+            <!-- Tabular meta rows -->
             <Grid>
               <Grid.ColumnDefinitions>
                 <ColumnDefinition Width="Auto" />
@@ -81,21 +97,15 @@
                 <RowDefinition Height="Auto" />
                 <RowDefinition Height="Auto" />
               </Grid.RowDefinitions>
-              <TextBlock Grid.Row="0" Grid.Column="0" Text="Последний запуск" FontSize="12"
+              <TextBlock Grid.Row="0" Grid.Column="0" Text="Последний запуск" FontSize="11"
                          Foreground="{StaticResource ImmTextSecondaryBrush}" />
-              <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding LastPlayedText}" FontSize="12"
+              <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding LastPlayedText}" FontSize="11"
                          Foreground="{StaticResource ImmTextPrimaryBrush}" HorizontalAlignment="Right" />
-              <TextBlock Grid.Row="1" Grid.Column="0" Text="Время в игре" FontSize="12" Margin="0,3,0,0"
+              <TextBlock Grid.Row="1" Grid.Column="0" Text="Время в игре" FontSize="11" Margin="0,3,0,0"
                          Foreground="{StaticResource ImmTextSecondaryBrush}" />
-              <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding PlaytimeText}" FontSize="12" Margin="0,3,0,0"
+              <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding PlaytimeText}" FontSize="11" Margin="0,3,0,0"
                          Foreground="{StaticResource ImmTextPrimaryBrush}" HorizontalAlignment="Right" />
             </Grid>
-
-            <ui:Button HorizontalAlignment="Center" Appearance="Secondary" Padding="8,2" Margin="0,8,0,0"
-                       Icon="{ui:SymbolIcon MoreHorizontal24}"
-                       Command="{Binding DataContext.RemoveEntryCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
-                       CommandParameter="{Binding}"
-                       ToolTip="Убрать из библиотеки" />
           </StackPanel>
         </Grid>
       </Border>
@@ -104,27 +114,18 @@
           <Setter TargetName="CardRoot" Property="BorderBrush" Value="{StaticResource ImmAccentBrush}" />
         </DataTrigger>
       </DataTemplate.Triggers>
-      <DataTemplate.Resources>
-        <Style TargetType="Border">
-          <Style.Triggers>
-            <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=Border}}" Value="True">
-              <Setter Property="Opacity" Value="0.96" />
-            </DataTrigger>
-          </Style.Triggers>
-        </Style>
-      </DataTemplate.Resources>
     </DataTemplate>
 
     <!-- ============ LIST ROW ============ -->
     <DataTemplate x:Key="PackRowTemplate" DataType="{x:Type vm:LibraryEntryViewModel}">
       <Border x:Name="RowRoot"
               Background="{StaticResource ImmBgCardBrush}"
-              BorderBrush="Transparent" BorderThickness="1"
+              BorderBrush="{StaticResource ImmCardBorderBrush}" BorderThickness="1"
               CornerRadius="8" Padding="12,8" Margin="0,0,0,8"
               Cursor="Hand">
         <Border.InputBindings>
           <MouseBinding Gesture="LeftClick"
-                        Command="{Binding DataContext.SelectEntryCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                        Command="{Binding DataContext.SelectEntryCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
                         CommandParameter="{Binding}" />
         </Border.InputBindings>
         <Grid>
@@ -157,7 +158,7 @@
                      Foreground="{StaticResource ImmTextPrimaryBrush}" />
           <ui:Button Grid.Column="6" Appearance="Secondary" Padding="4,1" VerticalAlignment="Center"
                      Icon="{ui:SymbolIcon MoreHorizontal24}"
-                     Command="{Binding DataContext.RemoveEntryCommand, RelativeSource={RelativeSource AncestorType=ItemsControl}}"
+                     Command="{Binding DataContext.RemoveEntryCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
                      CommandParameter="{Binding}"
                      ToolTip="Убрать из библиотеки" />
         </Grid>
@@ -170,19 +171,18 @@
     </DataTemplate>
   </Page.Resources>
 
+  <!-- ============ 3-COLUMN LAYOUT (260 / * / 380) ============ -->
   <Grid>
     <Grid.ColumnDefinitions>
-      <!-- Sidebar -->
-      <ColumnDefinition Width="232" />
-      <!-- Content -->
+      <ColumnDefinition Width="260" />
       <ColumnDefinition Width="*" />
-      <!-- Details -->
-      <ColumnDefinition Width="340" />
+      <ColumnDefinition Width="380" />
     </Grid.ColumnDefinitions>
 
-    <!-- ============ SIDEBAR ============ -->
-    <Border Grid.Column="0" Background="{StaticResource ImmBgSidebarBrush}">
-      <Grid Margin="16,20,16,16">
+    <!-- ============ LEFT COLUMN ============ -->
+    <Border Grid.Column="0" Background="{StaticResource ImmBgSidebarBrush}"
+            BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="0,0,1,0">
+      <Grid Margin="20,24,20,16">
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
@@ -190,8 +190,8 @@
           <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Logo: gradient ring + glow (reference mark) -->
-        <Grid Grid.Row="0" Margin="4,0,0,24">
+        <!-- Logo: gradient ring + glow -->
+        <Grid Grid.Row="0" Margin="2,0,0,28">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="Auto" />
@@ -233,21 +233,29 @@
 
         <!-- Nav -->
         <StackPanel Grid.Row="1">
-          <Border Background="{StaticResource ImmBgCardHoverBrush}" CornerRadius="6" Padding="12,10" Margin="0,0,0,4">
+          <Border Background="{StaticResource ImmBgCardHoverBrush}" CornerRadius="7" Padding="12,10" Margin="0,0,0,4">
             <Border.BorderBrush>
               <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
                 <GradientStop Color="{StaticResource ImmAccentColor}" Offset="0" />
                 <GradientStop Color="Transparent" Offset="1" />
               </LinearGradientBrush>
             </Border.BorderBrush>
-            <StackPanel Orientation="Horizontal">
-              <ui:SymbolIcon Symbol="Library24" FontSize="18" Foreground="{StaticResource ImmAccentBrush}" />
-              <TextBlock Text="Библиотека" FontSize="14" Margin="10,0,0,0" FontWeight="Medium"
-                         Foreground="{StaticResource ImmTextPrimaryBrush}" />
-            </StackPanel>
+            <Border BorderThickness="3,0,0,0" Margin="-12,-10,0,-10" Padding="9,10" VerticalAlignment="Stretch">
+              <Border.BorderBrush>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                  <GradientStop Color="{StaticResource ImmAccentColor}" Offset="0" />
+                  <GradientStop Color="Transparent" Offset="1" />
+                </LinearGradientBrush>
+              </Border.BorderBrush>
+              <StackPanel Orientation="Horizontal">
+                <ui:SymbolIcon Symbol="Library24" FontSize="18" Foreground="{StaticResource ImmAccentBrush}" />
+                <TextBlock Text="Библиотека" FontSize="14" Margin="10,0,0,0" FontWeight="Medium"
+                           Foreground="{StaticResource ImmTextPrimaryBrush}" />
+              </StackPanel>
+            </Border>
           </Border>
 
-          <Border Padding="12,10" Margin="0,0,0,4" Opacity="0.5">
+          <Border Padding="12,10" Margin="0,0,0,4" Opacity="0.55">
             <StackPanel Orientation="Horizontal">
               <ui:SymbolIcon Symbol="ScanType24" FontSize="18" Foreground="{StaticResource ImmTextSecondaryBrush}" />
               <TextBlock Text="Сканер" FontSize="14" Margin="10,0,0,0"
@@ -255,7 +263,7 @@
             </StackPanel>
           </Border>
 
-          <Border Padding="12,10" Opacity="0.5">
+          <Border Padding="12,10" Opacity="0.55">
             <StackPanel Orientation="Horizontal">
               <ui:SymbolIcon Symbol="Settings24" FontSize="18" Foreground="{StaticResource ImmTextSecondaryBrush}" />
               <TextBlock Text="Настройки" FontSize="14" Margin="10,0,0,0"
@@ -265,7 +273,7 @@
         </StackPanel>
 
         <!-- Status -->
-        <StackPanel Grid.Row="3" Margin="4,0,0,0">
+        <StackPanel Grid.Row="3" Margin="2,0,0,0">
           <Separator Background="{StaticResource ImmBorderBrush}" Margin="0,0,0,12" />
           <StackPanel Orientation="Horizontal">
             <Ellipse Width="8" Height="8" Fill="{StaticResource ImmSuccessBrush}"
@@ -278,12 +286,13 @@
       </Grid>
     </Border>
 
-    <!-- ============ CONTENT ============ -->
+    <!-- ============ CENTER COLUMN ============ -->
     <Grid Grid.Column="1" Margin="24,20,24,16">
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto" />
         <RowDefinition Height="Auto" />
         <RowDefinition Height="*" />
+        <RowDefinition Height="Auto" />
       </Grid.RowDefinitions>
 
       <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,2">
@@ -294,7 +303,7 @@
                    Text="{Binding Entries.Count, StringFormat='Установленные сборки ({0})'}" />
       </StackPanel>
 
-      <!-- Toolbar: import left · sort + view switch right (reference) -->
+      <!-- Toolbar: import · rescan left / search · sort · views right -->
       <Grid Grid.Row="1" Margin="0,12,0,16">
         <StackPanel Orientation="Horizontal">
           <Button Style="{StaticResource ImmPrimaryButtonStyle}" Command="{Binding ImportCommand}">
@@ -306,17 +315,18 @@
           <Button Style="{StaticResource ImmGhostButtonStyle}" Margin="8,0,0,0"
                   Command="{Binding RescanCommand}" CommandParameter="{Binding SelectedEntry}"
                   ToolTip="Ре-скан выбранной сборки">
-            <StackPanel Orientation="Horizontal">
-              <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="15"
-                             Foreground="{StaticResource ImmTextSecondaryBrush}" />
-            </StackPanel>
+            <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="15"
+                           Foreground="{StaticResource ImmTextSecondaryBrush}" />
           </Button>
         </StackPanel>
 
         <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+          <ui:TextBox Icon="{ui:SymbolIcon Search24}" PlaceholderText="Поиск сборок…"
+                      Width="200" Height="34" FontSize="13" VerticalContentAlignment="Center"
+                      Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
           <ComboBox ItemsSource="{Binding SortOptions}"
                     SelectedItem="{Binding SelectedSortOption}"
-                    Width="170" Height="34" FontSize="13"
+                    Width="150" Height="34" FontSize="13" Margin="8,0,0,0"
                     VerticalContentAlignment="Center" />
           <Border Background="{StaticResource ImmBgCardBrush}" BorderBrush="{StaticResource ImmBorderBrush}"
                   BorderThickness="1" CornerRadius="7" Margin="8,0,0,0" Padding="4">
@@ -338,40 +348,48 @@
         </StackPanel>
       </Grid>
 
-      <!-- Cards (grid) -->
-      <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
-        <StackPanel>
-          <ItemsControl ItemsSource="{Binding EntriesView}" ItemTemplate="{StaticResource PackCardTemplate}"
-                        Visibility="{Binding IsGridView, Converter={StaticResource BoolToVisibleConverter}}">
-            <ItemsControl.ItemsPanel>
-              <ItemsPanelTemplate>
-                <WrapPanel />
-              </ItemsPanelTemplate>
-            </ItemsControl.ItemsPanel>
-            <ItemsControl.ItemContainerStyle>
-              <Style>
-                <Setter Property="FrameworkElement.Width" Value="290" />
-                <Setter Property="FrameworkElement.Height" Value="384" />
-                <Setter Property="FrameworkElement.Margin" Value="0,0,16,16" />
-              </Style>
-            </ItemsControl.ItemContainerStyle>
-          </ItemsControl>
+      <!-- Cards grid (ListBox + VirtualizingWrapPanel, concept rule) -->
+      <ListBox Grid.Row="2" x:Name="PacksList"
+               ItemsSource="{Binding EntriesView}"
+               Background="Transparent" BorderThickness="0"
+               ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+               ScrollViewer.VerticalScrollBarVisibility="Auto">
+        <ListBox.Style>
+          <Style TargetType="ListBox">
+            <Setter Property="ItemTemplate" Value="{StaticResource PackCardTemplate}" />
+            <Style.Triggers>
+              <DataTrigger Binding="{Binding IsGridView}" Value="False">
+                <Setter Property="ItemTemplate" Value="{StaticResource PackRowTemplate}" />
+              </DataTrigger>
+            </Style.Triggers>
+          </Style>
+        </ListBox.Style>
+        <ListBox.ItemsPanel>
+          <ItemsPanelTemplate>
+            <WrapPanel />
+          </ItemsPanelTemplate>
+        </ListBox.ItemsPanel>
+        <ListBox.ItemContainerStyle>
+          <Style TargetType="ListBoxItem">
+            <Setter Property="Background" Value="Transparent" />
+            <Setter Property="Width" Value="290" />
+            <Setter Property="Height" Value="384" />
+            <Setter Property="Margin" Value="0,0,16,16" />
+            <Setter Property="Template">
+              <Setter.Value>
+                <ControlTemplate TargetType="ListBoxItem">
+                  <ContentPresenter />
+                </ControlTemplate>
+              </Setter.Value>
+            </Setter>
+          </Style>
+        </ListBox.ItemContainerStyle>
+      </ListBox>
 
-          <!-- Rows (list) -->
-          <ItemsControl ItemsSource="{Binding EntriesView}" ItemTemplate="{StaticResource PackRowTemplate}">
-            <ItemsControl.Style>
-              <Style TargetType="ItemsControl">
-                <Setter Property="Visibility" Value="Collapsed" />
-                <Style.Triggers>
-                  <DataTrigger Binding="{Binding IsGridView}" Value="False">
-                    <Setter Property="Visibility" Value="Visible" />
-                  </DataTrigger>
-                </Style.Triggers>
-              </Style>
-            </ItemsControl.Style>
-          </ItemsControl>
-        </StackPanel>
-      </ScrollViewer>
+      <!-- Footer counter -->
+      <TextBlock Grid.Row="3" FontSize="12" Margin="2,4,0,0"
+                 Foreground="{StaticResource ImmTextSecondaryBrush}"
+                 Text="{Binding Entries.Count, StringFormat='Всего сборок: {0}'}" />
 
       <!-- Empty state -->
       <StackPanel Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center"
@@ -387,15 +405,16 @@
       </StackPanel>
     </Grid>
 
-    <!-- ============ DETAILS ============ -->
-    <Border Grid.Column="2" Background="{StaticResource ImmBgCardBrush}" Padding="20">
-      <ContentControl Content="{Binding SelectedEntry}">
+    <!-- ============ RIGHT COLUMN ============ -->
+    <Border Grid.Column="2" Background="{StaticResource ImmBgPanelBrush}"
+            BorderBrush="{DynamicResource ControlElevationBorderBrush}" BorderThickness="1,0,0,0">
+      <ContentControl Content="{Binding SelectedEntry}" Margin="20,20,20,16">
         <ContentControl.Resources>
           <DataTemplate DataType="{x:Type vm:LibraryEntryViewModel}">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
               <StackPanel>
                 <!-- Cover -->
-                <Border Height="168" CornerRadius="10" ClipToBounds="True">
+                <Border Height="180" CornerRadius="10" ClipToBounds="True">
                   <Border.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                       <GradientStop Color="#1A2438" Offset="0" />
@@ -415,7 +434,6 @@
                 <TextBlock Text="{Binding Name}" FontSize="20" FontWeight="SemiBold" Margin="0,14,0,0"
                            Foreground="{StaticResource ImmTextPrimaryBrush}" TextWrapping="Wrap" />
 
-                <!-- Game identity row -->
                 <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
                   <ui:SymbolIcon Symbol="Rocket24" FontSize="15" Foreground="{StaticResource ImmAccentCyanBrush}" />
                   <TextBlock Text="{Binding GameDisplayName}" FontSize="13" Margin="8,0,0,0"
@@ -424,7 +442,7 @@
 
                 <Separator Background="{StaticResource ImmBorderBrush}" Margin="0,14,0,10" />
 
-                <!-- Info rows: label left, value right (reference) -->
+                <!-- Info rows: label left, value right -->
                 <Grid>
                   <Grid.ColumnDefinitions>
                     <ColumnDefinition Width="Auto" />
@@ -502,7 +520,7 @@
                   </Button>
                 </Grid>
 
-                <!-- Notes (reference section) -->
+                <!-- Notes -->
                 <StackPanel Margin="0,18,0,0"
                             Visibility="{Binding NotesText, Converter={StaticResource NullToCollapsedConverter}}">
                   <Grid>

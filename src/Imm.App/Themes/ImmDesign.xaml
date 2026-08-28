@@ -19,17 +19,19 @@
   <!-- Force canon accent over the Windows system accent (WPF-UI greens otherwise). -->
   <Color x:Key="SystemAccentColor">#2E8BFF</Color>
 
-  <!-- Translucent panels: acrylic glow comes through (Win11); Win10 degrades to solid via WPF-UI -->
+  <!-- Columns: darker tint, still translucent (Mica/Acrylic glows through); center stays clear -->
   <SolidColorBrush x:Key="ImmBgBaseBrush" Color="{StaticResource ImmBgBaseColor}" />
-  <SolidColorBrush x:Key="ImmBgSidebarBrush" Color="#E60A101B" />
-  <SolidColorBrush x:Key="ImmBgCardBrush" Color="#D9151D2E" />
+  <SolidColorBrush x:Key="ImmBgSidebarBrush" Color="#C90C141F" />
+  <SolidColorBrush x:Key="ImmBgPanelBrush" Color="#CF111A28" />
+  <SolidColorBrush x:Key="ImmBgCardBrush" Color="#E616202E" />
   <SolidColorBrush x:Key="ImmBgCardHoverBrush" Color="#F21A2438" />
+  <SolidColorBrush x:Key="ImmCardBorderBrush" Color="#2A3A52" />
   <SolidColorBrush x:Key="ImmAccentBrush" Color="{StaticResource ImmAccentColor}" />
   <SolidColorBrush x:Key="ImmAccentCyanBrush" Color="{StaticResource ImmAccentCyanColor}" />
   <SolidColorBrush x:Key="ImmAccentHoverBrush" Color="#4D9DFF" />
   <SolidColorBrush x:Key="ImmAccentPressedBrush" Color="#1E6FD9" />
   <SolidColorBrush x:Key="ImmTextPrimaryBrush" Color="#F5F7FA" />
-  <SolidColorBrush x:Key="ImmTextSecondaryBrush" Color="#8A94A6" />
+  <SolidColorBrush x:Key="ImmTextSecondaryBrush" Color="#A3B1C2" />
   <SolidColorBrush x:Key="ImmSuccessBrush" Color="#2ECC71" />
   <SolidColorBrush x:Key="ImmWarnBrush" Color="#E67E22" />
   <SolidColorBrush x:Key="ImmBorderBrush" Color="#223048" />

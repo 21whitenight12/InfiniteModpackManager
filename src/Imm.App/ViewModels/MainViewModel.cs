@@ -46,6 +46,20 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _isGridView = true;
 
+    [ObservableProperty]
+    private string _searchText = string.Empty;
+
+    partial void OnSearchTextChanged(string value) => ApplyFilter();
+
+    private void ApplyFilter()
+    {
+        EntriesView.Filter = string.IsNullOrWhiteSpace(SearchText)
+            ? null
+            : o => o is LibraryEntryViewModel e &&
+                   (e.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
+                    e.GameDisplayName.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
+    }
+
     [RelayCommand]
     private void SetGridView() => IsGridView = true;
 

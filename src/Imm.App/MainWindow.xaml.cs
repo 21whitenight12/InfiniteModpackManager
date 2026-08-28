@@ -22,7 +22,7 @@ public partial class MainWindow : FluentWindow
         ViewModel = viewModel;
         contentDialogService.SetDialogHost(RootContentDialogHost);
         snackbarService.SetSnackbarPresenter(RootSnackbarPresenter);
-        PageHost.Content = new LibraryPage(viewModel);
+        PageHost.Content = new LibraryView(viewModel);
         Loaded += async (_, _) => await ViewModel.InitializeAsync();
         AllowDrop = true;
         Drop += OnDrop;

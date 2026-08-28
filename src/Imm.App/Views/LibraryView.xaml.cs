@@ -5,10 +5,10 @@ using Imm.App.ViewModels;
 
 namespace Imm.App.Views;
 
-/// <summary>Library page (design canon): card grid + details pane + import.</summary>
-public partial class LibraryPage : Page
+/// <summary>Library view (concept canon): card grid + details pane + import.</summary>
+public partial class LibraryView : Page
 {
-    public LibraryPage(MainViewModel viewModel)
+    public LibraryView(MainViewModel viewModel)
     {
         InitializeComponent();
         DataContext = viewModel;
