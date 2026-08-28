@@ -8,11 +8,20 @@
   <Page.Resources>
     <!-- ============ GRID CARD (concept: cover, engine badge-pill, tabular meta rows) ============ -->
     <DataTemplate x:Key="PackCardTemplate" DataType="{x:Type vm:LibraryEntryViewModel}">
-      <Border x:Name="CardRoot"
-              Background="{StaticResource ImmBgCardBrush}"
-              BorderBrush="{StaticResource ImmCardBorderBrush}" BorderThickness="1"
+      <Border x:Name="CardRoot" BorderThickness="1"
               CornerRadius="10" Padding="0"
               Cursor="Hand">
+        <Border.Style>
+          <Style TargetType="Border">
+            <Setter Property="Background" Value="{StaticResource ImmBgCardBrush}" />
+            <Setter Property="BorderBrush" Value="{StaticResource ImmCardBorderBrush}" />
+            <Style.Triggers>
+              <Trigger Property="IsMouseOver" Value="True">
+                <Setter Property="Background" Value="{StaticResource ImmBgCardHoverBrush}" />
+              </Trigger>
+            </Style.Triggers>
+          </Style>
+        </Border.Style>
         <Border.InputBindings>
           <MouseBinding Gesture="LeftClick"
                         Command="{Binding DataContext.SelectEntryCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
@@ -357,33 +366,60 @@
         <ListBox.Style>
           <Style TargetType="ListBox">
             <Setter Property="ItemTemplate" Value="{StaticResource PackCardTemplate}" />
+            <Setter Property="ItemsPanel">
+              <Setter.Value>
+                <ItemsPanelTemplate>
+                  <WrapPanel />
+                </ItemsPanelTemplate>
+              </Setter.Value>
+            </Setter>
+            <Setter Property="ItemContainerStyle">
+              <Setter.Value>
+                <Style TargetType="ListBoxItem">
+                  <Setter Property="Background" Value="Transparent" />
+                  <Setter Property="Width" Value="290" />
+                  <Setter Property="Height" Value="384" />
+                  <Setter Property="Margin" Value="0,0,16,16" />
+                  <Setter Property="Template">
+                    <Setter.Value>
+                      <ControlTemplate TargetType="ListBoxItem">
+                        <ContentPresenter />
+                      </ControlTemplate>
+                    </Setter.Value>
+                  </Setter>
+                </Style>
+              </Setter.Value>
+            </Setter>
             <Style.Triggers>
               <DataTrigger Binding="{Binding IsGridView}" Value="False">
                 <Setter Property="ItemTemplate" Value="{StaticResource PackRowTemplate}" />
+                <Setter Property="ItemsPanel">
+                  <Setter.Value>
+                    <ItemsPanelTemplate>
+                      <StackPanel />
+                    </ItemsPanelTemplate>
+                  </Setter.Value>
+                </Setter>
+                <Setter Property="ItemContainerStyle">
+                  <Setter.Value>
+                    <Style TargetType="ListBoxItem">
+                      <Setter Property="Background" Value="Transparent" />
+                      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                      <Setter Property="Margin" Value="0,0,0,8" />
+                      <Setter Property="Template">
+                        <Setter.Value>
+                          <ControlTemplate TargetType="ListBoxItem">
+                            <ContentPresenter />
+                          </ControlTemplate>
+                        </Setter.Value>
+                      </Setter>
+                    </Style>
+                  </Setter.Value>
+                </Setter>
               </DataTrigger>
             </Style.Triggers>
           </Style>
         </ListBox.Style>
-        <ListBox.ItemsPanel>
-          <ItemsPanelTemplate>
-            <WrapPanel />
-          </ItemsPanelTemplate>
-        </ListBox.ItemsPanel>
-        <ListBox.ItemContainerStyle>
-          <Style TargetType="ListBoxItem">
-            <Setter Property="Background" Value="Transparent" />
-            <Setter Property="Width" Value="290" />
-            <Setter Property="Height" Value="384" />
-            <Setter Property="Margin" Value="0,0,16,16" />
-            <Setter Property="Template">
-              <Setter.Value>
-                <ControlTemplate TargetType="ListBoxItem">
-                  <ContentPresenter />
-                </ControlTemplate>
-              </Setter.Value>
-            </Setter>
-          </Style>
-        </ListBox.ItemContainerStyle>
       </ListBox>
 
       <!-- Footer counter -->

@@ -6,8 +6,8 @@
                  Width="1400" Height="900"
                  MinWidth="1100" MinHeight="640"
                  ExtendsContentIntoTitleBar="True"
-                 WindowBackdropType="Auto"
-                 Background="Transparent">
+                 WindowBackdropType="None"
+                 Background="{StaticResource ImmBgGradientBrush}">
 
   <Grid>
     <Grid.RowDefinitions>

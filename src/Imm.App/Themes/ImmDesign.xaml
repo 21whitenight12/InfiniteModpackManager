@@ -36,6 +36,13 @@
   <SolidColorBrush x:Key="ImmWarnBrush" Color="#E67E22" />
   <SolidColorBrush x:Key="ImmBorderBrush" Color="#223048" />
 
+  <!-- Fluent window gradient (base + side columns glow through translucent tints) -->
+  <LinearGradientBrush x:Key="ImmBgGradientBrush" StartPoint="0,0" EndPoint="1,1">
+    <GradientStop Color="#121C30" Offset="0" />
+    <GradientStop Color="#0D1420" Offset="0.55" />
+    <GradientStop Color="#0A101B" Offset="1" />
+  </LinearGradientBrush>
+
   <CornerRadius x:Key="ImmCardCornerRadius">10</CornerRadius>
   <Thickness x:Key="ImmCardPadding">14</Thickness>
 
