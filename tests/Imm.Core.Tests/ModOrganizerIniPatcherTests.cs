@@ -214,6 +214,39 @@ public sealed class ModOrganizerIniPatcherTests : IDisposable
     }
 
     [Fact]
+    public void ReadManagedGameDirectory_GamePathByteArrayRelative_ResolvesAgainstInstanceDir()
+    {
+        // Real-world MO2 2.5+ shape: gamePath=@ByteArray(..\\) — the pack root above MO2\.
+        var path = WriteIni("[General]\ngamePath=@ByteArray(..\\\\)\n");
+
+        Assert.Equal(Path.GetFullPath(Path.Combine(_temp, "..\\")), _patcher.ReadManagedGameDirectory(path));
+    }
+
+    [Fact]
+    public void ReadManagedGameDirectory_GamePathAbsolute_ReturnedAsIs()
+    {
+        var path = WriteIni("[General]\ngamePath=C:\\Games\\Skyrim SE\n");
+
+        Assert.Equal(@"C:\Games\Skyrim SE", _patcher.ReadManagedGameDirectory(path));
+    }
+
+    [Fact]
+    public void ReadManagedGameDirectory_NoGameKeys_ReturnsNull()
+    {
+        var path = WriteIni("[General]\ngameName=Skyrim Special Edition\nfirst_start=false\n");
+
+        Assert.Null(_patcher.ReadManagedGameDirectory(path));
+    }
+
+    [Fact]
+    public void ReadManagedGameDirectory_LegacyBaseDirectory_WinsOverGamePath()
+    {
+        var path = WriteIni("[General]\nbase_directory=C:\\Games\\Old\ngamePath=@ByteArray(..\\\\)\n");
+
+        Assert.Equal(@"C:\Games\Old", _patcher.ReadManagedGameDirectory(path));
+    }
+
+    [Fact]
     public void Patch_DuplicateKey_LastOccurrenceWins()
     {
         var path = WriteIni("[General]\nbase_directory=C:\\First\nbase_directory=C:\\Second\n");

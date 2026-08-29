@@ -141,7 +141,9 @@ public sealed class LibraryService : ILibraryService
         Engine = scan.Engine,
         Source = scan.Source,
         SystemGamePath = scan.SystemGamePath,
-        Mo2 = scan.Mo2ProfileName is null ? null : new Mo2Section { ProfileName = scan.Mo2ProfileName },
+        Mo2 = scan.Mo2ProfileName is null && scan.Mo2DirectoryName is null
+            ? null
+            : new Mo2Section { ProfileName = scan.Mo2ProfileName ?? string.Empty, Directory = scan.Mo2DirectoryName },
         Launch = new LaunchSection { Executable = scan.LaunchExecutable ?? string.Empty },
         Detection = new DetectionSection(),
     };
@@ -152,7 +154,9 @@ public sealed class LibraryService : ILibraryService
         manifest.Engine = scan.Engine;
         manifest.Source = scan.Source;
         manifest.SystemGamePath = scan.SystemGamePath;
-        manifest.Mo2 = scan.Mo2ProfileName is null ? null : new Mo2Section { ProfileName = scan.Mo2ProfileName };
+        manifest.Mo2 = scan.Mo2ProfileName is null && scan.Mo2DirectoryName is null
+            ? null
+            : new Mo2Section { ProfileName = scan.Mo2ProfileName ?? string.Empty, Directory = scan.Mo2DirectoryName };
         manifest.Launch = new LaunchSection { Executable = scan.LaunchExecutable ?? string.Empty };
     }
 }

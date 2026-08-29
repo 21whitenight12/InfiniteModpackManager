@@ -4,6 +4,12 @@ namespace Imm.Core.Domain;
 public sealed class Mo2Section
 {
     public string ProfileName { get; set; } = string.Empty;
+
+    /// <summary>
+    /// Subdirectory of the pack root holding the MO2 instance, when the instance does not sit in
+    /// the root itself (game-as-root exception, e.g. "MO2"); null for the classic root-level layout.
+    /// </summary>
+    public string? Directory { get; set; }
 }
 
 /// <summary>Launch section: executable name (SE loader preferred over bare game exe) and optional arguments.</summary>

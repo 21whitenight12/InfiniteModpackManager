@@ -19,6 +19,12 @@ public sealed record ScanResult
     /// <summary>MO2 profile name parsed from ModOrganizer.ini (portable instances only).</summary>
     public string? Mo2ProfileName { get; init; }
 
+    /// <summary>
+    /// Subdirectory of the pack root holding the portable MO2 instance, when it does not sit in the
+    /// root itself (game-as-root exception, e.g. "MO2"); null for the classic root-level instance.
+    /// </summary>
+    public string? Mo2DirectoryName { get; init; }
+
     /// <summary>Executable to launch: script extender loader if present, otherwise the game exe.</summary>
     public string? LaunchExecutable { get; init; }
 

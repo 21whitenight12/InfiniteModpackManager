@@ -175,6 +175,62 @@ public sealed class LaunchStrategyTests : IDisposable
     }
 
     [Fact]
+    public async Task Mo2_NestedInstance_LaunchesFromSubdirectory()
+    {
+        // Game-as-root exception: game in the pack root, MO2 instance in MO2\.
+        var pack = CreatePack("Nested", p =>
+        {
+            WriteGameExe(p);
+            Directory.CreateDirectory(Path.Combine(p, "MO2"));
+            File.WriteAllText(Path.Combine(p, "MO2", "ModOrganizer.exe"), string.Empty);
+            File.WriteAllText(Path.Combine(p, "MO2", "ModOrganizer.ini"), "[General]\ngamePath=@ByteArray(..\\\\)\n");
+        });
+        var manifest = Manifest(LaunchEngine.Mo2Standard, PackSource.Portable, "Default");
+        manifest.Mo2!.Directory = "MO2";
+
+        var plan = await _mo2.BuildPlanAsync(manifest, pack);
+
+        Assert.Equal(Path.Combine(pack, "MO2", "ModOrganizer.exe"), plan.ExecutablePath);
+        Assert.Equal(Path.Combine(pack, "MO2"), plan.WorkingDirectory);
+        Assert.Equal(new[] { "-p", "Default", "Fallout4.exe" }, plan.Arguments);
+    }
+
+    [Fact]
+    public async Task Mo2_GamePathStale_ThrowsWithoutTouchingIni()
+    {
+        // gamePath belongs to MO2 2.5+ — stale value stops the launch, ini is never patched.
+        var pack = CreatePack("GamePathStale", p =>
+        {
+            File.WriteAllText(Path.Combine(p, "ModOrganizer.exe"), string.Empty);
+            File.WriteAllText(Path.Combine(p, "ModOrganizer.ini"), "[General]\ngamePath=@ByteArray(C:\\\\Games\\\\Gone\\\\)\n");
+            WriteGameExe(p);
+        });
+
+        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _mo2.BuildPlanAsync(Manifest(LaunchEngine.Mo2Standard), pack));
+
+        Assert.Contains("gamePath", ex.Message);
+        Assert.Empty(Directory.GetFiles(pack, "ModOrganizer.ini.bak-*"));
+        Assert.Contains("gamePath", File.ReadAllText(Path.Combine(pack, "ModOrganizer.ini")));
+    }
+
+    [Fact]
+    public async Task Mo2_NoGameKey_IniLeftAlone()
+    {
+        // No base_directory / gamePath at all: MO2 applies its own defaults — ini must not be touched.
+        var pack = CreatePack("NoKey", p =>
+        {
+            File.WriteAllText(Path.Combine(p, "ModOrganizer.exe"), string.Empty);
+            File.WriteAllText(Path.Combine(p, "ModOrganizer.ini"), "[General]\ngameName=Fallout 4\n");
+            WriteGameExe(p);
+        });
+
+        var plan = await _mo2.BuildPlanAsync(Manifest(LaunchEngine.Mo2Standard), pack);
+
+        Assert.Equal("Fallout4.exe", plan.Arguments[2]);
+        Assert.Empty(Directory.GetFiles(pack, "ModOrganizer.ini.bak-*"));
+    }
+
+    [Fact]
     public async Task Mo2_SystemSource_GameMissing_ThrowsWithoutPatch()
     {
         var pack = CreatePack("SysMissing", p =>

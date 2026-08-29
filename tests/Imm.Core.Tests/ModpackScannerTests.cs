@@ -106,6 +106,45 @@ public sealed class ModpackScannerTests : IDisposable
     }
 
     [Fact]
+    public async Task GameAsRoot_NestedMo2Instance_FullDetection()
+    {
+        // Game-as-root exception (TrueAE-style): full game install in the root,
+        // portable MO2 instance in a first-level subdirectory.
+        Write(@"SkyrimSE.exe");
+        Write(@"Data\Skyrim.esm");
+        Write(@"MO2\ModOrganizer.exe");
+        Write(@"MO2\ModOrganizer.ini");
+        CreateDir(@"MO2\profiles\TRUE AE V5.32 EXTENDED");
+
+        var scan = await CreateScanner().ScanAsync(_root);
+
+        Assert.True(scan.LooksLikeModpack);
+        Assert.Equal(GameType.SkyrimSE, scan.GameType);
+        Assert.Equal(LaunchEngine.Mo2Standard, scan.Engine);
+        Assert.Equal(PackSource.Portable, scan.Source); // game ships with the pack
+        Assert.Null(scan.SystemGamePath);
+        Assert.Equal("TRUE AE V5.32 EXTENDED", scan.Mo2ProfileName);
+        Assert.Equal("MO2", scan.Mo2DirectoryName);
+        Assert.Equal("SkyrimSE.exe", scan.LaunchExecutable);
+    }
+
+    [Fact]
+    public async Task MultipleNestedMo2Instances_ProducesWarning_NotSilentGuess()
+    {
+        Write(@"SkyrimSE.exe");
+        Write(@"MO2\ModOrganizer.exe");
+        Write(@"MO2\ModOrganizer.ini");
+        Write(@"MO2 Backup\ModOrganizer.exe");
+        Write(@"MO2 Backup\ModOrganizer.ini");
+        CreateDir(@"MO2\profiles\Default");
+
+        var scan = await CreateScanner().ScanAsync(_root);
+
+        Assert.Equal(LaunchEngine.Direct, scan.Engine); // ambiguity — no MO2 handling
+        Assert.Contains(scan.Warnings, w => w.Contains("несколько вложенных"));
+    }
+
+    [Fact]
     public async Task MultipleProfiles_ProducesWarning_NotSilentGuess()
     {
         Write(@"ModOrganizer.exe");

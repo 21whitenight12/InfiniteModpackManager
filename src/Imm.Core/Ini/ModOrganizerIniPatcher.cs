@@ -10,30 +10,72 @@ namespace Imm.Core.Ini;
 public sealed record IniPatchResult(bool Changed, string? BackupPath, string? OldValue, string NewValue);
 
 /// <summary>
-/// Self-healing path patcher for portable ModOrganizer.ini (IMM.md INI Patching Rules).
+/// Reader/self-healing patcher for portable ModOrganizer.ini (IMM.md INI Patching Rules).
 /// Strict custom line parser: key and value split at the first '='; Qt service structures
-/// (@ByteArray, \xNN escapes, doubled backslashes) are never "normalized" — only the
-/// base_directory value is rewritten, preserving the original writing style.
-/// Absolute stale paths only; relative paths are left untouched. Idempotent.
-/// Before any write: timestamped backup &lt;name&gt;.bak-&lt;timestamp&gt; next to the file.
-/// A corrupt ini is never rewritten — the patcher stops with an error instead.
+/// (@ByteArray, \xNN escapes, doubled backslashes) are never "normalized" — a rewritten value
+/// preserves the original writing style. Absolute stale paths only; relative paths are left
+/// untouched. Idempotent. Before any write: timestamped backup &lt;name&gt;.bak-&lt;timestamp&gt;
+/// next to the file. A corrupt ini is never rewritten — the patcher stops with an error instead.
+///
+/// Game folder keys by MO2 version: legacy installs keep an absolute `base_directory` in
+/// [General]; MO2 2.5+ keeps `gamePath` (often relative to the instance directory, frequently
+/// @ByteArray-encoded). Only the legacy absolute key is ever patched — gamePath belongs to MO2.
 /// </summary>
 public sealed class ModOrganizerIniPatcher
 {
     private const string BaseDirectoryKey = "base_directory";
+    private const string GamePathKey = "gamePath";
     private const string GeneralSection = "General";
 
-    /// <summary>Effective base_directory value from the last [General] entry; null when the key is absent.</summary>
+    /// <summary>Legacy absolute base_directory value from the last [General] entry; null when the key is absent.</summary>
     public string? ReadBaseDirectory(string iniPath)
     {
         var ini = ReadIni(iniPath);
-        var match = FindBaseDirectoryLine(ini.Lines);
+        var match = FindIniKey(ini.Lines, BaseDirectoryKey);
         if (match is null)
         {
             return null;
         }
 
         return UnescapeQt(StripTrailingComment(match.Value.ValueRaw));
+    }
+
+    /// <summary>
+    /// Game folder as MO2 itself resolves it: the legacy absolute base_directory when present,
+    /// otherwise gamePath resolved against the instance directory (Qt @ByteArray values decoded).
+    /// Null when neither key holds a usable value — MO2 then applies its own defaults
+    /// (the instance directory), and the ini must not be touched.
+    /// </summary>
+    public string? ReadManagedGameDirectory(string iniPath)
+    {
+        var normalized = LongPath.Normalize(iniPath);
+        var ini = ReadIni(normalized);
+
+        var baseDirectory = FindIniKey(ini.Lines, BaseDirectoryKey);
+        if (baseDirectory is not null)
+        {
+            return UnescapeQt(StripTrailingComment(baseDirectory.Value.ValueRaw));
+        }
+
+        var gamePath = FindIniKey(ini.Lines, GamePathKey);
+        if (gamePath is null)
+        {
+            return null;
+        }
+
+        var raw = StripTrailingComment(gamePath.Value.ValueRaw);
+        var value = raw.StartsWith("@ByteArray(", StringComparison.Ordinal) && raw.EndsWith(')')
+            ? UnescapeQt(raw["@ByteArray(".Length..^1])
+            : UnescapeQt(raw);
+
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return null;
+        }
+
+        return Path.IsPathRooted(value)
+            ? value
+            : Path.GetFullPath(Path.Combine(Path.GetDirectoryName(normalized) ?? ".", value));
     }
 
     public IniPatchResult PatchBaseDirectory(string iniPath, string newBaseDirectory)
@@ -50,7 +92,7 @@ public sealed class ModOrganizerIniPatcher
         }
 
         var ini = ReadIni(normalized);
-        var match = FindBaseDirectoryLine(ini.Lines)
+        var match = FindIniKey(ini.Lines, BaseDirectoryKey)
             ?? throw new InvalidOperationException(
                 "В секции [General] не найден ключ base_directory — структура ini неожиданная, файл не изменён.");
 
@@ -84,7 +126,7 @@ public sealed class ModOrganizerIniPatcher
 
     // ---------- parsing ----------
 
-    private readonly record struct BaseDirectoryMatch(
+    private readonly record struct IniKeyMatch(
         int Index, string LineText, int EqualsIndex, string ValueRaw);
 
     private sealed class ParsedIni
@@ -95,10 +137,10 @@ public sealed class ModOrganizerIniPatcher
         public required bool TrailingNewline { get; init; }
     }
 
-    private static BaseDirectoryMatch? FindBaseDirectoryLine(List<string> lines)
+    private static IniKeyMatch? FindIniKey(List<string> lines, string keyName)
     {
         string section = string.Empty;
-        BaseDirectoryMatch? last = null;
+        IniKeyMatch? last = null;
 
         for (var i = 0; i < lines.Count; i++)
         {
@@ -118,12 +160,12 @@ public sealed class ModOrganizerIniPatcher
             }
 
             var key = text[..equalsIndex].Trim();
-            // QSettings: keys before the first section header belong to a nameless root section.
+            // QSettings: keys before the first section header belong to a nameless root section;
+            // a duplicated key's last occurrence wins.
             if ((section.Length == 0 || section.Equals(GeneralSection, StringComparison.OrdinalIgnoreCase))
-                && key.Equals(BaseDirectoryKey, StringComparison.OrdinalIgnoreCase))
+                && key.Equals(keyName, StringComparison.OrdinalIgnoreCase))
             {
-                // QSettings semantics: a duplicated key's last occurrence wins.
-                last = new BaseDirectoryMatch(i, text, equalsIndex, text[(equalsIndex + 1)..]);
+                last = new IniKeyMatch(i, text, equalsIndex, text[(equalsIndex + 1)..]);
             }
         }
 

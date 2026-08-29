@@ -103,7 +103,9 @@ public partial class LibraryEntryViewModel : ObservableObject
     public string GameSortKey => GameDisplayName;
 
     /// <summary>MO2 present but no profile resolved by the scanner → needs user attention (IMM.md: no silent guesses).</summary>
-    public bool HasWarnings => HasMo2Files() && _manifest?.Mo2 is null;
+    public bool HasWarnings =>
+        (_manifest?.Mo2 is not null && string.IsNullOrWhiteSpace(_manifest.Mo2.ProfileName))
+        || (HasMo2Files() && _manifest?.Mo2 is null);
 
     [ObservableProperty]
     private bool _isSelected;

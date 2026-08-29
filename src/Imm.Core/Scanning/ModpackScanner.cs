@@ -37,6 +37,21 @@ public sealed class ModpackScanner : IModpackScanner
         var rootGameType = DetectGameAt(root);
         var portableInfo = FindPortableGameRoot(root);
 
+        // MO2 detection (portable instances only): in the pack root, or in exactly one
+        // first-level subdirectory (game-as-root exception). More than one → no silent guessing.
+        var nestedMo2Instances = Mo2Locator.FindSubdirectoryInstances(root);
+        if (nestedMo2Instances.Count > 1)
+        {
+            warnings.Add(
+                "Найдено несколько вложенных папок MO2 ("
+                + string.Join(", ", nestedMo2Instances.Select(Path.GetFileName))
+                + ") — укажите инстанс вручную.");
+        }
+
+        var mo2Directory = Mo2Locator.IsPortableInstance(root)
+            ? root
+            : nestedMo2Instances.Count == 1 ? nestedMo2Instances[0] : null;
+
         PackSource source;
         string? systemGamePath = null;
         string? gameFilesDirectory;
@@ -55,18 +70,31 @@ public sealed class ModpackScanner : IModpackScanner
         }
         else if (rootGameType != GameType.Unknown)
         {
-            source = PackSource.System;
-            gameType = rootGameType;
-            gameFilesDirectory = root;
-            systemGamePath = _systemLocator.FindGamePath(gameType);
-            if (systemGamePath is null)
+            if (mo2Directory is not null
+                && !string.Equals(mo2Directory, root, StringComparison.OrdinalIgnoreCase))
             {
-                warnings.Add("Системная установка игры не найдена — укажите путь к игре вручную.");
+                // Game-as-root exception: the pack root is a full game install and the portable MO2
+                // instance lives in exactly one first-level subdirectory (e.g. MO2\). The game ships
+                // with the pack, so no system install lookup is needed.
+                source = PackSource.Portable;
+                gameType = rootGameType;
+                gameFilesDirectory = root;
             }
             else
             {
-                // Script extender loaders live in the real game install, not in the pack.
-                gameFilesDirectory = systemGamePath;
+                source = PackSource.System;
+                gameType = rootGameType;
+                gameFilesDirectory = root;
+                systemGamePath = _systemLocator.FindGamePath(gameType);
+                if (systemGamePath is null)
+                {
+                    warnings.Add("Системная установка игры не найдена — укажите путь к игре вручную.");
+                }
+                else
+                {
+                    // Script extender loaders live in the real game install, not in the pack.
+                    gameFilesDirectory = systemGamePath;
+                }
             }
         }
         else
@@ -76,24 +104,26 @@ public sealed class ModpackScanner : IModpackScanner
             gameFilesDirectory = null;
         }
 
-        // MO2 detection (portable instances only): ModOrganizer.exe next to ModOrganizer.ini.
-        var hasMo2 = File.Exists(LongPath.Normalize(Path.Combine(root, Markers.ModOrganizerExe)))
-                     && File.Exists(LongPath.Normalize(Path.Combine(root, Markers.ModOrganizerIni)));
+        // MO2 detection (portable instances only): ModOrganizer.exe next to ModOrganizer.ini,
+        // in the pack root or in exactly one first-level subdirectory.
+        var isNestedMo2 = mo2Directory is not null
+            && !string.Equals(mo2Directory, root, StringComparison.OrdinalIgnoreCase);
+        var mo2DirectoryName = isNestedMo2 ? Path.GetRelativePath(root, mo2Directory!) : null;
 
         LaunchEngine engine = LaunchEngine.Direct;
         string? mo2Profile = null;
-        if (hasMo2)
+        if (mo2Directory is not null)
         {
-            engine = DetectRootBuilder(root, gameType, warnings)
+            engine = DetectRootBuilder(mo2Directory, gameType, warnings)
                 ? LaunchEngine.Mo2RootBuilder
                 : LaunchEngine.Mo2Standard;
-            mo2Profile = DetectMo2Profile(root, warnings);
+            mo2Profile = DetectMo2Profile(mo2Directory, warnings);
         }
 
         // Launch executable: script extender loader preferred over the bare game exe (IMM.md).
-        var launchExecutable = DetectLaunchExecutable(gameType, gameFilesDirectory, hasMo2, warnings);
+        var launchExecutable = DetectLaunchExecutable(gameType, gameFilesDirectory, mo2Directory is not null, warnings);
 
-        var looksLikeModpack = gameType != GameType.Unknown || hasMo2;
+        var looksLikeModpack = gameType != GameType.Unknown || mo2Directory is not null;
         if (!looksLikeModpack)
         {
             warnings.Add("Не найдено известных маркеров (exe игры, MO2) — папка не похожа на поддерживаемую сборку.");
@@ -111,6 +141,7 @@ public sealed class ModpackScanner : IModpackScanner
             Source = source,
             SystemGamePath = systemGamePath,
             Mo2ProfileName = mo2Profile,
+            Mo2DirectoryName = mo2DirectoryName,
             LaunchExecutable = launchExecutable,
             LooksLikeModpack = looksLikeModpack,
             Warnings = warnings,

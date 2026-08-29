@@ -28,6 +28,7 @@ internal static class Markers
     public const string ModsFolder = "mods";
     public const string PluginsFolder = "plugins";
     public const string ProfilesFolder = "profiles";
+    public const string GameDataFolder = "Data";
 
     public static readonly IReadOnlyList<string> PortableGameRootNames = new[]
     {
