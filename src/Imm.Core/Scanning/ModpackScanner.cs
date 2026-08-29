@@ -282,6 +282,16 @@ public sealed class ModpackScanner : IModpackScanner
         _ => string.Empty,
     };
 
+    /// <summary>Script extender loader for the game type; empty when unknown (any loader pass then).</summary>
+    internal static string ScriptExtenderNameFor(GameType gameType) => gameType switch
+    {
+        GameType.SkyrimLE => "skse_loader.exe",
+        GameType.SkyrimSE => "skse64_loader.exe",
+        GameType.Fallout4 => "f4se_loader.exe",
+        GameType.FalloutNV => "nvse_loader.exe",
+        _ => string.Empty,
+    };
+
     /// <summary>Exactly one profile folder → its name; otherwise null + warning (no silent guessing).</summary>
     private static string? DetectMo2Profile(string root, List<string> warnings)
     {

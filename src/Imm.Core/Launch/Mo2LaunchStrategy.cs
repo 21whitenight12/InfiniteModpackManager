@@ -71,17 +71,68 @@ public sealed class Mo2LaunchStrategy : ILaunchStrategy
     }
 
     /// <summary>
-    /// Scanner-resolved executable first; otherwise re-locate the loader/game exe without touching
-    /// the manifest. Searches the effective game root, the ini-resolved game folder and (for system
-    /// packs) the detected install — the game type may be Unknown there, so known exe names are probed directly.
+    /// FEHLauncher scheme: MO2 resolves a bare executable name against its own directory (its cwd),
+    /// so any executable living elsewhere must be launched by FULL path (usvfs "file not found" otherwise).
+    /// Order: manifest hint expanded to a real location → mod folders (incl. the Root Builder layout
+    /// &lt;mod&gt;/Root/&lt;loader&gt;) → game roots. Bare name is kept only when the file sits next to ModOrganizer.exe.
     /// </summary>
     private string? ResolveExecutableName(ModpackManifest manifest, string packRoot, string mo2Directory)
     {
-        if (!string.IsNullOrWhiteSpace(manifest.Launch.Executable))
+        var searchDirectories = CollectSearchDirectories(manifest, packRoot, mo2Directory);
+
+        var hint = manifest.Launch.Executable;
+        if (!string.IsNullOrWhiteSpace(hint))
         {
-            return manifest.Launch.Executable;
+            var expanded = ExpandHint(hint, mo2Directory, searchDirectories);
+            if (expanded is not null)
+            {
+                return expanded;
+            }
         }
 
+        var fromMods = FindLoaderInMods(mo2Directory, manifest.GameType);
+        if (fromMods is not null)
+        {
+            _logger.Information("Launch executable found in mods folder: {Executable}", fromMods);
+            return fromMods;
+        }
+
+        foreach (var directory in searchDirectories)
+        {
+            foreach (var loader in Markers.ScriptExtenderLoaders)
+            {
+                if (File.Exists(LongPath.Normalize(Path.Combine(directory, loader))))
+                {
+                    return ToMo2Argument(directory, loader);
+                }
+            }
+        }
+
+        var typedExe = ModpackScanner.GameExeNameFor(manifest.GameType);
+        foreach (var directory in searchDirectories)
+        {
+            if (typedExe.Length > 0 && File.Exists(LongPath.Normalize(Path.Combine(directory, typedExe))))
+            {
+                return ToMo2Argument(directory, typedExe);
+            }
+        }
+
+        foreach (var directory in searchDirectories)
+        {
+            var anyExe = Markers.GameExecutables.Keys
+                .FirstOrDefault(exe => File.Exists(LongPath.Normalize(Path.Combine(directory, exe))));
+            if (anyExe is not null)
+            {
+                return ToMo2Argument(directory, anyExe);
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>Effective game roots: ini-resolved game folder, the pack's own game root, the detected install.</summary>
+    private List<string> CollectSearchDirectories(ModpackManifest manifest, string packRoot, string mo2Directory)
+    {
         var searchDirectories = new List<string>();
         var iniPath = Path.Combine(mo2Directory, Markers.ModOrganizerIni);
         var candidates = new[]
@@ -100,38 +151,77 @@ public sealed class Mo2LaunchStrategy : ILaunchStrategy
             }
         }
 
-        foreach (var directory in searchDirectories)
+        return searchDirectories;
+    }
+
+    /// <summary>
+    /// Manifest hint → launch argument: the first location that actually contains the file,
+    /// always as a full path (MO2 resolves bare names against its own directory only).
+    /// </summary>
+    private static string? ExpandHint(string hint, string mo2Directory, List<string> searchDirectories)
+    {
+        if (Path.IsPathRooted(hint))
         {
-            foreach (var loader in Markers.ScriptExtenderLoaders)
-            {
-                if (File.Exists(LongPath.Normalize(Path.Combine(directory, loader))))
-                {
-                    return loader;
-                }
-            }
+            return File.Exists(LongPath.Normalize(hint)) ? Path.GetFullPath(hint) : null;
         }
 
-        var typedExe = ModpackScanner.GameExeNameFor(manifest.GameType);
-        foreach (var directory in searchDirectories)
+        var candidates = searchDirectories.Concat([mo2Directory]);
+        foreach (var directory in candidates)
         {
-            if (typedExe.Length > 0 && File.Exists(LongPath.Normalize(Path.Combine(directory, typedExe))))
+            var candidate = Path.Combine(directory, hint);
+            if (File.Exists(LongPath.Normalize(candidate)))
             {
-                return typedExe;
-            }
-        }
-
-        foreach (var directory in searchDirectories)
-        {
-            var anyExe = Markers.GameExecutables.Keys
-                .FirstOrDefault(exe => File.Exists(LongPath.Normalize(Path.Combine(directory, exe))));
-            if (anyExe is not null)
-            {
-                return anyExe;
+                return Path.GetFullPath(candidate);
             }
         }
 
         return null;
     }
+
+    /// <summary>
+    /// Loader inside a mod folder: the game's own loader first, then any known loader;
+    /// per pass &lt;mod&gt;/&lt;loader&gt; before the Root Builder layout &lt;mod&gt;/Root/&lt;loader&gt;.
+    /// </summary>
+    private static string? FindLoaderInMods(string mo2Directory, GameType gameType)
+    {
+        var modsDirectory = Path.Combine(mo2Directory, Markers.ModsFolder);
+        if (!Directory.Exists(LongPath.Normalize(modsDirectory)))
+        {
+            return null;
+        }
+
+        var typedLoader = ModpackScanner.ScriptExtenderNameFor(gameType);
+        var passes = string.IsNullOrEmpty(typedLoader)
+            ? new List<IReadOnlyList<string>> { Markers.ScriptExtenderLoaders }
+            : new List<IReadOnlyList<string>> { new[] { typedLoader }, Markers.ScriptExtenderLoaders };
+
+        foreach (var pass in passes)
+        {
+            foreach (var loader in pass)
+            {
+                foreach (var mod in Directory.EnumerateDirectories(modsDirectory))
+                {
+                    var direct = Path.Combine(mod, loader);
+                    if (File.Exists(LongPath.Normalize(direct)))
+                    {
+                        return Path.GetFullPath(direct);
+                    }
+
+                    var rootLayout = Path.Combine(mod, "Root", loader);
+                    if (File.Exists(LongPath.Normalize(rootLayout)))
+                    {
+                        return Path.GetFullPath(rootLayout);
+                    }
+                }
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>Always a full path: MO2 resolves bare names against its own directory only (usvfs).</summary>
+    private static string ToMo2Argument(string directory, string fileName) =>
+        Path.GetFullPath(Path.Combine(directory, fileName));
 
     /// <summary>
     /// Self-healing paths (IMM.md MVP #4), MO2-version aware:

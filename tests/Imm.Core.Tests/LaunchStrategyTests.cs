@@ -113,7 +113,7 @@ public sealed class LaunchStrategyTests : IDisposable
 
         Assert.Equal(Path.Combine(pack, "ModOrganizer.exe"), plan.ExecutablePath);
         Assert.Equal(pack, plan.WorkingDirectory);
-        Assert.Equal(new[] { "-p", "Vanilla+", "Fallout4.exe" }, plan.Arguments);
+        Assert.Equal(new[] { "-p", "Vanilla+", Path.Combine(pack, "Stock Game", "Fallout4.exe") }, plan.Arguments);
     }
 
     [Fact]
@@ -153,7 +153,7 @@ public sealed class LaunchStrategyTests : IDisposable
 
         var plan = await _mo2.BuildPlanAsync(manifest, pack);
 
-        Assert.Equal(new[] { "-p", "Default", "Fallout4.exe" }, plan.Arguments);
+        Assert.Equal(new[] { "-p", "Default", Path.Combine(pack, "Stock Game", "Fallout4.exe") }, plan.Arguments);
     }
 
     [Fact]
@@ -192,7 +192,51 @@ public sealed class LaunchStrategyTests : IDisposable
 
         Assert.Equal(Path.Combine(pack, "MO2", "ModOrganizer.exe"), plan.ExecutablePath);
         Assert.Equal(Path.Combine(pack, "MO2"), plan.WorkingDirectory);
-        Assert.Equal(new[] { "-p", "Default", "Fallout4.exe" }, plan.Arguments);
+        Assert.Equal(new[] { "-p", "Default", Path.Combine(pack, "Fallout4.exe") }, plan.Arguments);
+    }
+
+    [Fact]
+    public async Task Mo2_LoaderOutsideInstance_LaunchesByFullPath()
+    {
+        // FEHLauncher scheme (usvfs): MO2 resolves a bare name against its own directory,
+        // so a loader living in the game root must be passed as a full path.
+        var pack = CreatePack("OutsideLoader", p =>
+        {
+            File.WriteAllText(Path.Combine(p, "ModOrganizer.exe"), string.Empty);
+            File.WriteAllText(Path.Combine(p, "ModOrganizer.ini"), "[General]\nbase_directory=C:\\Games\\FO4\n");
+            Directory.CreateDirectory(Path.Combine(p, "Stock Game"));
+            WriteGameExe(Path.Combine(p, "Stock Game"));
+            File.WriteAllText(Path.Combine(p, "Stock Game", "f4se_loader.exe"), string.Empty);
+        });
+        var manifest = Manifest(LaunchEngine.Mo2Standard, PackSource.Portable, "Default");
+        manifest.Launch.Executable = "f4se_loader.exe"; // scanner hint from the game root
+
+        var plan = await _mo2.BuildPlanAsync(manifest, pack);
+
+        Assert.Equal(new[] { "-p", "Default", Path.Combine(pack, "Stock Game", "f4se_loader.exe") }, plan.Arguments);
+    }
+
+    [Fact]
+    public async Task Mo2_RootBuilderModLayout_FindsLoaderInModRoot()
+    {
+        // Root Builder packs keep the loader in <mod>/Root — found even without a scanner hint.
+        var pack = CreatePack("RbMods", p =>
+        {
+            File.WriteAllText(Path.Combine(p, "ModOrganizer.exe"), string.Empty);
+            File.WriteAllText(Path.Combine(p, "ModOrganizer.ini"), "[General]\nbase_directory=C:\\Games\\FO4\n");
+            Directory.CreateDirectory(Path.Combine(p, "Stock Game"));
+            WriteGameExe(Path.Combine(p, "Stock Game"));
+            var modRoot = Path.Combine(p, "mods", "Main Fallout Catalog", "Root");
+            Directory.CreateDirectory(modRoot);
+            File.WriteAllText(Path.Combine(modRoot, "f4se_loader.exe"), string.Empty);
+        });
+        var manifest = Manifest(LaunchEngine.Mo2RootBuilder, PackSource.Portable, "Default");
+
+        var plan = await _mo2.BuildPlanAsync(manifest, pack);
+
+        Assert.Equal(
+            new[] { "-p", "Default", Path.Combine(pack, "mods", "Main Fallout Catalog", "Root", "f4se_loader.exe") },
+            plan.Arguments);
     }
 
     [Fact]
@@ -226,7 +270,7 @@ public sealed class LaunchStrategyTests : IDisposable
 
         var plan = await _mo2.BuildPlanAsync(Manifest(LaunchEngine.Mo2Standard), pack);
 
-        Assert.Equal("Fallout4.exe", plan.Arguments[2]);
+        Assert.Equal(Path.Combine(pack, "Fallout4.exe"), plan.Arguments[2]);
         Assert.Empty(Directory.GetFiles(pack, "ModOrganizer.ini.bak-*"));
     }
 
