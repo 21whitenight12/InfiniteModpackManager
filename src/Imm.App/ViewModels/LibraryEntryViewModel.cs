@@ -47,6 +47,16 @@ public partial class LibraryEntryViewModel : ObservableObject
     /// <summary>UI hook after RenameAsync / SetCoverAsync touch the entry.</summary>
     public void Refresh() => OnPropertyChanged(string.Empty);
 
+    /// <summary>
+    /// Applies a user rename to the wrapped entry: the service updates its own deserialized copy,
+    /// so the VM's instance must be synced explicitly before the notification.
+    /// </summary>
+    public void ApplyName(string name)
+    {
+        _entry.Name = name;
+        OnPropertyChanged(nameof(Name));
+    }
+
     public GameType GameType => _manifest?.GameType ?? GameType.Unknown;
 
     public LaunchEngine Engine => _manifest?.Engine ?? LaunchEngine.Direct;

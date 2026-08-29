@@ -189,7 +189,7 @@ public partial class MainViewModel : ObservableObject
             if (!string.IsNullOrWhiteSpace(displayName) && !string.Equals(displayName.Trim(), entry.Name, StringComparison.Ordinal))
             {
                 await _library.RenameAsync(entry, displayName).ConfigureAwait(true);
-                viewModel.Refresh();
+                viewModel.ApplyName(displayName.Trim());
                 _snackbar.Show(
                     "Библиотека",
                     $"Сборка «{entry.Name}» добавлена",
@@ -333,13 +333,11 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        var dialogResult = await _dialog.ShowSimpleDialogAsync(new SimpleContentDialogCreateOptions
-        {
-            Title = "Убрать сборку из библиотеки?",
-            Content = $"«{entry.Name}» будет убрана из списка IMM. Папка сборки на диске не удаляется.",
-            PrimaryButtonText = "Убрать",
-            CloseButtonText = "Отмена",
-        }).ConfigureAwait(true);
+        var removeDialog = CreateDialog(
+            "Убрать сборку из библиотеки?",
+            $"«{entry.Name}» будет убрана из списка IMM. Папка сборки на диске не удаляется.",
+            "Убрать", "Отмена", SymbolRegular.Delete24, danger: true);
+        var dialogResult = await _dialog.ShowAsync(removeDialog, CancellationToken.None).ConfigureAwait(true);
 
         if (dialogResult is not ContentDialogResult.Primary)
         {
@@ -485,6 +483,27 @@ public partial class MainViewModel : ObservableObject
         _ = ChooseGameFolderAsync(entry, dialog.FolderName);
     }
 
+    /// <summary>
+    /// IMM-styled dialog factory (design/DESIGN.md canon): navy card content, canon accent on the
+    /// primary button, themed icons. All app dialogs go through this to stay visually consistent.
+    /// </summary>
+    private ContentDialog CreateDialog(string title, object content, string primaryText,
+        string closeText, SymbolRegular primaryIcon, bool danger = false)
+    {
+        return new ContentDialog
+        {
+            Title = title,
+            Content = content,
+            PrimaryButtonText = primaryText,
+            CloseButtonText = closeText,
+            DefaultButton = ContentDialogButton.Primary,
+            PrimaryButtonAppearance = danger ? ControlAppearance.Danger : ControlAppearance.Primary,
+            PrimaryButtonIcon = new SymbolIcon { Symbol = primaryIcon },
+            CloseButtonAppearance = ControlAppearance.Secondary,
+            DialogWidth = 460,
+        };
+    }
+
     /// <summary>Post-import dialog: pack name + optional cover image. Cancel keeps the defaults.</summary>
     private async Task<(string? DisplayName, string? CoverImagePath)> ShowImportDialogAsync(string defaultName)
     {
@@ -533,13 +552,8 @@ public partial class MainViewModel : ObservableObject
         panel.Children.Add(coverButton);
         panel.Children.Add(coverText);
 
-        var result = await _dialog.ShowSimpleDialogAsync(new SimpleContentDialogCreateOptions
-        {
-            Title = "Новая сборка",
-            Content = panel,
-            PrimaryButtonText = "Сохранить",
-            CloseButtonText = "Пропустить",
-        }).ConfigureAwait(true);
+        var dialog = CreateDialog("Новая сборка", panel, "Сохранить", "Пропустить", SymbolRegular.CheckmarkCircle24);
+        var result = await _dialog.ShowAsync(dialog, CancellationToken.None).ConfigureAwait(true);
 
         return result is ContentDialogResult.Primary
             ? (textBox.Text, coverPath)
@@ -556,13 +570,16 @@ public partial class MainViewModel : ObservableObject
             Margin = new System.Windows.Thickness(0, 4, 0, 4),
         };
 
-        var result = await _dialog.ShowSimpleDialogAsync(new SimpleContentDialogCreateOptions
+        var panel = new System.Windows.Controls.StackPanel { Margin = new System.Windows.Thickness(0, 8, 0, 0) };
+        panel.Children.Add(new System.Windows.Controls.TextBlock
         {
-            Title = "Переименовать сборку",
-            Content = textBox,
-            PrimaryButtonText = "Сохранить",
-            CloseButtonText = "Отмена",
-        }).ConfigureAwait(true);
+            Text = "Название:",
+            Opacity = 0.8,
+        });
+        panel.Children.Add(textBox);
+
+        var dialog = CreateDialog("Переименовать сборку", panel, "Сохранить", "Отмена", SymbolRegular.CheckmarkCircle24);
+        var result = await _dialog.ShowAsync(dialog, CancellationToken.None).ConfigureAwait(true);
 
         if (result is not ContentDialogResult.Primary || string.IsNullOrWhiteSpace(textBox.Text))
         {
@@ -576,7 +593,7 @@ public partial class MainViewModel : ObservableObject
         }
 
         await _library.RenameAsync(libraryEntry, textBox.Text).ConfigureAwait(true);
-        entry.Refresh();
+        entry.ApplyName(textBox.Text.Trim());
     }
 
     public void RenameEntry(LibraryEntryViewModel entry) => _ = RenameEntryAsync(entry);
