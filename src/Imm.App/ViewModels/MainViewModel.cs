@@ -273,6 +273,17 @@ public partial class MainViewModel : ObservableObject
                 new SymbolIcon { Symbol = SymbolRegular.Play24 },
                 TimeSpan.FromSeconds(4));
         }
+        catch (System.ComponentModel.Win32Exception exception) when (exception.NativeErrorCode == 1223)
+        {
+            // UAC prompt refused — a cancel, not an error (FEHLauncher scheme).
+            _logger.Information("Launch cancelled by user (UAC refused) for {Path}", entry.RootPath);
+            _snackbar.Show(
+                "Запуск отменён",
+                "Запрос UAC отклонён — запуск без прав администратора невозможен.",
+                ControlAppearance.Light,
+                new SymbolIcon { Symbol = SymbolRegular.Info24 },
+                TimeSpan.FromSeconds(4));
+        }
         catch (InvalidOperationException exception)
         {
             _logger.Warning("Launch rejected: {Message}", exception.Message);

@@ -38,6 +38,10 @@ public sealed class LaunchService : ILaunchService
             WorkingDirectory = plan.WorkingDirectory,
             UseShellExecute = true,
         };
+        if (plan.Elevate)
+        {
+            startInfo.Verb = "runas"; // UAC prompt; user refusal surfaces as Win32Exception 1223
+        }
         foreach (var argument in plan.Arguments)
         {
             startInfo.ArgumentList.Add(argument);

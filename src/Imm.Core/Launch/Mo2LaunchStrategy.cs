@@ -47,7 +47,7 @@ public sealed class Mo2LaunchStrategy : ILaunchStrategy
             ?? throw new InvalidOperationException("Не удалось определить запускаемый exe игры — проверьте сборку или выполните ре-скан.");
 
         var mo2Exe = Path.Combine(mo2Directory, Markers.ModOrganizerExe);
-        return Task.FromResult(new LaunchPlan(mo2Exe, mo2Directory, ["-p", profile, executable]));
+        return Task.FromResult(new LaunchPlan(mo2Exe, mo2Directory, ["-p", profile, executable], Elevate: true));
     }
 
     /// <summary>Manifest-configured instance directory first; then root, then a single nested instance.</summary>
