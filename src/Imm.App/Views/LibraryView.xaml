@@ -34,8 +34,8 @@
           </Grid.RowDefinitions>
 
           <!-- Cover -->
-          <Grid Grid.Row="0" Height="164" ClipToBounds="True">
-            <Border CornerRadius="9,9,0,0">
+          <Grid Grid.Row="0" Height="145" Margin="10,10,10,0" ClipToBounds="True">
+            <Border CornerRadius="9" ClipToBounds="True">
               <Border.Background>
                 <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                   <GradientStop Color="#1A2438" Offset="0" />
@@ -43,21 +43,30 @@
                 </LinearGradientBrush>
               </Border.Background>
               <Grid>
-                <Image Source="{Binding CoverPath}" Stretch="UniformToFill"
-                       Visibility="{Binding CoverPath, Converter={StaticResource NullToCollapsedConverter}}" />
-                <ui:SymbolIcon Symbol="Library24" FontSize="40"
-                               Foreground="{StaticResource ImmTextSecondaryBrush}"
-                               Visibility="{Binding CoverPath, Converter={StaticResource NullToVisibleConverter}}"
-                               HorizontalAlignment="Center" VerticalAlignment="Center" />
+                <Border CornerRadius="9" ClipToBounds="True"
+                        Visibility="{Binding CoverPath, Converter={StaticResource NullToCollapsedConverter}}">
+                  <Border.Background>
+                    <ImageBrush ImageSource="{Binding CoverPath}" Stretch="UniformToFill" />
+                  </Border.Background>
+                </Border>
+                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                            Visibility="{Binding CoverPath, Converter={StaticResource NullToVisibleConverter}}">
+                  <ui:SymbolIcon Symbol="Library24" FontSize="34"
+                                 Foreground="{StaticResource ImmTextSecondaryBrush}"
+                                 HorizontalAlignment="Center" />
+                  <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold"
+                             Foreground="{StaticResource ImmTextSecondaryBrush}"
+                             HorizontalAlignment="Center" Margin="0,8,0,0" />
+                </StackPanel>
               </Grid>
             </Border>
             <!-- Selection badge -->
-            <Border Width="26" Height="26" CornerRadius="13"
+            <Border Width="22" Height="22" CornerRadius="11"
                     Background="{StaticResource ImmAccentBrush}" BorderBrush="#0D1420" BorderThickness="2"
-                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,8,8,0"
+                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,7,7,0"
                     Visibility="{Binding IsSelected, Converter={StaticResource BoolToVisibleConverter}}"
                     IsHitTestVisible="False" Panel.ZIndex="2">
-              <ui:SymbolIcon Symbol="Checkmark24" FontSize="12" Foreground="White" />
+              <ui:SymbolIcon Symbol="Checkmark24" FontSize="10" Foreground="White" />
             </Border>
             <Border CornerRadius="9,9,0,0" BorderBrush="{StaticResource ImmWarnBrush}" BorderThickness="2"
                     Visibility="{Binding HasWarnings, Converter={StaticResource BoolToVisibleConverter}}"
@@ -302,16 +311,16 @@
         <RowDefinition Height="*" />
       </Grid.RowDefinitions>
 
-      <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,2">
-        <TextBlock Text="Библиотека" FontSize="26" FontWeight="SemiBold"
+      <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,0">
+        <TextBlock Text="Библиотека" FontSize="24" FontWeight="SemiBold"
                    Foreground="{StaticResource ImmTextPrimaryBrush}" />
-        <TextBlock Margin="12,0,0,0" VerticalAlignment="Bottom" FontSize="13"
+        <TextBlock Margin="10,0,0,1" VerticalAlignment="Bottom" FontSize="12"
                    Foreground="{StaticResource ImmTextSecondaryBrush}"
-                   Text="{Binding Entries.Count, StringFormat='Установленные сборки ({0})'}" />
+                   Text="{Binding Entries.Count, StringFormat='{}{0} сборки'}" />
       </StackPanel>
 
       <!-- Toolbar: import · rescan left / search · sort · views right -->
-      <Grid Grid.Row="1" Margin="0,12,0,16">
+      <Grid Grid.Row="1" Margin="0,10,0,14">
         <StackPanel Orientation="Horizontal">
           <Button Style="{StaticResource ImmPrimaryButtonStyle}" Command="{Binding ImportCommand}">
             <StackPanel Orientation="Horizontal">
@@ -319,7 +328,7 @@
               <TextBlock Text="Добавить сборку" Margin="8,0,0,0" VerticalAlignment="Center" />
             </StackPanel>
           </Button>
-          <Button Style="{StaticResource ImmGhostButtonStyle}" Margin="8,0,0,0"
+          <Button Style="{StaticResource ImmGhostButtonStyle}" Height="38" Margin="8,0,0,0"
                   Command="{Binding RescanCommand}" CommandParameter="{Binding SelectedEntry}"
                   ToolTip="Ре-скан выбранной сборки">
             <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="15"
@@ -376,8 +385,8 @@
                 <Style TargetType="ListBoxItem">
                   <Setter Property="Background" Value="Transparent" />
                   <Setter Property="Width" Value="290" />
-                  <Setter Property="Height" Value="384" />
-                  <Setter Property="Margin" Value="0,0,16,16" />
+                  <Setter Property="Height" Value="350" />
+                  <Setter Property="Margin" Value="0,0,16,12" />
                   <Setter Property="Template">
                     <Setter.Value>
                       <ControlTemplate TargetType="ListBoxItem">
@@ -434,28 +443,42 @@
       </StackPanel>
     </Grid>
 
-    <!-- ============ RIGHT COLUMN ============ -->
-    <Border Grid.Column="2">
+    <!-- ============ RIGHT COLUMN: elevated detail card ============ -->
+    <Border Grid.Column="2" Margin="12,16,16,16"
+            Background="{StaticResource ImmDetailCardBrush}"
+            BorderBrush="{StaticResource ImmCardBorderBrush}"
+            BorderThickness="1"
+            CornerRadius="14"
+            SnapsToDevicePixels="True">
       <ContentControl Content="{Binding SelectedEntry}" Margin="20,20,20,16">
         <ContentControl.Resources>
           <DataTemplate DataType="{x:Type vm:LibraryEntryViewModel}">
             <ScrollViewer VerticalScrollBarVisibility="Auto">
               <StackPanel>
                 <!-- Cover -->
-                <Border Height="180" CornerRadius="10" ClipToBounds="True">
+                <Border Height="180" CornerRadius="12" ClipToBounds="True" Margin="0">
                   <Border.Background>
                     <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
                       <GradientStop Color="#1A2438" Offset="0" />
                       <GradientStop Color="#0F1626" Offset="1" />
                     </LinearGradientBrush>
                   </Border.Background>
-                  <Grid>
-                    <Image Source="{Binding CoverPath}" Stretch="UniformToFill"
-                           Visibility="{Binding CoverPath, Converter={StaticResource NullToCollapsedConverter}}" />
-                    <ui:SymbolIcon Symbol="Library24" FontSize="40"
-                                   Foreground="{StaticResource ImmTextSecondaryBrush}"
-                                   Visibility="{Binding CoverPath, Converter={StaticResource NullToVisibleConverter}}"
-                                   HorizontalAlignment="Center" VerticalAlignment="Center" />
+                  <Grid ClipToBounds="True">
+                    <Border CornerRadius="12" ClipToBounds="True"
+                            Visibility="{Binding CoverPath, Converter={StaticResource NullToCollapsedConverter}}">
+                      <Border.Background>
+                      <ImageBrush ImageSource="{Binding CoverPath}" Stretch="UniformToFill" />
+                      </Border.Background>
+                    </Border>
+                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                                Visibility="{Binding CoverPath, Converter={StaticResource NullToVisibleConverter}}">
+                      <ui:SymbolIcon Symbol="Library24" FontSize="36"
+                                     Foreground="{StaticResource ImmTextSecondaryBrush}"
+                                     HorizontalAlignment="Center" />
+                      <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold"
+                                 Foreground="{StaticResource ImmTextSecondaryBrush}"
+                                 HorizontalAlignment="Center" Margin="0,8,0,0" />
+                    </StackPanel>
                   </Grid>
                 </Border>
 

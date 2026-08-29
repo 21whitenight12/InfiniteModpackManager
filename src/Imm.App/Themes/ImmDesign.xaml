@@ -21,8 +21,9 @@
 
   <!-- Columns: darker tint, still translucent (Mica/Acrylic glows through); center stays clear -->
   <SolidColorBrush x:Key="ImmBgBaseBrush" Color="{StaticResource ImmBgBaseColor}" />
-  <SolidColorBrush x:Key="ImmBgSidebarBrush" Color="#C90C141F" />
-  <SolidColorBrush x:Key="ImmBgPanelBrush" Color="#CF111A28" />
+  <SolidColorBrush x:Key="ImmBgSidebarBrush" Color="#D9081E3A" />
+  <SolidColorBrush x:Key="ImmBgPanelBrush" Color="#CF09234A" />
+  <SolidColorBrush x:Key="ImmDetailCardBrush" Color="#C4071A38" />
   <SolidColorBrush x:Key="ImmBgCardBrush" Color="#E616202E" />
   <SolidColorBrush x:Key="ImmBgCardHoverBrush" Color="#F21A2438" />
   <SolidColorBrush x:Key="ImmCardBorderBrush" Color="#2A3A52" />
@@ -38,9 +39,9 @@
 
   <!-- Fluent window gradient: visible diagonal wash, canon navy endpoints -->
   <LinearGradientBrush x:Key="ImmBgGradientBrush" StartPoint="0,0" EndPoint="1,1">
-    <GradientStop Color="#1E3050" Offset="0" />
-    <GradientStop Color="#142745" Offset="0.45" />
-    <GradientStop Color="#0A1830" Offset="1" />
+    <GradientStop Color="#D92B313A" Offset="0" />
+    <GradientStop Color="#D9252B34" Offset="0.45" />
+    <GradientStop Color="#D91E242D" Offset="1" />
   </LinearGradientBrush>
 
   <!-- Soft accent aurora over the base gradient (top-center glow) -->

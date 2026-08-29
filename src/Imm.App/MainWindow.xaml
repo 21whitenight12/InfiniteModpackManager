@@ -3,13 +3,13 @@
                  xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
                  xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
                  Title="Infinite Modpack Manager"
-                 Width="1400" Height="900"
+                 Width="1400" Height="1000"
                  MinWidth="1100" MinHeight="640"
                  ExtendsContentIntoTitleBar="True"
-                 WindowBackdropType="None"
-                 Background="{StaticResource ImmBgGradientBrush}">
+                 WindowBackdropType="Acrylic"
+                 Background="Transparent">
 
-  <Grid>
+  <Grid Background="{StaticResource ImmBgGradientBrush}">
     <Grid.RowDefinitions>
       <RowDefinition Height="Auto" />
       <RowDefinition Height="*" />
@@ -26,7 +26,8 @@
 
     <ui:TitleBar Grid.Row="0" Title="Infinite Modpack Manager" Background="Transparent" />
 
-    <Frame x:Name="PageHost" Grid.Row="1" NavigationUIVisibility="Hidden" />
+    <Frame x:Name="PageHost" Grid.Row="1" NavigationUIVisibility="Hidden"
+           Background="Transparent" />
 
     <ui:ContentDialogHost x:Name="RootContentDialogHost" Grid.RowSpan="2" />
     <ui:SnackbarPresenter x:Name="RootSnackbarPresenter" Grid.RowSpan="2"
