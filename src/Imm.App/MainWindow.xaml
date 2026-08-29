@@ -18,6 +18,12 @@
     <!-- Accent aurora behind all content (titlebar transparent → gradient flows through) -->
     <Rectangle Grid.RowSpan="2" Fill="{StaticResource ImmAccentGlowBrush}" IsHitTestVisible="False" />
 
+    <!-- Column tints: full window height (titlebar included), fade reaching into center -->
+    <Rectangle Grid.RowSpan="2" Width="340" HorizontalAlignment="Left"
+               Fill="{StaticResource ImmSidebarTintBrush}" IsHitTestVisible="False" />
+    <Rectangle Grid.RowSpan="2" Width="460" HorizontalAlignment="Right"
+               Fill="{StaticResource ImmPanelTintBrush}" IsHitTestVisible="False" />
+
     <ui:TitleBar Grid.Row="0" Title="Infinite Modpack Manager" Background="Transparent" />
 
     <Frame x:Name="PageHost" Grid.Row="1" NavigationUIVisibility="Hidden" />

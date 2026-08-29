@@ -39,8 +39,8 @@
   <!-- Fluent window gradient: visible diagonal wash, canon navy endpoints -->
   <LinearGradientBrush x:Key="ImmBgGradientBrush" StartPoint="0,0" EndPoint="1,1">
     <GradientStop Color="#1E3050" Offset="0" />
-    <GradientStop Color="#101C30" Offset="0.45" />
-    <GradientStop Color="#0A1220" Offset="1" />
+    <GradientStop Color="#142745" Offset="0.45" />
+    <GradientStop Color="#0A1830" Offset="1" />
   </LinearGradientBrush>
 
   <!-- Soft accent aurora over the base gradient (top-center glow) -->
@@ -49,6 +49,20 @@
     <GradientStop Color="#332E8BFF" Offset="0" />
     <GradientStop Color="#002E8BFF" Offset="1" />
   </RadialGradientBrush>
+
+  <!-- Column tints (window-level strips, full height incl. titlebar).
+       Left: 340px strip = 260px solid + 80px dissolve into center.
+       Right: 460px strip = fade starts 80px before column edge, solid at window edge. -->
+  <LinearGradientBrush x:Key="ImmSidebarTintBrush" StartPoint="0,0" EndPoint="1,0">
+    <GradientStop Color="#C90C141F" Offset="0" />
+    <GradientStop Color="#C90C141F" Offset="0.76" />
+    <GradientStop Color="#000C141F" Offset="1" />
+  </LinearGradientBrush>
+  <LinearGradientBrush x:Key="ImmPanelTintBrush" StartPoint="0,0" EndPoint="1,0">
+    <GradientStop Color="#00111A28" Offset="0" />
+    <GradientStop Color="#CF111A28" Offset="0.825" />
+    <GradientStop Color="#CF111A28" Offset="1" />
+  </LinearGradientBrush>
 
   <CornerRadius x:Key="ImmCardCornerRadius">10</CornerRadius>
   <Thickness x:Key="ImmCardPadding">14</Thickness>
