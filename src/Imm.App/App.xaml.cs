@@ -6,6 +6,7 @@ using Imm.Core.Ini;
 using Imm.Core.IO;
 using Imm.Core.Launch;
 using Imm.Core.Library;
+using Imm.Core.Logging;
 using Imm.Core.Scanning;
 using Imm.App.ViewModels;
 using Microsoft.Extensions.DependencyInjection;
@@ -35,9 +36,11 @@ public partial class App : Application
     private static IHost BuildHost()
     {
         var paths = ImmPaths.Resolve();
+        var uiSink = new UiLogSink();
         Log.Logger = new LoggerConfiguration()
             .MinimumLevel.Information()
             .Enrich.FromLogContext()
+            .WriteTo.Sink(uiSink)
             .WriteTo.File(
                 Path.Combine(paths.LogsDirectory, "imm-.log"),
                 rollingInterval: RollingInterval.Day,
@@ -53,6 +56,7 @@ public partial class App : Application
         builder.Services.AddSingleton(Log.Logger);
 
         builder.Services.AddSingleton(paths);
+        builder.Services.AddSingleton(uiSink);
         builder.Services.AddSingleton<IRegistryService, WindowsRegistryService>();
         builder.Services.AddSingleton<SystemGameLocator>();
         builder.Services.AddSingleton<IModpackScanner, ModpackScanner>();
@@ -61,6 +65,8 @@ public partial class App : Application
         builder.Services.AddSingleton<ILaunchStrategy, DirectLaunchStrategy>();
         builder.Services.AddSingleton<ILaunchStrategy, Mo2LaunchStrategy>();
         builder.Services.AddSingleton<ILaunchService, LaunchService>();
+        builder.Services.AddTransient<LogViewModel>();
+        builder.Services.AddSingleton<ILogWindowService, LogWindowService>();
         builder.Services.AddSingleton<IContentDialogService, ContentDialogService>();
         builder.Services.AddSingleton<ISnackbarService, SnackbarService>();
         builder.Services.AddTransient<MainViewModel>();

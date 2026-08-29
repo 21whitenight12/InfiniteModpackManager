@@ -85,8 +85,7 @@
                          TextTrimming="CharacterEllipsis" />
               <ui:Button Grid.Column="1" Appearance="Secondary" Padding="4,1" Margin="6,0,0,0"
                          Icon="{ui:SymbolIcon MoreHorizontal24}"
-                         Command="{Binding DataContext.RemoveEntryCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
-                         CommandParameter="{Binding}"
+                         Command="{Binding DeleteCommand}"
                          ToolTip="Убрать из библиотеки" />
             </Grid>
 
@@ -176,8 +175,7 @@
                      Foreground="{StaticResource ImmTextPrimaryBrush}" />
           <ui:Button Grid.Column="6" Appearance="Secondary" Padding="4,1" VerticalAlignment="Center"
                      Icon="{ui:SymbolIcon MoreHorizontal24}"
-                     Command="{Binding DataContext.RemoveEntryCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
-                     CommandParameter="{Binding}"
+                     Command="{Binding DeleteCommand}"
                      ToolTip="Убрать из библиотеки" />
         </Grid>
       </Border>
@@ -286,6 +284,19 @@
               <TextBlock Text="Настройки" FontSize="14" Margin="10,0,0,0"
                          Foreground="{StaticResource ImmTextSecondaryBrush}" />
             </StackPanel>
+          </Border>
+
+          <Border Padding="12,10" Margin="0,4,0,0">
+            <Button Style="{StaticResource ImmGhostButtonStyle}"
+                    Command="{Binding OpenLogWindowCommand}"
+                    HorizontalContentAlignment="Left" Padding="0"
+                    ToolTip="Окно с подробным логом (Information+)">
+              <StackPanel Orientation="Horizontal">
+                <ui:SymbolIcon Symbol="SlideText24" FontSize="18" Foreground="{StaticResource ImmTextSecondaryBrush}" />
+                <TextBlock Text="Лог" FontSize="14" Margin="10,0,0,0"
+                           Foreground="{StaticResource ImmTextSecondaryBrush}" />
+              </StackPanel>
+            </Button>
           </Border>
         </StackPanel>
 

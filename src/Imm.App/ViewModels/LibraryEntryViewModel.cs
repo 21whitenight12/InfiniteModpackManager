@@ -1,5 +1,6 @@
 using System.IO;
 using CommunityToolkit.Mvvm.ComponentModel;
+using CommunityToolkit.Mvvm.Input;
 using Imm.Core.Domain;
 using Imm.Core.Scanning;
 
@@ -9,12 +10,14 @@ namespace Imm.App.ViewModels;
 public partial class LibraryEntryViewModel : ObservableObject
 {
     private readonly LibraryEntry _entry;
+    private readonly MainViewModel? _owner;
     private ModpackManifest? _manifest;
 
-    public LibraryEntryViewModel(LibraryEntry entry, ModpackManifest? manifest)
+    public LibraryEntryViewModel(LibraryEntry entry, ModpackManifest? manifest, MainViewModel? owner = null)
     {
         _entry = entry;
         _manifest = manifest;
+        _owner = owner;
     }
 
     public Guid Id => _entry.Id;
@@ -111,7 +114,20 @@ public partial class LibraryEntryViewModel : ObservableObject
     private bool _isSelected;
 
     private bool HasMo2Files() =>
-        File.Exists(Path.Combine(_entry.RootPath, "ModOrganizer.exe"));
+        File.Exists(Path.Combine(_entry.RootPath, "ModOrganizer.exe"))
+        || File.Exists(Path.Combine(_entry.RootPath, "MO2", "ModOrganizer.exe"));
+
+    // ----- context menu commands (command objects live here so ContextMenu
+    // bindings never cross the popup tree boundary; owner executes them) -----
+
+    [RelayCommand]
+    private void OpenFolder() => _owner?.OpenPackFolder(this);
+
+    [RelayCommand]
+    private void Rescan() => _owner?.RescanCommand.Execute(this);
+
+    [RelayCommand]
+    private void Delete() => _owner?.RemoveCommand.Execute(this);
 
     public void UpdateManifest(ModpackManifest manifest)
     {

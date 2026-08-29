@@ -4,6 +4,7 @@ using System.IO;
 using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
+using Imm.App.Services;
 using Imm.Core.Domain;
 using Imm.Core.IO;
 using Imm.Core.Launch;
@@ -23,13 +24,23 @@ public partial class MainViewModel : ObservableObject
     private readonly ILibraryService _library;
     private readonly ILaunchService _launch;
     private readonly ISnackbarService _snackbar;
+    private readonly IContentDialogService _dialog;
+    private readonly ILogWindowService _logWindow;
     private readonly ILogger _logger;
 
-    public MainViewModel(ILibraryService library, ILaunchService launch, ISnackbarService snackbar, ILogger logger)
+    public MainViewModel(
+        ILibraryService library,
+        ILaunchService launch,
+        ISnackbarService snackbar,
+        IContentDialogService dialog,
+        ILogWindowService logWindow,
+        ILogger logger)
     {
         _library = library;
         _launch = launch;
         _snackbar = snackbar;
+        _dialog = dialog;
+        _logWindow = logWindow;
         _logger = logger.ForContext<MainViewModel>();
         Entries.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasNoEntries));
         EntriesView = CollectionViewSource.GetDefaultView(Entries);
@@ -62,6 +73,9 @@ public partial class MainViewModel : ObservableObject
                    (e.Name.Contains(SearchText, StringComparison.OrdinalIgnoreCase) ||
                     e.GameDisplayName.Contains(SearchText, StringComparison.OrdinalIgnoreCase));
     }
+
+    [RelayCommand]
+    private void OpenLogWindow() => _logWindow.Show();
 
     [RelayCommand]
     private void SetGridView() => IsGridView = true;
@@ -122,7 +136,7 @@ public partial class MainViewModel : ObservableObject
         foreach (var entry in index.Entries)
         {
             var manifest = await _library.LoadManifestAsync(entry).ConfigureAwait(true);
-            Entries.Add(new LibraryEntryViewModel(entry, manifest));
+            Entries.Add(new LibraryEntryViewModel(entry, manifest, this));
         }
 
         SelectedEntry = Entries.FirstOrDefault();
@@ -159,7 +173,7 @@ public partial class MainViewModel : ObservableObject
         {
             var entry = await _library.ImportAsync(folderPath).ConfigureAwait(true);
             var manifest = await _library.LoadManifestAsync(entry).ConfigureAwait(true);
-            var viewModel = new LibraryEntryViewModel(entry, manifest);
+            var viewModel = new LibraryEntryViewModel(entry, manifest, this);
             Entries.Add(viewModel);
             SelectedEntry = viewModel;
             StatusText = "Готово";
@@ -294,6 +308,19 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
+        var dialogResult = await _dialog.ShowSimpleDialogAsync(new SimpleContentDialogCreateOptions
+        {
+            Title = "Убрать сборку из библиотеки?",
+            Content = $"«{entry.Name}» будет убрана из списка IMM. Папка сборки на диске не удаляется.",
+            PrimaryButtonText = "Убрать",
+            CloseButtonText = "Отмена",
+        }).ConfigureAwait(true);
+
+        if (dialogResult is not ContentDialogResult.Primary)
+        {
+            return;
+        }
+
         IsBusy = true;
         try
         {
@@ -326,7 +353,7 @@ public partial class MainViewModel : ObservableObject
     }
 
     [RelayCommand]
-    private void OpenPackFolder(LibraryEntryViewModel? entry)
+    public void OpenPackFolder(LibraryEntryViewModel? entry)
     {
         if (entry is null || !Directory.Exists(entry.RootPath))
         {
