@@ -14,6 +14,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Serilog;
 using Wpf.Ui;
+using Wpf.Ui.Appearance;
 using Wpf.Ui.Extensions;
 
 namespace Imm.App;
@@ -81,6 +82,13 @@ public partial class App : Application
         Log.Information("Application starting. Portable={Portable}, Library={Library}",
             _host.Services.GetRequiredService<ImmPaths>().Portable,
             _host.Services.GetRequiredService<ImmPaths>().LibraryFilePath);
+
+        // Canon accent must win over the Windows system accent: ThemesDictionary regenerates
+        // WPF-UI accent brushes (green on this machine), which static XAML overrides can't beat.
+        ApplicationAccentColorManager.Apply(
+            System.Windows.Media.Color.FromRgb(0x2E, 0x8B, 0xFF),
+            ApplicationTheme.Dark,
+            systemGlassColor: false);
 
         _host.Start();
         var mainWindow = _host.Services.GetRequiredService<MainWindow>();
