@@ -168,7 +168,20 @@ public sealed class ModpackScanner : IModpackScanner
         }
 
         // Launch executable: script extender loader preferred over the bare game exe (IMM.md).
+        // Root Builder scheme: the pack's canonical loader lives in mods/<mod>/Root — resolve it
+        // right here (fast single-pass parse) and persist the FULL path in the manifest. The game
+        // folder may hold no loader at all (RB migrates root files into mods), so no preconditions
+        // on the heuristic result.
         var launchExecutable = DetectLaunchExecutable(gameType, gameFilesDirectory, mo2Directory is not null, warnings);
+        if (engine == LaunchEngine.Mo2RootBuilder && mo2Directory is not null)
+        {
+            var modsLoader = Mo2Locator.FindLoaderInMods(mo2Directory, gameType);
+            if (modsLoader is not null)
+            {
+                launchExecutable = modsLoader;
+                _logger.Information("Root Builder loader resolved in mods: {Executable}", modsLoader);
+            }
+        }
 
         var looksLikeModpack = gameType != GameType.Unknown || mo2Directory is not null;
         if (!looksLikeModpack)

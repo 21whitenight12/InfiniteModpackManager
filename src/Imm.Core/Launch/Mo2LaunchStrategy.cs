@@ -73,21 +73,27 @@ public sealed class Mo2LaunchStrategy : ILaunchStrategy
     /// <summary>
     /// FEHLauncher scheme: MO2 resolves a bare executable name against its own directory (its cwd),
     /// so any executable living elsewhere must be launched by FULL path (usvfs "file not found" otherwise).
-    /// Priority: mod folders (incl. the Root Builder layout &lt;mod&gt;/Root/&lt;loader&gt;) — the pack's
-    /// canonical loader — then the manifest hint expanded to a real location, then game roots.
+    /// Priority: the persisted full path from the manifest (Root Builder scheme — resolved at scan),
+    /// validated live; then mod folders; then the hint expanded to a real location; then game roots.
     /// </summary>
     private string? ResolveExecutableName(ModpackManifest manifest, string packRoot, string mo2Directory)
     {
         var searchDirectories = CollectSearchDirectories(manifest, packRoot, mo2Directory);
 
-        var fromMods = FindLoaderInMods(mo2Directory, manifest.GameType);
+        // Persisted full path (scan-time Root Builder resolution): use while the file still exists.
+        var hint = manifest.Launch.Executable;
+        if (!string.IsNullOrWhiteSpace(hint) && Path.IsPathRooted(hint) && File.Exists(LongPath.Normalize(hint)))
+        {
+            return Path.GetFullPath(hint);
+        }
+
+        var fromMods = Mo2Locator.FindLoaderInMods(mo2Directory, manifest.GameType);
         if (fromMods is not null)
         {
             _logger.Information("Launch executable found in mods folder: {Executable}", fromMods);
             return fromMods;
         }
 
-        var hint = manifest.Launch.Executable;
         if (!string.IsNullOrWhiteSpace(hint))
         {
             var expanded = ExpandHint(hint, mo2Directory, searchDirectories);
@@ -172,47 +178,6 @@ public sealed class Mo2LaunchStrategy : ILaunchStrategy
             if (File.Exists(LongPath.Normalize(candidate)))
             {
                 return Path.GetFullPath(candidate);
-            }
-        }
-
-        return null;
-    }
-
-    /// <summary>
-    /// Loader inside a mod folder: the game's own loader first, then any known loader;
-    /// per pass &lt;mod&gt;/&lt;loader&gt; before the Root Builder layout &lt;mod&gt;/Root/&lt;loader&gt;.
-    /// </summary>
-    private static string? FindLoaderInMods(string mo2Directory, GameType gameType)
-    {
-        var modsDirectory = Path.Combine(mo2Directory, Markers.ModsFolder);
-        if (!Directory.Exists(LongPath.Normalize(modsDirectory)))
-        {
-            return null;
-        }
-
-        var typedLoader = ModpackScanner.ScriptExtenderNameFor(gameType);
-        var passes = string.IsNullOrEmpty(typedLoader)
-            ? new List<IReadOnlyList<string>> { Markers.ScriptExtenderLoaders }
-            : new List<IReadOnlyList<string>> { new[] { typedLoader }, Markers.ScriptExtenderLoaders };
-
-        foreach (var pass in passes)
-        {
-            foreach (var loader in pass)
-            {
-                foreach (var mod in Directory.EnumerateDirectories(modsDirectory))
-                {
-                    var direct = Path.Combine(mod, loader);
-                    if (File.Exists(LongPath.Normalize(direct)))
-                    {
-                        return Path.GetFullPath(direct);
-                    }
-
-                    var rootLayout = Path.Combine(mod, "Root", loader);
-                    if (File.Exists(LongPath.Normalize(rootLayout)))
-                    {
-                        return Path.GetFullPath(rootLayout);
-                    }
-                }
             }
         }
 
