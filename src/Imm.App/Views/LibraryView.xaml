@@ -537,8 +537,8 @@
 
                 <!-- Launch: wide canon accent (Phase 2 wires the command) -->
                 <Button Style="{StaticResource ImmPrimaryButtonStyle}" Height="44" FontSize="15" FontWeight="Bold"
-                        Margin="0,18,0,0" IsEnabled="False"
-                        ToolTip="Запуск появится в фазе запуска (Phase 2)">
+                        Margin="0,16,0,0" IsEnabled="False"
+                        ToolTip="Запуск будет доступен после подключения стратегии запуска">
                   <StackPanel Orientation="Horizontal">
                     <ui:SymbolIcon Symbol="Play24" FontSize="16" Foreground="White" />
                     <TextBlock Text="ЗАПУСТИТЬ" Margin="10,0,0,0" VerticalAlignment="Center" />
@@ -572,7 +572,7 @@
                 </Grid>
 
                 <!-- Notes -->
-                <StackPanel Margin="0,18,0,0"
+                <StackPanel Margin="0,14,0,0"
                             Visibility="{Binding NotesText, Converter={StaticResource NullToCollapsedConverter}}">
                   <Grid>
                     <Grid.ColumnDefinitions>
@@ -592,7 +592,7 @@
                   </Border>
                 </StackPanel>
 
-                <TextBlock Text="Путь" FontSize="12" Margin="0,18,0,0"
+                <TextBlock Text="Путь" FontSize="12" Margin="0,14,0,0"
                            Foreground="{StaticResource ImmTextSecondaryBrush}" />
                 <TextBlock Text="{Binding RootPath}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"
                            Foreground="{StaticResource ImmTextPrimaryBrush}" />
