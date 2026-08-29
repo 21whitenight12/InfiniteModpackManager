@@ -1,0 +1,35 @@
+using System.IO;
+using Imm.Core.Domain;
+using Imm.Core.IO;
+using Imm.Core.Scanning;
+
+namespace Imm.Core.Launch;
+
+/// <summary>Direct launch: game exe or script extender loader from the pack / portable game root (IMM.md MVP #3).</summary>
+public sealed class DirectLaunchStrategy : ILaunchStrategy
+{
+    public bool Handles(LaunchEngine engine) => engine == LaunchEngine.Direct;
+
+    public Task<LaunchPlan> BuildPlanAsync(ModpackManifest manifest, string packRoot, CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var gameRoot = GameRootLocator.FindGameRoot(packRoot)
+            ?? throw new InvalidOperationException("Папка игры не найдена — выполните ре-скан или добавьте сборку заново.");
+
+        // Script extender loader preferred over the bare game exe (IMM.md ILaunchStrategy).
+        foreach (var loader in Markers.ScriptExtenderLoaders)
+        {
+            if (File.Exists(LongPath.Normalize(Path.Combine(gameRoot, loader))))
+            {
+                return Task.FromResult(new LaunchPlan(Path.Combine(gameRoot, loader), gameRoot, []));
+            }
+        }
+
+        var gameExe = Markers.GameExecutables.Keys
+            .FirstOrDefault(exe => File.Exists(LongPath.Normalize(Path.Combine(gameRoot, exe))))
+            ?? throw new InvalidOperationException("Не удалось определить запускаемый exe игры — проверьте сборку или выполните ре-скан.");
+
+        return Task.FromResult(new LaunchPlan(Path.Combine(gameRoot, gameExe), gameRoot, []));
+    }
+}

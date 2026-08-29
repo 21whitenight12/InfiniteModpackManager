@@ -535,10 +535,12 @@
                              Visibility="{Binding ProfileText, Converter={StaticResource NullToCollapsedConverter}}" />
                 </Grid>
 
-                <!-- Launch: wide canon accent (Phase 2 wires the command) -->
+                <!-- Launch: wide canon accent (strategy wired in Phase 2) -->
                 <Button Style="{StaticResource ImmPrimaryButtonStyle}" Height="44" FontSize="15" FontWeight="Bold"
-                        Margin="0,16,0,0" IsEnabled="False"
-                        ToolTip="Запуск будет доступен после подключения стратегии запуска">
+                        Margin="0,16,0,0"
+                        Command="{Binding DataContext.LaunchCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                        CommandParameter="{Binding}"
+                        ToolTip="Запустить сборку">
                   <StackPanel Orientation="Horizontal">
                     <ui:SymbolIcon Symbol="Play24" FontSize="16" Foreground="White" />
                     <TextBlock Text="ЗАПУСТИТЬ" Margin="10,0,0,0" VerticalAlignment="Center" />

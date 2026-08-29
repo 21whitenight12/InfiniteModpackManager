@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Imm.Core.Domain;
 using Imm.Core.IO;
+using Imm.Core.Launch;
 using Imm.Core.Library;
 using Imm.Core.Scanning;
 using Microsoft.Win32;
@@ -20,12 +21,14 @@ namespace Imm.App.ViewModels;
 public partial class MainViewModel : ObservableObject
 {
     private readonly ILibraryService _library;
+    private readonly ILaunchService _launch;
     private readonly ISnackbarService _snackbar;
     private readonly ILogger _logger;
 
-    public MainViewModel(ILibraryService library, ISnackbarService snackbar, ILogger logger)
+    public MainViewModel(ILibraryService library, ILaunchService launch, ISnackbarService snackbar, ILogger logger)
     {
         _library = library;
+        _launch = launch;
         _snackbar = snackbar;
         _logger = logger.ForContext<MainViewModel>();
         Entries.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasNoEntries));
@@ -224,6 +227,62 @@ public partial class MainViewModel : ObservableObject
         finally
         {
             IsBusy = false;
+        }
+    }
+
+    [RelayCommand]
+    private async Task LaunchAsync(LibraryEntryViewModel? entry)
+    {
+        if (entry is null || IsBusy)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        StatusText = "Запуск…";
+        try
+        {
+            var libraryEntry = await FindEntryAsync(entry.Id).ConfigureAwait(true);
+            var manifest = libraryEntry is null
+                ? null
+                : await _library.LoadManifestAsync(libraryEntry).ConfigureAwait(true);
+            if (manifest is null)
+            {
+                throw new InvalidOperationException("Манифест сборки не найден — выполните ре-скан.");
+            }
+
+            await _launch.LaunchAsync(manifest, entry.RootPath).ConfigureAwait(true);
+            _snackbar.Show(
+                "Запуск",
+                $"Сборка «{entry.Name}» запущена",
+                ControlAppearance.Success,
+                new SymbolIcon { Symbol = SymbolRegular.Play24 },
+                TimeSpan.FromSeconds(4));
+        }
+        catch (InvalidOperationException exception)
+        {
+            _logger.Warning("Launch rejected: {Message}", exception.Message);
+            _snackbar.Show(
+                "Запуск невозможен",
+                exception.Message,
+                ControlAppearance.Caution,
+                new SymbolIcon { Symbol = SymbolRegular.Warning24 },
+                TimeSpan.FromSeconds(6));
+        }
+        catch (Exception exception)
+        {
+            _logger.Error(exception, "Launch failed for {Path}", entry.RootPath);
+            _snackbar.Show(
+                "Ошибка запуска",
+                exception.Message,
+                ControlAppearance.Danger,
+                new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
+                TimeSpan.FromSeconds(6));
+        }
+        finally
+        {
+            IsBusy = false;
+            StatusText = "Готово";
         }
     }
 
