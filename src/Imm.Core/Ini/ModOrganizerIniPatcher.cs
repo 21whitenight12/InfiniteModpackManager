@@ -25,6 +25,8 @@ public sealed class ModOrganizerIniPatcher
 {
     private const string BaseDirectoryKey = "base_directory";
     private const string GamePathKey = "gamePath";
+    private const string GameNameKey = "gameName";
+    private const string SelectedProfileKey = "selected_profile";
     private const string GeneralSection = "General";
 
     /// <summary>Legacy absolute base_directory value from the last [General] entry; null when the key is absent.</summary>
@@ -38,6 +40,43 @@ public sealed class ModOrganizerIniPatcher
         }
 
         return UnescapeQt(StripTrailingComment(match.Value.ValueRaw));
+    }
+
+    /// <summary>
+    /// MO2's own last selection (selected_profile in [General]), @ByteArray-decoded when needed.
+    /// Null when the key is absent or empty.
+    /// </summary>
+    public string? ReadSelectedProfile(string iniPath)
+    {
+        var ini = ReadIni(iniPath);
+        var match = FindIniKey(ini.Lines, SelectedProfileKey);
+        if (match is null)
+        {
+            return null;
+        }
+
+        return DecodePossibleByteArray(StripTrailingComment(match.Value.ValueRaw));
+    }
+
+    /// <summary>MO2's game display name (gameName in [General]); null when absent or empty.</summary>
+    public string? ReadGameName(string iniPath)
+    {
+        var ini = ReadIni(iniPath);
+        var match = FindIniKey(ini.Lines, GameNameKey);
+        if (match is null)
+        {
+            return null;
+        }
+
+        return DecodePossibleByteArray(StripTrailingComment(match.Value.ValueRaw));
+    }
+
+    /// <summary>Decodes a Qt @ByteArray(...) wrapper when present; plain values pass through.</summary>
+    private static string DecodePossibleByteArray(string raw)
+    {
+        return raw.StartsWith("@ByteArray(", StringComparison.Ordinal) && raw.EndsWith(')')
+            ? UnescapeQt(raw["@ByteArray(".Length..^1])
+            : UnescapeQt(raw);
     }
 
     /// <summary>

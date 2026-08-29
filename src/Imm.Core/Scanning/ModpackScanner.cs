@@ -1,5 +1,6 @@
 using System.IO;
 using Imm.Core.Domain;
+using Imm.Core.Ini;
 using Imm.Core.IO;
 using Serilog;
 
@@ -102,6 +103,42 @@ public sealed class ModpackScanner : IModpackScanner
             source = PackSource.System;
             gameType = GameType.Unknown;
             gameFilesDirectory = null;
+
+            // Fresh-import case: nothing in the folders, but MO2's own ini may know the game
+            // (gameName + gamePath/base_directory written by MO2 itself).
+            if (mo2Directory is not null)
+            {
+                var iniReader = new ModOrganizerIniPatcher();
+                var iniPath = Path.Combine(mo2Directory, Markers.ModOrganizerIni);
+                var knownGame = Mo2Locator.MapGameName(iniReader.ReadGameName(iniPath));
+                if (knownGame is not null)
+                {
+                    gameType = knownGame.Value;
+                    var managedGame = iniReader.ReadManagedGameDirectory(iniPath);
+                    if (!string.IsNullOrEmpty(managedGame))
+                    {
+                        systemGamePath = managedGame;
+                        gameFilesDirectory = managedGame;
+                        if (!Directory.Exists(LongPath.Normalize(managedGame)))
+                        {
+                            warnings.Add(
+                                $"ModOrganizer.ini указывает на несуществующую папку игры («{managedGame}») — выберите папку игры вручную.");
+                        }
+                    }
+                    else
+                    {
+                        systemGamePath = _systemLocator.FindGamePath(gameType);
+                        if (systemGamePath is null)
+                        {
+                            warnings.Add("Системная установка игры не найдена — укажите путь к игре вручную.");
+                        }
+                        else
+                        {
+                            gameFilesDirectory = systemGamePath;
+                        }
+                    }
+                }
+            }
         }
 
         // MO2 detection (portable instances only): ModOrganizer.exe next to ModOrganizer.ini,
@@ -117,7 +154,17 @@ public sealed class ModpackScanner : IModpackScanner
             engine = DetectRootBuilder(mo2Directory, gameType, warnings)
                 ? LaunchEngine.Mo2RootBuilder
                 : LaunchEngine.Mo2Standard;
-            mo2Profile = DetectMo2Profile(mo2Directory, warnings);
+            var iniPath = Path.Combine(mo2Directory, Markers.ModOrganizerIni);
+            mo2Profile = new ModOrganizerIniPatcher().ReadSelectedProfile(iniPath);
+            if (mo2Profile is not null)
+            {
+                // MO2's own last selection — a persisted fact, not a guess.
+                _logger.Information("MO2 profile from ModOrganizer.ini selected_profile: {Profile}", mo2Profile);
+            }
+            else
+            {
+                mo2Profile = DetectMo2Profile(mo2Directory, warnings);
+            }
         }
 
         // Launch executable: script extender loader preferred over the bare game exe (IMM.md).

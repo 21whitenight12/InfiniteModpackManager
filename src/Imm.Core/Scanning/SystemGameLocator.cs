@@ -31,6 +31,21 @@ public sealed class SystemGameLocator
             return null;
         }
 
+        // FEHLauncher-style cascade: Bethesda registry (64/32-bit) → Steam → GOG.
+        var bethesda64 = FindBethesdaGame(gameType, executable, RegistryView.Registry64);
+        if (bethesda64 is not null)
+        {
+            _logger.Information("Bethesda registry (64) install found for {GameType}: {Path}", gameType, bethesda64);
+            return bethesda64;
+        }
+
+        var bethesda32 = FindBethesdaGame(gameType, executable, RegistryView.Registry32);
+        if (bethesda32 is not null)
+        {
+            _logger.Information("Bethesda registry (32) install found for {GameType}: {Path}", gameType, bethesda32);
+            return bethesda32;
+        }
+
         var steam = FindSteamGame(gameType, executable);
         if (steam is not null)
         {
@@ -48,6 +63,29 @@ public sealed class SystemGameLocator
         _logger.Information("No system install found for {GameType}.", gameType);
         return null;
     }
+
+    /// <summary>Bethesda launcher-era registry keys (HKLM\SOFTWARE\Bethesda Softworks\...), exe validated.</summary>
+    private string? FindBethesdaGame(GameType gameType, string executable, RegistryView view)
+    {
+        var subKey = $@"SOFTWARE\Bethesda Softworks\{BethesdaKeyName(gameType)}";
+        var path = _registry.GetString(RegistryHive.LocalMachine, view, subKey, "Installed Path");
+        if (string.IsNullOrEmpty(path))
+        {
+            return null;
+        }
+
+        return File.Exists(LongPath.Normalize(Path.Combine(path, executable))) ? path : null;
+    }
+
+    /// <summary>Bethesda registry key names are stable store facts, kept name-only.</summary>
+    internal static string? BethesdaKeyName(GameType gameType) => gameType switch
+    {
+        GameType.SkyrimLE => "Skyrim",
+        GameType.SkyrimSE => "Skyrim Special Edition",
+        GameType.Fallout4 => "Fallout4",
+        GameType.FalloutNV => "FalloutNV",
+        _ => null,
+    };
 
     private string? FindSteamGame(GameType gameType, string executable)
     {

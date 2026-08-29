@@ -106,7 +106,15 @@ public sealed class LibraryService : ILibraryService
             return scan;
         }
 
+        var userProfile = manifest.Detection.ProfileOverriddenByUser ? manifest.Mo2?.ProfileName : null;
         ApplyScan(manifest, scan);
+        if (!string.IsNullOrWhiteSpace(userProfile))
+        {
+            // Manually picked profile survives re-scan.
+            manifest.Mo2 ??= new Mo2Section();
+            manifest.Mo2.ProfileName = userProfile;
+        }
+
         await SaveManifestAsync(entry.RootPath, manifest, cancellationToken).ConfigureAwait(false);
         return scan;
     }

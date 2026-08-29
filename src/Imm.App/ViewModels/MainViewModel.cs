@@ -367,6 +367,99 @@ public partial class MainViewModel : ObservableObject
         });
     }
 
+    /// <summary>Persists a manually picked MO2 profile; survives re-scan (ProfileOverriddenByUser).</summary>
+    public async Task SetProfileAsync(LibraryEntryViewModel entry, string profile)
+    {
+        var libraryEntry = await FindEntryAsync(entry.Id).ConfigureAwait(true);
+        if (libraryEntry is null)
+        {
+            return;
+        }
+
+        var manifest = await _library.LoadManifestAsync(libraryEntry).ConfigureAwait(true);
+        if (manifest is null)
+        {
+            return;
+        }
+
+        manifest.Mo2 ??= new Mo2Section();
+        manifest.Mo2.ProfileName = profile;
+        manifest.Detection.ProfileOverriddenByUser = true;
+        await _library.SaveManifestAsync(entry.RootPath, manifest).ConfigureAwait(true);
+        entry.UpdateManifest(manifest);
+
+        _snackbar.Show(
+            "Профиль",
+            $"Для «{entry.Name}» выбран профиль «{profile}»",
+            ControlAppearance.Success,
+            new SymbolIcon { Symbol = SymbolRegular.CheckmarkCircle24 },
+            TimeSpan.FromSeconds(4));
+    }
+
+    public void SetProfile(LibraryEntryViewModel entry, string profile) =>
+        _ = SetProfileAsync(entry, profile);
+
+    /// <summary>
+    /// Manual game folder pick (FEHLauncher-style last resort): validates a supported game exe,
+    /// updates the manifest (GameType, SystemGamePath, launch executable), flags the override.
+    /// </summary>
+    public async Task ChooseGameFolderAsync(LibraryEntryViewModel entry, string folder)
+    {
+        var gameType = Mo2Locator.DetectGameByExe(folder);
+        if (gameType is null)
+        {
+            _snackbar.Show(
+                "Папка не подходит",
+                "В выбранной папке нет exe поддерживаемой игры (Skyrim LE/SE, Fallout 4/NV).",
+                ControlAppearance.Caution,
+                new SymbolIcon { Symbol = SymbolRegular.Warning24 },
+                TimeSpan.FromSeconds(6));
+            return;
+        }
+
+        var libraryEntry = await FindEntryAsync(entry.Id).ConfigureAwait(true);
+        if (libraryEntry is null)
+        {
+            return;
+        }
+
+        var manifest = await _library.LoadManifestAsync(libraryEntry).ConfigureAwait(true);
+        if (manifest is null)
+        {
+            return;
+        }
+
+        manifest.GameType = gameType.Value;
+        manifest.SystemGamePath = folder;
+        manifest.Source = PackSource.System;
+        manifest.Launch.Executable = Mo2Locator.DetectLaunchExecutableName(folder) ?? string.Empty;
+        manifest.Detection.OverriddenByUser = true;
+        await _library.SaveManifestAsync(entry.RootPath, manifest).ConfigureAwait(true);
+        entry.UpdateManifest(manifest);
+
+        _snackbar.Show(
+            "Игра",
+            $"Для «{entry.Name}» указана папка: {folder}",
+            ControlAppearance.Success,
+            new SymbolIcon { Symbol = SymbolRegular.CheckmarkCircle24 },
+            TimeSpan.FromSeconds(4));
+    }
+
+    public void ChooseGameFolder(LibraryEntryViewModel entry)
+    {
+        var dialog = new OpenFolderDialog
+        {
+            Title = "Выберите папку с игрой",
+        };
+
+        if (dialog.ShowDialog() is not true)
+        {
+            return;
+        }
+
+        _ = ChooseGameFolderAsync(entry, dialog.FolderName);
+    }
+
     private async Task<LibraryEntry?> FindEntryAsync(Guid id)
     {
         var index = await _library.LoadAsync().ConfigureAwait(true);

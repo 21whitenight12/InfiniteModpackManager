@@ -85,8 +85,9 @@
                          TextTrimming="CharacterEllipsis" />
               <ui:Button Grid.Column="1" Appearance="Secondary" Padding="4,1" Margin="6,0,0,0"
                          Icon="{ui:SymbolIcon MoreHorizontal24}"
-                         Command="{Binding DeleteCommand}"
-                         ToolTip="Убрать из библиотеки" />
+                         Click="OpenCardMenu"
+                         ContextMenu="{StaticResource PackMenu}"
+                         ToolTip="Действия со сборкой" />
             </Grid>
 
             <!-- Engine badge pill + game row -->
@@ -175,8 +176,9 @@
                      Foreground="{StaticResource ImmTextPrimaryBrush}" />
           <ui:Button Grid.Column="6" Appearance="Secondary" Padding="4,1" VerticalAlignment="Center"
                      Icon="{ui:SymbolIcon MoreHorizontal24}"
-                     Command="{Binding DeleteCommand}"
-                     ToolTip="Убрать из библиотеки" />
+                     Click="OpenCardMenu"
+                     ContextMenu="{StaticResource PackMenu}"
+                     ToolTip="Действия со сборкой" />
         </Grid>
       </Border>
       <DataTemplate.Triggers>
@@ -185,6 +187,31 @@
         </DataTrigger>
       </DataTemplate.Triggers>
     </DataTemplate>
+
+    <!-- Pack context menu (opened by the '...' button; DataContext = the card's entry VM) -->
+    <ContextMenu x:Key="PackMenu"
+                 DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
+      <MenuItem Header="Профиль" Icon="{ui:SymbolIcon PeopleTeam24}" ItemsSource="{Binding AvailableProfiles}">
+        <MenuItem.ItemContainerStyle>
+          <Style TargetType="MenuItem">
+            <Setter Property="Header" Value="{Binding}" />
+            <Setter Property="Command" Value="{Binding DataContext.SetProfileCommand, RelativeSource={RelativeSource AncestorType=ContextMenu}}" />
+            <Setter Property="CommandParameter" Value="{Binding}" />
+          </Style>
+        </MenuItem.ItemContainerStyle>
+      </MenuItem>
+      <MenuItem Header="Указать папку игры…" Icon="{ui:SymbolIcon FolderOpen24}"
+                Command="{Binding ChooseGameFolderCommand}"
+                ToolTip="Игра лежит отдельно от сборки — выбрать папку вручную" />
+      <Separator />
+      <MenuItem Header="Открыть папку сборки" Icon="{ui:SymbolIcon Folder24}"
+                Command="{Binding OpenFolderCommand}" />
+      <MenuItem Header="Ре-скан" Icon="{ui:SymbolIcon ArrowClockwise24}"
+                Command="{Binding RescanCommand}" />
+      <Separator />
+      <MenuItem Header="Убрать из библиотеки" Icon="{ui:SymbolIcon Delete24}"
+                Command="{Binding DeleteCommand}" />
+    </ContextMenu>
   </Page.Resources>
 
   <!-- ============ 3-COLUMN LAYOUT (260 / * / 380) ============ -->

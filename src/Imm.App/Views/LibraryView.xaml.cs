@@ -38,4 +38,15 @@ public partial class LibraryView : Page
             }
         }
     }
+
+    /// <summary>Left click on the '...' button opens its context menu (placement under the button).</summary>
+    private void OpenCardMenu(object sender, RoutedEventArgs e)
+    {
+        if (sender is FrameworkElement { ContextMenu: { } menu } button)
+        {
+            menu.PlacementTarget = button;
+            menu.Placement = System.Windows.Controls.Primitives.PlacementMode.Bottom;
+            menu.IsOpen = true;
+        }
+    }
 }

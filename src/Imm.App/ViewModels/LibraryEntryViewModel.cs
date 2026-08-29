@@ -120,6 +120,22 @@ public partial class LibraryEntryViewModel : ObservableObject
     // ----- context menu commands (command objects live here so ContextMenu
     // bindings never cross the popup tree boundary; owner executes them) -----
 
+    /// <summary>Profiles of the resolved MO2 instance; empty when no instance or no profiles folder.</summary>
+    public IReadOnlyList<string> AvailableProfiles
+    {
+        get
+        {
+            var instance = Mo2Locator.ResolveInstance(_entry.RootPath, _manifest?.Mo2?.Directory);
+            return instance is null ? [] : Mo2Locator.ListProfiles(instance);
+        }
+    }
+
+    [RelayCommand]
+    private void SetProfile(string profile) => _owner?.SetProfile(this, profile);
+
+    [RelayCommand]
+    private void ChooseGameFolder() => _owner?.ChooseGameFolder(this);
+
     [RelayCommand]
     private void OpenFolder() => _owner?.OpenPackFolder(this);
 

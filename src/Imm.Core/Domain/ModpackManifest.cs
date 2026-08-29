@@ -23,6 +23,9 @@ public sealed class LaunchSection
 public sealed class DetectionSection
 {
     public bool OverriddenByUser { get; set; }
+
+    /// <summary>True when the profile was picked manually in IMM; survives re-scan.</summary>
+    public bool ProfileOverriddenByUser { get; set; }
 }
 
 /// <summary>
