@@ -239,8 +239,13 @@ public sealed class ModpackScanner : IModpackScanner
 
     private static bool DetectRootBuilder(string root, GameType gameType, List<string> warnings)
     {
-        var rootBuilderDll = Path.Combine(root, Markers.PluginsFolder, Markers.RootBuilderDll);
-        if (!File.Exists(LongPath.Normalize(rootBuilderDll)))
+        // Root Builder ships in two forms: a C++ plugin (plugins/RootBuilder.dll)
+        // and a Python plugin (plugins/rootbuilder/ with __init__.py).
+        var hasCppPlugin = File.Exists(LongPath.Normalize(
+            Path.Combine(root, Markers.PluginsFolder, Markers.RootBuilderDll)));
+        var hasPythonPlugin = Directory.Exists(LongPath.Normalize(
+            Path.Combine(root, Markers.PluginsFolder, "rootbuilder")));
+        if (!hasCppPlugin && !hasPythonPlugin)
         {
             return false;
         }
@@ -249,7 +254,7 @@ public sealed class ModpackScanner : IModpackScanner
         var modsDirectory = Path.Combine(root, Markers.ModsFolder);
         if (!Directory.Exists(LongPath.Normalize(modsDirectory)))
         {
-            warnings.Add("RootBuilder.dll найден, но папка mods отсутствует — проверьте настройку сборки.");
+            warnings.Add("Root Builder найден, но папка mods отсутствует — проверьте настройку сборки.");
             return true;
         }
 
@@ -259,7 +264,8 @@ public sealed class ModpackScanner : IModpackScanner
             gameFileNames.Add(GameExeNameFor(gameType));
         }
 
-        gameFileNames.AddRange(new[] { "binkw64.dll", "binkw32.dll" });
+        // binkw64/binkw32 (Skyrim) vs bink2w64 (Fallout 4): root-level binaries Root Builder manages.
+        gameFileNames.AddRange(new[] { "binkw64.dll", "binkw32.dll", "bink2w64.dll" });
 
         foreach (var mod in Directory.EnumerateDirectories(LongPath.Normalize(modsDirectory)))
         {
@@ -269,7 +275,8 @@ public sealed class ModpackScanner : IModpackScanner
             }
         }
 
-        warnings.Add("RootBuilder.dll найден, но корневые файлы игры в mods\\ не обнаружены — проверьте сборку.");
+        // Plugin presence is the fact; root files may legitimately live in the game folder
+        // right now (Root Builder migrates them back on MO2 close and re-virtualizes on start).
         return true;
     }
 
