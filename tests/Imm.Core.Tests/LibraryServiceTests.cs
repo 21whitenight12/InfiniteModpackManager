@@ -153,4 +153,85 @@ public sealed class LibraryServiceTests : IDisposable
 
         Assert.Empty(index.Entries);
     }
+
+    [Fact]
+    public async Task Import_WithDisplayNameAndCover_UsesBoth()
+    {
+        var (service, _) = CreateService();
+        var pack = CreateMo2Pack("Folder Name");
+        var cover = Path.Combine(_temp, "art.png");
+        await File.WriteAllBytesAsync(cover, [1, 2, 3]);
+
+        var entry = await service.ImportAsync(pack, displayName: "  Моя сборка  ", coverImagePath: cover);
+
+        Assert.Equal("Моя сборка", entry.Name);
+        Assert.True(File.Exists(Path.Combine(pack, "cover.png")));
+        var index = await service.LoadAsync();
+        Assert.Equal("Моя сборка", index.Entries.Single(e => e.Id == entry.Id).Name);
+    }
+
+    [Fact]
+    public async Task Import_NoDisplayName_KeepsFolderName()
+    {
+        var (service, _) = CreateService();
+        var pack = CreateMo2Pack("Folder Name");
+
+        var entry = await service.ImportAsync(pack);
+
+        Assert.Equal("Folder Name", entry.Name);
+    }
+
+    [Fact]
+    public async Task Rename_UpdatesIndexAndEntry()
+    {
+        var (service, _) = CreateService();
+        var pack = CreateMo2Pack("Old Name");
+        var entry = await service.ImportAsync(pack);
+
+        await service.RenameAsync(entry, "New Name");
+
+        Assert.Equal("New Name", entry.Name);
+        var index = await service.LoadAsync();
+        Assert.Equal("New Name", index.Entries.Single().Name);
+    }
+
+    [Fact]
+    public async Task Rename_Empty_Throws()
+    {
+        var (service, _) = CreateService();
+        var entry = await service.ImportAsync(CreateMo2Pack("Some"));
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.RenameAsync(entry, "   "));
+    }
+
+    [Fact]
+    public async Task SetCover_ReplacesPreviousCover()
+    {
+        var (service, _) = CreateService();
+        var pack = CreateMo2Pack("Covered");
+        var first = Path.Combine(_temp, "a.png");
+        var second = Path.Combine(_temp, "b.jpg");
+        await File.WriteAllBytesAsync(first, [1]);
+        await File.WriteAllBytesAsync(second, [2]);
+
+        await service.SetCoverAsync(pack, first);
+        Assert.True(File.Exists(Path.Combine(pack, "cover.png")));
+
+        var result = await service.SetCoverAsync(pack, second);
+
+        Assert.Equal(Path.Combine(pack, "cover.jpg"), result);
+        Assert.False(File.Exists(Path.Combine(pack, "cover.png"))); // old cover removed
+        Assert.True(File.Exists(Path.Combine(pack, "cover.jpg")));
+    }
+
+    [Fact]
+    public async Task SetCover_UnsupportedExtension_Throws()
+    {
+        var (service, _) = CreateService();
+        var pack = CreateMo2Pack("NoCover");
+        var bmp = Path.Combine(_temp, "x.bmp");
+        await File.WriteAllBytesAsync(bmp, [1]);
+
+        await Assert.ThrowsAsync<InvalidOperationException>(() => service.SetCoverAsync(pack, bmp));
+    }
 }

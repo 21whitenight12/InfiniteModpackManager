@@ -26,6 +26,27 @@ public partial class LibraryEntryViewModel : ObservableObject
 
     public string RootPath => _entry.RootPath;
 
+    /// <summary>Notifies when the cover file appears/disappears (import, manual change, removal).</summary>
+    public string? CoverPath
+    {
+        get
+        {
+            foreach (var name in new[] { "cover.png", "cover.jpg", "cover.jpeg", "cover.webp" })
+            {
+                var path = Path.Combine(_entry.RootPath, name);
+                if (File.Exists(path))
+                {
+                    return path;
+                }
+            }
+
+            return null;
+        }
+    }
+
+    /// <summary>UI hook after RenameAsync / SetCoverAsync touch the entry.</summary>
+    public void Refresh() => OnPropertyChanged(string.Empty);
+
     public GameType GameType => _manifest?.GameType ?? GameType.Unknown;
 
     public LaunchEngine Engine => _manifest?.Engine ?? LaunchEngine.Direct;
@@ -48,24 +69,6 @@ public partial class LibraryEntryViewModel : ObservableObject
         (LaunchEngine.Direct, PackSource.Portable) => "Direct · Портативная игра",
         _ => "Direct",
     };
-
-    /// <summary>Cover image from the pack root; null → placeholder gradient in the card template.</summary>
-    public string? CoverPath
-    {
-        get
-        {
-            foreach (var name in new[] { "cover.png", "cover.jpg", "cover.jpeg", "cover.webp" })
-            {
-                var path = Path.Combine(_entry.RootPath, name);
-                if (File.Exists(path))
-                {
-                    return path;
-                }
-            }
-
-            return null;
-        }
-    }
 
     public string LastPlayedText => _entry.LastPlayedAtUtc is null
         ? "—"
@@ -135,6 +138,12 @@ public partial class LibraryEntryViewModel : ObservableObject
 
     [RelayCommand]
     private void ChooseGameFolder() => _owner?.ChooseGameFolder(this);
+
+    [RelayCommand]
+    private void Rename() => _owner?.RenameEntry(this);
+
+    [RelayCommand]
+    private void ChangeCover() => _owner?.ChangeCover(this);
 
     [RelayCommand]
     private void OpenFolder() => _owner?.OpenPackFolder(this);

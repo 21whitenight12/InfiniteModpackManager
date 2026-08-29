@@ -23,6 +23,11 @@
                 Command="{Binding ChooseGameFolderCommand}"
                 ToolTip="Игра лежит отдельно от сборки — выбрать папку вручную" />
       <Separator />
+      <MenuItem Header="Переименовать…" Icon="{ui:SymbolIcon Edit24}"
+                Command="{Binding RenameCommand}" />
+      <MenuItem Header="Сменить обложку…" Icon="{ui:SymbolIcon ImageEdit24}"
+                Command="{Binding ChangeCoverCommand}" />
+      <Separator />
       <MenuItem Header="Открыть папку сборки" Icon="{ui:SymbolIcon Folder24}"
                 Command="{Binding OpenFolderCommand}" />
       <MenuItem Header="Ре-скан" Icon="{ui:SymbolIcon ArrowClockwise24}"

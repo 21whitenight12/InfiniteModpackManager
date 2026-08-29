@@ -45,7 +45,8 @@ public sealed class LibraryService : ILibraryService
         }
     }
 
-    public async Task<LibraryEntry> ImportAsync(string rootPath, CancellationToken cancellationToken = default)
+    public async Task<LibraryEntry> ImportAsync(string rootPath, string? displayName = null, string? coverImagePath = null,
+        CancellationToken cancellationToken = default)
     {
         var root = LongPath.Normalize(Path.GetFullPath(rootPath));
         if (!Directory.Exists(root))
@@ -68,12 +69,19 @@ public sealed class LibraryService : ILibraryService
 
         var entry = new LibraryEntry
         {
-            Name = Path.GetFileName(root.TrimEnd(Path.DirectorySeparatorChar)),
+            Name = string.IsNullOrWhiteSpace(displayName)
+                ? Path.GetFileName(root.TrimEnd(Path.DirectorySeparatorChar))
+                : displayName.Trim(),
             RootPath = root,
             AddedAtUtc = DateTime.UtcNow,
         };
         index.Entries.Add(entry);
         await SaveAsync(index, cancellationToken).ConfigureAwait(false);
+
+        if (coverImagePath is not null)
+        {
+            await SetCoverAsync(root, coverImagePath, cancellationToken).ConfigureAwait(false);
+        }
 
         var manifest = ManifestFromScan(entry.Id, scan);
         await SaveManifestAsync(entry.RootPath, manifest, cancellationToken).ConfigureAwait(false);
@@ -81,6 +89,62 @@ public sealed class LibraryService : ILibraryService
         _logger.Information("Imported modpack {Name} from {Root} (game={Game}, engine={Engine})",
             entry.Name, root, scan.GameType, scan.Engine);
         return entry;
+    }
+
+    /// <inheritdoc />
+    public async Task RenameAsync(LibraryEntry entry, string newName, CancellationToken cancellationToken = default)
+    {
+        var trimmed = newName.Trim();
+        if (string.IsNullOrWhiteSpace(trimmed))
+        {
+            throw new InvalidOperationException("Название сборки не может быть пустым.");
+        }
+
+        var index = await LoadAsync(cancellationToken).ConfigureAwait(false);
+        var indexed = index.Entries.FirstOrDefault(e => e.Id == entry.Id)
+            ?? throw new InvalidOperationException("Сборка не найдена в библиотеке.");
+
+        indexed.Name = trimmed;
+        await SaveAsync(index, cancellationToken).ConfigureAwait(false);
+        entry.Name = trimmed;
+        _logger.Information("Renamed modpack {Id} to {Name}", entry.Id, trimmed);
+    }
+
+    /// <inheritdoc />
+    public async Task<string> SetCoverAsync(string packRoot, string coverImagePath, CancellationToken cancellationToken = default)
+    {
+        var source = LongPath.Normalize(Path.GetFullPath(coverImagePath));
+        if (!File.Exists(source))
+        {
+            throw new FileNotFoundException("Файл обложки не найден.", coverImagePath);
+        }
+
+        var extension = Path.GetExtension(source).ToLowerInvariant();
+        if (extension is not ".png" and not ".jpg" and not ".jpeg" and not ".webp")
+        {
+            throw new InvalidOperationException("Обложка должна быть PNG, JPG или WebP.");
+        }
+
+        var targetName = extension is ".jpg" or ".jpeg" ? "cover.jpg" : $"cover{extension}";
+        var target = LongPath.Normalize(Path.Combine(packRoot, targetName));
+
+        foreach (var previous in new[] { "cover.png", "cover.jpg", "cover.jpeg", "cover.webp" })
+        {
+            var previousPath = LongPath.Normalize(Path.Combine(packRoot, previous));
+            if (!string.Equals(previousPath, target, StringComparison.OrdinalIgnoreCase)
+                && File.Exists(previousPath))
+            {
+                File.Delete(previousPath);
+            }
+        }
+
+        // File.Copy does not accept long paths; a raw Stream copy keeps the pack root untouched otherwise.
+        await using var sourceStream = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.Read);
+        await using var targetStream = new FileStream(target, FileMode.Create, FileAccess.Write, FileShare.None);
+        await sourceStream.CopyToAsync(targetStream, cancellationToken).ConfigureAwait(false);
+
+        _logger.Information("Cover set for pack at {Root}: {Target}", packRoot, target);
+        return target;
     }
 
     public async Task<ScanResult> RescanAsync(LibraryEntry entry, CancellationToken cancellationToken = default)

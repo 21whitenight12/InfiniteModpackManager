@@ -177,12 +177,26 @@ public partial class MainViewModel : ObservableObject
             Entries.Add(viewModel);
             SelectedEntry = viewModel;
             StatusText = "Готово";
-            _snackbar.Show(
-                "Библиотека",
-                $"Сборка «{viewModel.Name}» добавлена",
-                ControlAppearance.Success,
-                new SymbolIcon { Symbol = SymbolRegular.CheckmarkCircle24 },
-                TimeSpan.FromSeconds(4));
+
+            // Post-import customization: name + cover (defaults = folder name / no cover).
+            var (displayName, coverImagePath) = await ShowImportDialogAsync(viewModel.Name).ConfigureAwait(true);
+            if (coverImagePath is not null)
+            {
+                await _library.SetCoverAsync(entry.RootPath, coverImagePath).ConfigureAwait(true);
+                viewModel.Refresh();
+            }
+
+            if (!string.IsNullOrWhiteSpace(displayName) && !string.Equals(displayName.Trim(), entry.Name, StringComparison.Ordinal))
+            {
+                await _library.RenameAsync(entry, displayName).ConfigureAwait(true);
+                viewModel.Refresh();
+                _snackbar.Show(
+                    "Библиотека",
+                    $"Сборка «{entry.Name}» добавлена",
+                    ControlAppearance.Success,
+                    new SymbolIcon { Symbol = SymbolRegular.CheckmarkCircle24 },
+                    TimeSpan.FromSeconds(4));
+            }
         }
         catch (InvalidOperationException exception)
         {
@@ -470,6 +484,141 @@ public partial class MainViewModel : ObservableObject
 
         _ = ChooseGameFolderAsync(entry, dialog.FolderName);
     }
+
+    /// <summary>Post-import dialog: pack name + optional cover image. Cancel keeps the defaults.</summary>
+    private async Task<(string? DisplayName, string? CoverImagePath)> ShowImportDialogAsync(string defaultName)
+    {
+        var textBox = new Wpf.Ui.Controls.TextBox
+        {
+            Text = defaultName,
+            PlaceholderText = "Название сборки",
+            Margin = new System.Windows.Thickness(0, 4, 0, 4),
+        };
+        var coverButton = new Wpf.Ui.Controls.Button
+        {
+            Content = "Выбрать обложку…",
+            Icon = new SymbolIcon { Symbol = SymbolRegular.Image24 },
+            Appearance = ControlAppearance.Secondary,
+            HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
+        };
+        var coverText = new System.Windows.Controls.TextBlock
+        {
+            Text = "Обложка не выбрана (PNG/JPG/WebP)",
+            Opacity = 0.7,
+            Margin = new System.Windows.Thickness(0, 4, 0, 0),
+        };
+        string? coverPath = null;
+        coverButton.Click += (_, _) =>
+        {
+            var dialog = new OpenFileDialog
+            {
+                Title = "Выберите обложку",
+                Filter = "Изображения|*.png;*.jpg;*.jpeg;*.webp",
+                CheckFileExists = true,
+            };
+            if (dialog.ShowDialog() is true)
+            {
+                coverPath = dialog.FileName;
+                coverText.Text = dialog.FileName;
+            }
+        };
+
+        var panel = new System.Windows.Controls.StackPanel { Margin = new System.Windows.Thickness(0, 8, 0, 0) };
+        panel.Children.Add(new System.Windows.Controls.TextBlock
+        {
+            Text = "Название:",
+            Opacity = 0.8,
+        });
+        panel.Children.Add(textBox);
+        panel.Children.Add(coverButton);
+        panel.Children.Add(coverText);
+
+        var result = await _dialog.ShowSimpleDialogAsync(new SimpleContentDialogCreateOptions
+        {
+            Title = "Новая сборка",
+            Content = panel,
+            PrimaryButtonText = "Сохранить",
+            CloseButtonText = "Пропустить",
+        }).ConfigureAwait(true);
+
+        return result is ContentDialogResult.Primary
+            ? (textBox.Text, coverPath)
+            : (null, null);
+    }
+
+    /// <summary>Menu action: rename the pack (library.json), empty name keeps the old one.</summary>
+    public async Task RenameEntryAsync(LibraryEntryViewModel entry)
+    {
+        var textBox = new Wpf.Ui.Controls.TextBox
+        {
+            Text = entry.Name,
+            PlaceholderText = "Название сборки",
+            Margin = new System.Windows.Thickness(0, 4, 0, 4),
+        };
+
+        var result = await _dialog.ShowSimpleDialogAsync(new SimpleContentDialogCreateOptions
+        {
+            Title = "Переименовать сборку",
+            Content = textBox,
+            PrimaryButtonText = "Сохранить",
+            CloseButtonText = "Отмена",
+        }).ConfigureAwait(true);
+
+        if (result is not ContentDialogResult.Primary || string.IsNullOrWhiteSpace(textBox.Text))
+        {
+            return;
+        }
+
+        var libraryEntry = await FindEntryAsync(entry.Id).ConfigureAwait(true);
+        if (libraryEntry is null)
+        {
+            return;
+        }
+
+        await _library.RenameAsync(libraryEntry, textBox.Text).ConfigureAwait(true);
+        entry.Refresh();
+    }
+
+    public void RenameEntry(LibraryEntryViewModel entry) => _ = RenameEntryAsync(entry);
+
+    /// <summary>Menu action: pick a new cover image, copied into the pack root as cover.*</summary>
+    public async Task ChangeCoverAsync(LibraryEntryViewModel entry)
+    {
+        var dialog = new OpenFileDialog
+        {
+            Title = "Выберите обложку",
+            Filter = "Изображения|*.png;*.jpg;*.jpeg;*.webp",
+            CheckFileExists = true,
+        };
+        if (dialog.ShowDialog() is not true)
+        {
+            return;
+        }
+
+        try
+        {
+            await _library.SetCoverAsync(entry.RootPath, dialog.FileName).ConfigureAwait(true);
+            entry.Refresh();
+            _snackbar.Show(
+                "Обложка",
+                $"Обложка «{entry.Name}» обновлена",
+                ControlAppearance.Success,
+                new SymbolIcon { Symbol = SymbolRegular.CheckmarkCircle24 },
+                TimeSpan.FromSeconds(4));
+        }
+        catch (Exception exception)
+        {
+            _logger.Error(exception, "Cover change failed for {Path}", entry.RootPath);
+            _snackbar.Show(
+                "Обложка",
+                exception.Message,
+                ControlAppearance.Danger,
+                new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
+                TimeSpan.FromSeconds(6));
+        }
+    }
+
+    public void ChangeCover(LibraryEntryViewModel entry) => _ = ChangeCoverAsync(entry);
 
     private async Task<LibraryEntry?> FindEntryAsync(Guid id)
     {
