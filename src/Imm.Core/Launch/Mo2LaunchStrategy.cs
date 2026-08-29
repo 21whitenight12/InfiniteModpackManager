@@ -73,12 +73,19 @@ public sealed class Mo2LaunchStrategy : ILaunchStrategy
     /// <summary>
     /// FEHLauncher scheme: MO2 resolves a bare executable name against its own directory (its cwd),
     /// so any executable living elsewhere must be launched by FULL path (usvfs "file not found" otherwise).
-    /// Order: manifest hint expanded to a real location → mod folders (incl. the Root Builder layout
-    /// &lt;mod&gt;/Root/&lt;loader&gt;) → game roots. Bare name is kept only when the file sits next to ModOrganizer.exe.
+    /// Priority: mod folders (incl. the Root Builder layout &lt;mod&gt;/Root/&lt;loader&gt;) — the pack's
+    /// canonical loader — then the manifest hint expanded to a real location, then game roots.
     /// </summary>
     private string? ResolveExecutableName(ModpackManifest manifest, string packRoot, string mo2Directory)
     {
         var searchDirectories = CollectSearchDirectories(manifest, packRoot, mo2Directory);
+
+        var fromMods = FindLoaderInMods(mo2Directory, manifest.GameType);
+        if (fromMods is not null)
+        {
+            _logger.Information("Launch executable found in mods folder: {Executable}", fromMods);
+            return fromMods;
+        }
 
         var hint = manifest.Launch.Executable;
         if (!string.IsNullOrWhiteSpace(hint))
@@ -88,13 +95,6 @@ public sealed class Mo2LaunchStrategy : ILaunchStrategy
             {
                 return expanded;
             }
-        }
-
-        var fromMods = FindLoaderInMods(mo2Directory, manifest.GameType);
-        if (fromMods is not null)
-        {
-            _logger.Information("Launch executable found in mods folder: {Executable}", fromMods);
-            return fromMods;
         }
 
         foreach (var directory in searchDirectories)
