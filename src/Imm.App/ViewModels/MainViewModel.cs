@@ -5,11 +5,13 @@ using System.Windows.Data;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Imm.App.Services;
+using Imm.Core.Backups;
 using Imm.Core.Domain;
 using Imm.Core.IO;
 using Imm.Core.Launch;
 using Imm.Core.Library;
 using Imm.Core.Scanning;
+using Imm.Core.Tracking;
 using Microsoft.Win32;
 using Serilog;
 using Wpf.Ui;
@@ -23,6 +25,8 @@ public partial class MainViewModel : ObservableObject
 {
     private readonly ILibraryService _library;
     private readonly ILaunchService _launch;
+    private readonly IBackupService _backups;
+    private readonly ISessionTracker _sessionTracker;
     private readonly ISnackbarService _snackbar;
     private readonly IContentDialogService _dialog;
     private readonly ILogWindowService _logWindow;
@@ -31,6 +35,8 @@ public partial class MainViewModel : ObservableObject
     public MainViewModel(
         ILibraryService library,
         ILaunchService launch,
+        IBackupService backups,
+        ISessionTracker sessionTracker,
         ISnackbarService snackbar,
         IContentDialogService dialog,
         ILogWindowService logWindow,
@@ -38,6 +44,8 @@ public partial class MainViewModel : ObservableObject
     {
         _library = library;
         _launch = launch;
+        _backups = backups;
+        _sessionTracker = sessionTracker;
         _snackbar = snackbar;
         _dialog = dialog;
         _logWindow = logWindow;
@@ -324,8 +332,10 @@ public partial class MainViewModel : ObservableObject
                 throw new InvalidOperationException("Манифест сборки не найден — выполните ре-скан.");
             }
 
-            using var process = await _launch.LaunchAsync(manifest, entry.RootPath).ConfigureAwait(true);
+            var launchStartedUtc = DateTime.UtcNow;
+            var process = await _launch.LaunchAsync(manifest, entry.RootPath).ConfigureAwait(true);
             _logger.Information("Launched {Name} (pid={ProcessId})", entry.Name, process.Id);
+            TrackSession(entry, manifest, process, launchStartedUtc);
             _snackbar.Show(
                 "Запуск",
                 $"Сборка «{entry.Name}» запущена",
@@ -719,6 +729,143 @@ public partial class MainViewModel : ObservableObject
     }
 
     public void ChangeCover(LibraryEntryViewModel entry) => _ = ChangeCoverAsync(entry);
+
+    /// <summary>Manual backup (IMM.md «Бэкапы»): zip of the MO2 profile or of the game saves.</summary>
+    [RelayCommand]
+    private async Task CreateBackupAsync(LibraryEntryViewModel? entry)
+    {
+        if (entry is null || IsBusy)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        StatusText = "Резервная копия…";
+        try
+        {
+            var libraryEntry = await FindEntryAsync(entry.Id).ConfigureAwait(true)
+                ?? throw new InvalidOperationException("Сборка не найдена в библиотеке.");
+            var manifest = await _library.LoadManifestAsync(libraryEntry).ConfigureAwait(true)
+                ?? throw new InvalidOperationException("Манифест сборки не найден — выполните ре-скан.");
+
+            var archive = await _backups.CreateBackupAsync(libraryEntry, manifest).ConfigureAwait(true);
+            _snackbar.Show(
+                "Бэкап",
+                $"Архив сохранён: {Path.GetFileName(archive)}",
+                ControlAppearance.Success,
+                new SymbolIcon { Symbol = SymbolRegular.Archive24 },
+                TimeSpan.FromSeconds(6));
+        }
+        catch (InvalidOperationException exception)
+        {
+            _logger.Warning("Backup rejected: {Message}", exception.Message);
+            _snackbar.Show(
+                "Бэкап невозможен",
+                exception.Message,
+                ControlAppearance.Caution,
+                new SymbolIcon { Symbol = SymbolRegular.Warning24 },
+                TimeSpan.FromSeconds(6));
+        }
+        catch (Exception exception)
+        {
+            _logger.Error(exception, "Backup failed for {Path}", entry.RootPath);
+            _snackbar.Show(
+                "Ошибка бэкапа",
+                exception.Message,
+                ControlAppearance.Danger,
+                new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
+                TimeSpan.FromSeconds(6));
+        }
+        finally
+        {
+            IsBusy = false;
+            StatusText = "Готово";
+        }
+    }
+
+    /// <summary>Opens the pack's backup folder (Documents\&lt;packId&gt;), creating it when missing.</summary>
+    [RelayCommand]
+    private void OpenBackupsFolder(LibraryEntryViewModel? entry)
+    {
+        if (entry is null)
+        {
+            return;
+        }
+
+        try
+        {
+            var directory = _backups.PackDirectory(entry.Id);
+            Directory.CreateDirectory(LongPath.Normalize(directory));
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = directory,
+                UseShellExecute = true,
+            });
+        }
+        catch (Exception exception)
+        {
+            _logger.Error(exception, "Opening backups folder for {Path} failed", entry.RootPath);
+            _snackbar.Show(
+                "Бэкапы",
+                $"Не удалось открыть папку: {exception.Message}",
+                ControlAppearance.Danger,
+                new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
+                TimeSpan.FromSeconds(6));
+        }
+    }
+
+    /// <summary>
+    /// Session tracking in the background (IMM.md «Трекинг сессии»): the UI never waits for the game to
+    /// close, and a tracking failure must not affect the launch result.
+    /// </summary>
+    private void TrackSession(LibraryEntryViewModel entry, ModpackManifest manifest,
+        System.Diagnostics.Process process, DateTime launchStartedUtc)
+    {
+        var expectedGameDirectory = manifest.Source == PackSource.System ? manifest.SystemGamePath : null;
+
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                var session = await _sessionTracker
+                    .TrackAsync(manifest, launchStartedUtc, process, expectedGameDirectory)
+                    .ConfigureAwait(false);
+                if (session is null)
+                {
+                    return;
+                }
+
+                var stored = await _library
+                    .RecordSessionAsync(entry.Id, session.PlaytimeMinutes, session.LastPlayedAtUtc)
+                    .ConfigureAwait(false);
+                if (stored is null)
+                {
+                    return;
+                }
+
+                var dispatcher = System.Windows.Application.Current?.Dispatcher;
+                if (dispatcher is null)
+                {
+                    return;
+                }
+
+                await dispatcher.InvokeAsync(() =>
+                {
+                    entry.ApplySession(stored.PlaytimeMinutes, stored.LastPlayedAtUtc);
+                    _logger.Information("Session recorded for {Name}: +{Minutes} min (total {Total})",
+                        entry.Name, session.PlaytimeMinutes, stored.PlaytimeMinutes);
+                });
+            }
+            catch (Exception exception)
+            {
+                _logger.Warning(exception, "Session tracking failed for {Path}", entry.RootPath);
+            }
+            finally
+            {
+                process.Dispose();
+            }
+        });
+    }
 
     private async Task<LibraryEntry?> FindEntryAsync(Guid id)
     {

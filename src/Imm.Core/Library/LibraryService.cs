@@ -280,6 +280,24 @@ public sealed class LibraryService : ILibraryService
     public Task SaveAsync(LibraryIndex index, CancellationToken cancellationToken = default) =>
         AtomicFile.WriteJsonAsync(_paths.LibraryFilePath, index, cancellationToken);
 
+    public async Task<LibraryEntry?> RecordSessionAsync(Guid entryId, int playtimeMinutes, DateTime lastPlayedAtUtc,
+        CancellationToken cancellationToken = default)
+    {
+        var index = await LoadAsync(cancellationToken).ConfigureAwait(false);
+        var stored = index.Entries.FirstOrDefault(e => e.Id == entryId);
+        if (stored is null)
+        {
+            return null;
+        }
+
+        stored.PlaytimeMinutes += Math.Max(0, playtimeMinutes);
+        stored.LastPlayedAtUtc = lastPlayedAtUtc;
+        await SaveAsync(index, cancellationToken).ConfigureAwait(false);
+        _logger.Information("Session recorded for {Name}: +{Minutes} min (total {Total} min)",
+            stored.Name, playtimeMinutes, stored.PlaytimeMinutes);
+        return stored;
+    }
+
     public static string ManifestPath(string packRoot) => Path.Combine(packRoot, ManifestFileName);
 
     internal static ModpackManifest ManifestFromScan(Guid id, ScanResult scan) => new()

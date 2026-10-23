@@ -239,6 +239,12 @@ public partial class LibraryEntryViewModel : ObservableObject
     private void OpenFolder() => _owner?.OpenPackFolder(this);
 
     [RelayCommand]
+    private void CreateBackup() => _owner?.CreateBackupCommand.Execute(this);
+
+    [RelayCommand]
+    private void OpenBackupsFolder() => _owner?.OpenBackupsFolderCommand.Execute(this);
+
+    [RelayCommand]
     private void Rescan() => _owner?.RescanCommand.Execute(this);
 
     [RelayCommand]
@@ -248,5 +254,16 @@ public partial class LibraryEntryViewModel : ObservableObject
     {
         _manifest = manifest;
         OnPropertyChanged(string.Empty);
+    }
+
+    /// <summary>Applies a finished session (playtime + last played) to the wrapped entry.</summary>
+    public void ApplySession(int playtimeMinutes, DateTime? lastPlayedAtUtc)
+    {
+        _entry.PlaytimeMinutes = playtimeMinutes;
+        _entry.LastPlayedAtUtc = lastPlayedAtUtc;
+        OnPropertyChanged(nameof(PlaytimeMinutes));
+        OnPropertyChanged(nameof(PlaytimeText));
+        OnPropertyChanged(nameof(LastPlayedAtUtc));
+        OnPropertyChanged(nameof(LastPlayedText));
     }
 }

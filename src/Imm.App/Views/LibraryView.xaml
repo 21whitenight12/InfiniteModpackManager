@@ -30,6 +30,13 @@
       <Separator />
       <MenuItem Header="Открыть папку сборки" Icon="{ui:SymbolIcon Folder24}"
                 Command="{Binding OpenFolderCommand}" />
+      <Separator />
+      <MenuItem Header="Создать бэкап…" Icon="{ui:SymbolIcon Archive24}"
+                Command="{Binding CreateBackupCommand}"
+                ToolTip="zip профиля MO2 (или сейвов игры) в папку «Документы»" />
+      <MenuItem Header="Открыть папку бэкапов" Icon="{ui:SymbolIcon Folder24}"
+                Command="{Binding OpenBackupsFolderCommand}" />
+      <Separator />
       <MenuItem Header="Ре-скан" Icon="{ui:SymbolIcon ArrowClockwise24}"
                 Command="{Binding RescanCommand}" />
       <Separator />

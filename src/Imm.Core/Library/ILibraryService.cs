@@ -37,4 +37,11 @@ public interface ILibraryService
 
     /// <summary>Persists the library index (atomic write).</summary>
     Task SaveAsync(LibraryIndex index, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Adds a finished session to library.json (playtime + last played) and returns the stored entry;
+    /// null when the entry is gone.
+    /// </summary>
+    Task<LibraryEntry?> RecordSessionAsync(Guid entryId, int playtimeMinutes, DateTime lastPlayedAtUtc,
+        CancellationToken cancellationToken = default);
 }
