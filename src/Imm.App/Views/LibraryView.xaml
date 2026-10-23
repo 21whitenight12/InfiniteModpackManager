@@ -220,10 +220,10 @@
     </DataTemplate>
   </Page.Resources>
 
-  <!-- ============ 3-COLUMN LAYOUT (260 / * / 380) ============ -->
+  <!-- ============ 3-COLUMN LAYOUT (276 / * / 380) ============ -->
   <Grid>
     <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="260" />
+      <ColumnDefinition Width="276" />
       <ColumnDefinition Width="*" />
       <ColumnDefinition Width="380" />
     </Grid.ColumnDefinitions>
@@ -244,37 +244,14 @@
             <ColumnDefinition Width="Auto" />
             <ColumnDefinition Width="Auto" />
           </Grid.ColumnDefinitions>
-          <Grid Grid.Column="0" Width="44" Height="44" Margin="0,0,12,0">
-            <Ellipse Fill="{StaticResource ImmAccentBrush}" Opacity="0.18">
-              <Ellipse.Effect>
-                <BlurEffect Radius="14" />
-              </Ellipse.Effect>
-            </Ellipse>
-            <Border Width="40" Height="40" CornerRadius="20">
-              <Border.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                  <GradientStop Color="#16324F" Offset="0" />
-                  <GradientStop Color="#0D1B33" Offset="1" />
-                </LinearGradientBrush>
-              </Border.Background>
-              <Border.BorderBrush>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                  <GradientStop Color="{StaticResource ImmAccentCyanColor}" Offset="0" />
-                  <GradientStop Color="{StaticResource ImmAccentColor}" Offset="0.55" />
-                  <GradientStop Color="#E8B84B" Offset="1" />
-                </LinearGradientBrush>
-              </Border.BorderBrush>
-              <Border BorderThickness="2" CornerRadius="19">
-                <TextBlock Text="∞" FontSize="21" FontWeight="Bold" Margin="0,-2,0,0"
-                           Foreground="#F2D06B"
-                           HorizontalAlignment="Center" VerticalAlignment="Center" />
-              </Border>
-            </Border>
-          </Grid>
+          <!-- App mark: transparent asset (no tile, no halo) — sits on the gradient like a native logo -->
+          <Image Grid.Column="0" Width="44" Height="44" Margin="0,0,12,0"
+                 Source="/Assets/app-icon-mark.png" Stretch="Uniform"
+                 RenderOptions.BitmapScalingMode="HighQuality" />
           <StackPanel Grid.Column="1" VerticalAlignment="Center">
-            <TextBlock Text="IMM" FontSize="20" FontWeight="Bold"
+            <TextBlock Text="IMM" FontSize="23" FontWeight="Bold"
                        Foreground="{StaticResource ImmTextPrimaryBrush}" />
-            <TextBlock Text="Infinite Modpack Manager" FontSize="10"
+            <TextBlock Text="Infinite Modpack Manager" FontSize="14"
                        Foreground="{StaticResource ImmTextSecondaryBrush}" />
           </StackPanel>
         </Grid>
