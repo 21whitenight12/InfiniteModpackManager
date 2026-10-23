@@ -29,6 +29,9 @@ public partial class LogViewModel : ObservableObject
 
     public ObservableCollection<string> Lines { get; } = [];
 
+    /// <summary>Запас сверх лимита: тримминг пачкой дешевле, чем RemoveAt(0) на каждую строку.</summary>
+    private const int TrimSlack = 512;
+
     [ObservableProperty]
     private bool _isPaused;
 
@@ -72,7 +75,13 @@ public partial class LogViewModel : ObservableObject
     private void Append(string line)
     {
         Lines.Add(line);
-        while (Lines.Count > UiLogSink.DefaultCapacity)
+        if (Lines.Count <= UiLogSink.DefaultCapacity + TrimSlack)
+        {
+            return;
+        }
+
+        // Пачкой, а не по строке: RemoveAt(0) на каждую строку — O(n²) при лог-шторме.
+        for (var i = 0; i < TrimSlack; i++)
         {
             Lines.RemoveAt(0);
         }

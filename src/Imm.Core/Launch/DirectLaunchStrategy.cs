@@ -18,7 +18,13 @@ public sealed class DirectLaunchStrategy : ILaunchStrategy
             ?? throw new InvalidOperationException("Папка игры не найдена — выполните ре-скан или добавьте сборку заново.");
 
         // Script extender loader preferred over the bare game exe (IMM.md ILaunchStrategy).
-        foreach (var loader in Markers.ScriptExtenderLoaders)
+        // Лоадер СВОЕЙ игры приоритетнее прочих: порядок общего списка — не приоритет.
+        var typedLoader = ModpackScanner.ScriptExtenderNameFor(manifest.GameType);
+        var loaders = typedLoader.Length == 0
+            ? Markers.ScriptExtenderLoaders
+            : new[] { typedLoader }.Concat(Markers.ScriptExtenderLoaders).ToArray();
+
+        foreach (var loader in loaders)
         {
             if (File.Exists(LongPath.Normalize(Path.Combine(gameRoot, loader))))
             {

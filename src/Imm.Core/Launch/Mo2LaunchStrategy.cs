@@ -51,24 +51,8 @@ public sealed class Mo2LaunchStrategy : ILaunchStrategy
     }
 
     /// <summary>Manifest-configured instance directory first; then root, then a single nested instance.</summary>
-    private static string? ResolveMo2Directory(ModpackManifest manifest, string packRoot)
-    {
-        var configured = manifest.Mo2?.Directory;
-        if (!string.IsNullOrWhiteSpace(configured))
-        {
-            var candidate = Path.GetFullPath(Path.Combine(packRoot, configured));
-            return Mo2Locator.IsPortableInstance(candidate) ? candidate : null;
-        }
-
-        // Manifests written before the Directory field existed.
-        if (Mo2Locator.IsPortableInstance(packRoot))
-        {
-            return packRoot;
-        }
-
-        var instances = Mo2Locator.FindSubdirectoryInstances(packRoot);
-        return instances.Count == 1 ? instances[0] : null;
-    }
+    private static string? ResolveMo2Directory(ModpackManifest manifest, string packRoot) =>
+        Mo2Locator.ResolveInstance(packRoot, manifest.Mo2?.Directory);
 
     /// <summary>
     /// FEHLauncher scheme: MO2 resolves a bare executable name against its own directory (its cwd),

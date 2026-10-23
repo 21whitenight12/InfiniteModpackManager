@@ -68,7 +68,7 @@ public sealed class ModpackScanner : IModpackScanner
             gameFilesDirectory = portableInfo.Value.Path;
             if (rootGameType != GameType.Unknown)
             {
-                warnings.Add("Game exe found both in pack root and in a portable game folder — using the portable folder.");
+                warnings.Add("Exe игры найден и в корне сборки, и в портативной папке игры — используется портативная.");
             }
         }
         else if (rootGameType != GameType.Unknown)

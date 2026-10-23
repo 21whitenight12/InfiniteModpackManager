@@ -39,7 +39,12 @@ public static class Mo2Locator
         if (!string.IsNullOrWhiteSpace(configuredSubdirectory))
         {
             var candidate = Path.GetFullPath(Path.Combine(packRoot, configuredSubdirectory));
-            return IsPortableInstance(candidate) ? candidate : null;
+            if (IsPortableInstance(candidate))
+            {
+                return candidate;
+            }
+
+            // Протухший Directory не должен прятать живой инстанс: падаем на корень / единственный вложенный.
         }
 
         if (IsPortableInstance(packRoot))

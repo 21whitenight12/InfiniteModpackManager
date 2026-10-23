@@ -63,7 +63,15 @@ public sealed class UiLogSink : ILogEventSink, IDisposable
             }
         }
 
-        LineAppended?.Invoke(line);
+        try
+        {
+            LineAppended?.Invoke(line);
+        }
+        catch (Exception exception)
+        {
+            // Подписчик (UI) не должен ломать место вызова Log.*: логировать отсюда нечем — это sink.
+            System.Diagnostics.Debug.WriteLine(exception);
+        }
     }
 
     public void Dispose() => _disposed = true;

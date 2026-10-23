@@ -39,6 +39,7 @@ public partial class MainWindow : FluentWindow
 
     private async void OnDrop(object sender, DragEventArgs e)
     {
+        e.Handled = true;
         if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths || paths.Length == 0)
         {
             return;

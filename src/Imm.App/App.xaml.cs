@@ -66,7 +66,7 @@ public partial class App : Application
         builder.Services.AddSingleton<ILaunchStrategy, DirectLaunchStrategy>();
         builder.Services.AddSingleton<ILaunchStrategy, Mo2LaunchStrategy>();
         builder.Services.AddSingleton<ILaunchService, LaunchService>();
-        builder.Services.AddTransient<LogViewModel>();
+        builder.Services.AddSingleton<LogViewModel>();
         builder.Services.AddSingleton<ILogWindowService, LogWindowService>();
         builder.Services.AddSingleton<IContentDialogService, ContentDialogService>();
         builder.Services.AddSingleton<ISnackbarService, SnackbarService>();
@@ -109,7 +109,7 @@ public partial class App : Application
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs args)
     {
         Log.Fatal(args.Exception, "Unhandled UI-thread exception.");
-        ShowFatalDialog("UI error", args.Exception);
+        ShowFatalDialog("Ошибка интерфейса", args.Exception);
         args.Handled = true;
 
         // Anti-zombie: fatal before startup completes → an invisible process is pointless.
@@ -125,7 +125,7 @@ public partial class App : Application
         if (args.ExceptionObject is Exception exception)
         {
             Log.Fatal(exception, "Unhandled AppDomain exception. IsTerminating={IsTerminating}", args.IsTerminating);
-            ShowFatalDialog("Fatal error", exception);
+            ShowFatalDialog("Критическая ошибка", exception);
         }
     }
 
@@ -137,7 +137,7 @@ public partial class App : Application
 
     private void ShowFatalDialog(string title, Exception exception)
     {
-        var message = $"{exception.Message}\n\nDetails are in the log file.";
+        var message = $"{exception.Message}\n\nПодробности — в логе.";
         try
         {
             var mainWindow = _host.Services.GetService<MainWindow>();
@@ -154,7 +154,7 @@ public partial class App : Application
                 {
                     Title = title,
                     Content = message,
-                    CloseButtonText = "Close"
+                    CloseButtonText = "Закрыть"
                 });
             });
         }

@@ -292,4 +292,16 @@ public sealed class ModOrganizerIniPatcherTests : IDisposable
             }
         }
     }
+
+    [Fact]
+    public void Patch_KeepsTrailingComment()
+    {
+        var path = WriteIni("[General]\nbase_directory=C:\\Games\\Old  ; migrated 2023\n");
+
+        _patcher.PatchBaseDirectory(path, @"C:\Games\New");
+
+        var updated = ReadRaw(path);
+        Assert.Contains(@"base_directory=C:\Games\New", updated);
+        Assert.Contains("; migrated 2023", updated);
+    }
 }

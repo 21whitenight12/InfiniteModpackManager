@@ -208,8 +208,7 @@ public partial class LibraryEntryViewModel : ObservableObject
     private bool _isSelected;
 
     private bool HasMo2Files() =>
-        File.Exists(Path.Combine(_entry.RootPath, "ModOrganizer.exe"))
-        || File.Exists(Path.Combine(_entry.RootPath, "MO2", "ModOrganizer.exe"));
+        Mo2Locator.ResolveInstance(_entry.RootPath, _manifest?.Mo2?.Directory) is not null;
 
     // ----- context menu commands (command objects live here so ContextMenu
     // bindings never cross the popup tree boundary; owner executes them) -----

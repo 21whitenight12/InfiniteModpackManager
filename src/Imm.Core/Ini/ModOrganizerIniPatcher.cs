@@ -74,8 +74,9 @@ public sealed class ModOrganizerIniPatcher
     /// <summary>Decodes a Qt @ByteArray(...) wrapper when present; plain values pass through.</summary>
     private static string DecodePossibleByteArray(string raw)
     {
-        return raw.StartsWith("@ByteArray(", StringComparison.Ordinal) && raw.EndsWith(')')
-            ? UnescapeQt(raw["@ByteArray(".Length..^1])
+        var trimmed = raw.TrimStart();
+        return trimmed.StartsWith("@ByteArray(", StringComparison.Ordinal) && trimmed.EndsWith(')')
+            ? UnescapeQt(trimmed["@ByteArray(".Length..^1])
             : UnescapeQt(raw);
     }
 
@@ -103,9 +104,7 @@ public sealed class ModOrganizerIniPatcher
         }
 
         var raw = StripTrailingComment(gamePath.Value.ValueRaw);
-        var value = raw.StartsWith("@ByteArray(", StringComparison.Ordinal) && raw.EndsWith(')')
-            ? UnescapeQt(raw["@ByteArray(".Length..^1])
-            : UnescapeQt(raw);
+        var value = DecodePossibleByteArray(raw);
 
         if (string.IsNullOrWhiteSpace(value))
         {
@@ -135,7 +134,7 @@ public sealed class ModOrganizerIniPatcher
             ?? throw new InvalidOperationException(
                 "В секции [General] не найден ключ base_directory — структура ini неожиданная, файл не изменён.");
 
-        if (match.ValueRaw.StartsWith("@ByteArray(", StringComparison.Ordinal))
+        if (match.ValueRaw.TrimStart().StartsWith("@ByteArray(", StringComparison.Ordinal))
         {
             throw new InvalidOperationException(
                 "base_directory хранится в бинарном формате Qt (@ByteArray) — файл не изменён, требуется ручная проверка.");
@@ -156,7 +155,9 @@ public sealed class ModOrganizerIniPatcher
 
         var backupPath = CreateBackup(normalized);
         var cleanRaw = StripTrailingComment(match.ValueRaw);
-        var updatedLine = match.LineText[..(match.EqualsIndex + 1)] + EncodeLike(cleanRaw, newBaseDirectory);
+        // Хвостовой "; комментарий" — часть пользовательской строки, а не наш мусор: возвращаем его на место.
+        var commentSuffix = match.ValueRaw[cleanRaw.Length..];
+        var updatedLine = match.LineText[..(match.EqualsIndex + 1)] + EncodeLike(cleanRaw, newBaseDirectory) + commentSuffix;
         ini.Lines[match.Index] = updatedLine;
         WriteIni(normalized, ini);
 
@@ -299,7 +300,19 @@ public sealed class ModOrganizerIniPatcher
         var normalizedPath = LongPath.Normalize(path);
         var bytes = File.ReadAllBytes(normalizedPath);
         var (encoding, bomLength) = DetectEncoding(bytes);
-        var content = encoding.GetString(bytes, bomLength, bytes.Length - bomLength);
+
+        string content;
+        try
+        {
+            content = encoding.GetString(bytes, bomLength, bytes.Length - bomLength);
+        }
+        catch (DecoderFallbackException)
+        {
+            // Не «повреждён», а «не та кодировка»: файл не трогаем, но и диагноз не врём.
+            throw new InvalidOperationException(
+                "ModOrganizer.ini сохранён в кодировке, отличной от UTF-8/UTF-16 (например, ANSI) — файл не изменён. "
+                + "Пересохраните его в UTF-8 и повторите.");
+        }
 
         if (content.Contains('\uFFFD'))
         {
@@ -321,7 +334,7 @@ public sealed class ModOrganizerIniPatcher
     {
         if (bytes.Length >= 3 && bytes[0] == 0xEF && bytes[1] == 0xBB && bytes[2] == 0xBF)
         {
-            return (new UTF8Encoding(encoderShouldEmitUTF8Identifier: true), 3);
+            return (new UTF8Encoding(encoderShouldEmitUTF8Identifier: true, throwOnInvalidBytes: true), 3);
         }
 
         if (bytes.Length >= 2 && bytes[0] == 0xFF && bytes[1] == 0xFE)
@@ -335,7 +348,7 @@ public sealed class ModOrganizerIniPatcher
         }
 
         // No BOM: read/write as UTF-8 without BOM (MO2's own default for fresh inis).
-        return (new UTF8Encoding(encoderShouldEmitUTF8Identifier: false), 0);
+        return (new UTF8Encoding(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true), 0);
     }
 
     private static List<string> SplitLines(string content)

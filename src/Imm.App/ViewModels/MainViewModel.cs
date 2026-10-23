@@ -44,6 +44,15 @@ public partial class MainViewModel : ObservableObject
         _logger = logger.ForContext<MainViewModel>();
         Entries.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasNoEntries));
         EntriesView = CollectionViewSource.GetDefaultView(Entries);
+        if (EntriesView is ListCollectionView listView && listView.CanChangeLiveSorting)
+        {
+            // Переименование меняет ключ сортировки — без live-sorting карточка остаётся на старом месте.
+            listView.LiveSortingProperties.Add(nameof(LibraryEntryViewModel.Name));
+            listView.LiveSortingProperties.Add(nameof(LibraryEntryViewModel.LastPlayedAtUtc));
+            listView.LiveSortingProperties.Add(nameof(LibraryEntryViewModel.PlaytimeMinutes));
+            listView.IsLiveSorting = true;
+        }
+
         ApplySort();
     }
 
@@ -205,13 +214,15 @@ public partial class MainViewModel : ObservableObject
             {
                 await _library.RenameAsync(entry, displayName).ConfigureAwait(true);
                 viewModel.ApplyName(displayName.Trim());
-                _snackbar.Show(
-                    "Библиотека",
-                    $"Сборка «{entry.Name}» добавлена",
-                    ControlAppearance.Success,
-                    new SymbolIcon { Symbol = SymbolRegular.CheckmarkCircle24 },
-                    TimeSpan.FromSeconds(4));
             }
+
+            // Подтверждение — на любой успешный импорт, а не только на переименованный.
+            _snackbar.Show(
+                "Библиотека",
+                $"Сборка «{entry.Name}» добавлена",
+                ControlAppearance.Success,
+                new SymbolIcon { Symbol = SymbolRegular.CheckmarkCircle24 },
+                TimeSpan.FromSeconds(4));
         }
         catch (InvalidOperationException exception)
         {
@@ -313,7 +324,8 @@ public partial class MainViewModel : ObservableObject
                 throw new InvalidOperationException("Манифест сборки не найден — выполните ре-скан.");
             }
 
-            await _launch.LaunchAsync(manifest, entry.RootPath).ConfigureAwait(true);
+            using var process = await _launch.LaunchAsync(manifest, entry.RootPath).ConfigureAwait(true);
+            _logger.Information("Launched {Name} (pid={ProcessId})", entry.Name, process.Id);
             _snackbar.Show(
                 "Запуск",
                 $"Сборка «{entry.Name}» запущена",

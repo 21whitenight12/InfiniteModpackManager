@@ -25,6 +25,8 @@ public partial class LibraryView : Page
 
     private async void OnDrop(object sender, DragEventArgs e)
     {
+        // Drop всплывает: без Handled тот же дроп поймает ещё и обработчик окна → двойной импорт.
+        e.Handled = true;
         if (e.Data.GetData(DataFormats.FileDrop) is not string[] paths || DataContext is not MainViewModel vm)
         {
             return;

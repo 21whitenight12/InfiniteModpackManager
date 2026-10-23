@@ -23,8 +23,18 @@ public static class AtomicFile
 
         try
         {
-            await File.WriteAllTextAsync(tempPath, ImmJson.Serialize(document), cancellationToken)
-                .ConfigureAwait(false);
+            var json = ImmJson.Serialize(document);
+            var bytes = System.Text.Encoding.UTF8.GetBytes(json);
+
+            // WriteThrough: данные уходят на диск до File.Move — иначе обрыв питания оставляет
+            // «успешно переименованный» пустой файл.
+            await using (var stream = new FileStream(tempPath, FileMode.CreateNew, FileAccess.Write, FileShare.None,
+                             bufferSize: 4096, FileOptions.WriteThrough | FileOptions.Asynchronous))
+            {
+                await stream.WriteAsync(bytes, cancellationToken).ConfigureAwait(false);
+                await stream.FlushAsync(cancellationToken).ConfigureAwait(false);
+            }
+
             File.Move(tempPath, normalized, overwrite: true);
         }
         finally

@@ -308,4 +308,22 @@ public sealed class LaunchStrategyTests : IDisposable
 
         Assert.Contains(gameDir, File.ReadAllText(Path.Combine(pack, "ModOrganizer.ini")));
     }
+
+    [Fact]
+    public async Task Mo2_StaleInstanceDirectory_FallsBackToRootInstance()
+    {
+        // Протухший Directory не должен прятать живой инстанс в корне сборки.
+        var pack = CreatePack("StaleDir", p =>
+        {
+            File.WriteAllText(Path.Combine(p, "ModOrganizer.exe"), string.Empty);
+            File.WriteAllText(Path.Combine(p, "ModOrganizer.ini"), "[General]\ngameName=Fallout 4\n");
+            WriteGameExe(p);
+        });
+        var manifest = Manifest(LaunchEngine.Mo2Standard, PackSource.Portable, "Default");
+        manifest.Mo2!.Directory = "Gone";
+
+        var plan = await _mo2.BuildPlanAsync(manifest, pack);
+
+        Assert.Equal(Path.Combine(pack, "ModOrganizer.exe"), plan.ExecutablePath);
+    }
 }
