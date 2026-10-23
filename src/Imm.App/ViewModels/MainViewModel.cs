@@ -27,6 +27,7 @@ public partial class MainViewModel : ObservableObject
     private readonly ILaunchService _launch;
     private readonly IBackupService _backups;
     private readonly ISessionTracker _sessionTracker;
+    private readonly IWindowActivationService _windowActivation;
     private readonly ISnackbarService _snackbar;
     private readonly IContentDialogService _dialog;
     private readonly ILogWindowService _logWindow;
@@ -37,6 +38,7 @@ public partial class MainViewModel : ObservableObject
         ILaunchService launch,
         IBackupService backups,
         ISessionTracker sessionTracker,
+        IWindowActivationService windowActivation,
         ISnackbarService snackbar,
         IContentDialogService dialog,
         ILogWindowService logWindow,
@@ -46,6 +48,7 @@ public partial class MainViewModel : ObservableObject
         _launch = launch;
         _backups = backups;
         _sessionTracker = sessionTracker;
+        _windowActivation = windowActivation;
         _snackbar = snackbar;
         _dialog = dialog;
         _logWindow = logWindow;
@@ -811,6 +814,87 @@ public partial class MainViewModel : ObservableObject
                 ControlAppearance.Danger,
                 new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
                 TimeSpan.FromSeconds(6));
+        }
+    }
+
+    /// <summary>
+    /// «Открыть MO2»: brings the running MO2 window to the front, otherwise starts the instance without
+    /// a game. A second MO2 on the same instance is never started — it would corrupt the profile.
+    /// </summary>
+    [RelayCommand]
+    private async Task OpenMo2Async(LibraryEntryViewModel? entry)
+    {
+        if (entry is null || IsBusy)
+        {
+            return;
+        }
+
+        IsBusy = true;
+        try
+        {
+            var libraryEntry = await FindEntryAsync(entry.Id).ConfigureAwait(true)
+                ?? throw new InvalidOperationException("Сборка не найдена в библиотеке.");
+            var manifest = await _library.LoadManifestAsync(libraryEntry).ConfigureAwait(true)
+                ?? throw new InvalidOperationException("Манифест сборки не найден — выполните ре-скан.");
+
+            var instance = Mo2Locator.ResolveInstance(libraryEntry.RootPath, manifest.Mo2?.Directory)
+                ?? throw new InvalidOperationException(
+                    "ModOrganizer.exe не найден — поддерживаются только portable-инстансы MO2.");
+            var mo2Exe = Path.Combine(instance, "ModOrganizer.exe");
+
+            if (_windowActivation.TryActivate(mo2Exe))
+            {
+                _logger.Information("Mod Organizer window activated for {Path}", entry.RootPath);
+                _snackbar.Show(
+                    "MO2",
+                    "Окно Mod Organizer 2 выведено на передний план",
+                    ControlAppearance.Info,
+                    new SymbolIcon { Symbol = SymbolRegular.Window24 },
+                    TimeSpan.FromSeconds(4));
+                return;
+            }
+
+            await _launch.OpenModOrganizerAsync(manifest, libraryEntry.RootPath).ConfigureAwait(true);
+            _snackbar.Show(
+                "MO2",
+                "Mod Organizer 2 запущен (без игры)",
+                ControlAppearance.Success,
+                new SymbolIcon { Symbol = SymbolRegular.Settings24 },
+                TimeSpan.FromSeconds(4));
+        }
+        catch (System.ComponentModel.Win32Exception exception) when (exception.NativeErrorCode == 1223)
+        {
+            _logger.Information("Opening MO2 cancelled by user (UAC refused) for {Path}", entry.RootPath);
+            _snackbar.Show(
+                "Запуск отменён",
+                "Запрос UAC отклонён — MO2 не запущен.",
+                ControlAppearance.Light,
+                new SymbolIcon { Symbol = SymbolRegular.Info24 },
+                TimeSpan.FromSeconds(4));
+        }
+        catch (InvalidOperationException exception)
+        {
+            _logger.Warning("Opening MO2 rejected: {Message}", exception.Message);
+            _snackbar.Show(
+                "MO2 не открыт",
+                exception.Message,
+                ControlAppearance.Caution,
+                new SymbolIcon { Symbol = SymbolRegular.Warning24 },
+                TimeSpan.FromSeconds(6));
+        }
+        catch (Exception exception)
+        {
+            _logger.Error(exception, "Opening MO2 failed for {Path}", entry.RootPath);
+            _snackbar.Show(
+                "Ошибка запуска MO2",
+                exception.Message,
+                ControlAppearance.Danger,
+                new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
+                TimeSpan.FromSeconds(6));
+        }
+        finally
+        {
+            IsBusy = false;
         }
     }
 

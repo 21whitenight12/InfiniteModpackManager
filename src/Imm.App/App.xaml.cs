@@ -71,6 +71,7 @@ public partial class App : Application
         builder.Services.AddSingleton<IBackupService, BackupService>();
         builder.Services.AddSingleton<IGameProcessProbe, GameProcessProbe>();
         builder.Services.AddSingleton<ISessionTracker, SessionTracker>();
+        builder.Services.AddSingleton<IWindowActivationService, WindowActivationService>();
         builder.Services.AddSingleton<LogViewModel>();
         builder.Services.AddSingleton<ILogWindowService, LogWindowService>();
         builder.Services.AddSingleton<IContentDialogService, ContentDialogService>();

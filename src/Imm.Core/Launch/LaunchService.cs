@@ -1,5 +1,7 @@
 using System.Diagnostics;
+using System.IO;
 using Imm.Core.Domain;
+using Imm.Core.Scanning;
 using Serilog;
 
 namespace Imm.Core.Launch;
@@ -9,6 +11,12 @@ public interface ILaunchService
 {
     /// <summary>Launches the pack. Throws <see cref="InvalidOperationException"/> with a user-facing message on failure.</summary>
     Task<Process> LaunchAsync(ModpackManifest manifest, string packRoot, CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Starts ModOrganizer.exe of the pack's instance without a game executable ("open MO2");
+    /// elevated for the same reason the game launch is (SE loaders inherit the MO2 token).
+    /// </summary>
+    Task<Process> OpenModOrganizerAsync(ModpackManifest manifest, string packRoot, CancellationToken cancellationToken = default);
 }
 
 public sealed class LaunchService : ILaunchService
@@ -49,5 +57,30 @@ public sealed class LaunchService : ILaunchService
 
         return Process.Start(startInfo)
             ?? throw new InvalidOperationException("Процесс не был запущен (система вернула null).");
+    }
+
+    /// <inheritdoc />
+    public Task<Process> OpenModOrganizerAsync(ModpackManifest manifest, string packRoot,
+        CancellationToken cancellationToken = default)
+    {
+        cancellationToken.ThrowIfCancellationRequested();
+
+        var instance = Mo2Locator.ResolveInstance(packRoot, manifest.Mo2?.Directory)
+            ?? throw new InvalidOperationException(
+                "ModOrganizer.exe не найден — поддерживаются только portable-инстансы MO2.");
+
+        var mo2Exe = Path.Combine(instance, Markers.ModOrganizerExe);
+        _logger.Information("Opening Mod Organizer without a game: {Exe}", mo2Exe);
+
+        var startInfo = new ProcessStartInfo
+        {
+            FileName = mo2Exe,
+            WorkingDirectory = instance,
+            UseShellExecute = true,
+            Verb = "runas", // UAC prompt; refusal surfaces as Win32Exception 1223
+        };
+
+        return Task.FromResult(Process.Start(startInfo)
+            ?? throw new InvalidOperationException("Процесс не был запущен (система вернула null)."));
     }
 }

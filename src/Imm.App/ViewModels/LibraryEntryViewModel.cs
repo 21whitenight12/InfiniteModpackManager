@@ -161,6 +161,9 @@ public partial class LibraryEntryViewModel : ObservableObject
         _ => "Direct",
     };
 
+    /// <summary>MO2 packs get the «Открыть MO2» action (Direct packs have no MO2 to open).</summary>
+    public bool IsMo2 => Engine is LaunchEngine.Mo2Standard or LaunchEngine.Mo2RootBuilder;
+
     public string LastPlayedText => _entry.LastPlayedAtUtc is null
         ? "—"
         : _entry.LastPlayedAtUtc.Value.ToLocalTime().ToString("dd.MM.yyyy");
