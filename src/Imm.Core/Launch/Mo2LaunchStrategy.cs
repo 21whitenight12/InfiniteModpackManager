@@ -43,7 +43,7 @@ public sealed class Mo2LaunchStrategy : ILaunchStrategy
 
         EnsureManagedGameUsable(manifest, packRoot, mo2Directory);
 
-        var executable = ResolveExecutableName(manifest, packRoot, mo2Directory)
+        var executable = ResolveExecutableName(manifest, packRoot, mo2Directory, cancellationToken)
             ?? throw new InvalidOperationException("Не удалось определить запускаемый exe игры — проверьте сборку или выполните ре-скан.");
 
         var mo2Exe = Path.Combine(mo2Directory, Markers.ModOrganizerExe);
@@ -76,7 +76,8 @@ public sealed class Mo2LaunchStrategy : ILaunchStrategy
     /// Priority: the persisted full path from the manifest (Root Builder scheme — resolved at scan),
     /// validated live; then mod folders; then the hint expanded to a real location; then game roots.
     /// </summary>
-    private string? ResolveExecutableName(ModpackManifest manifest, string packRoot, string mo2Directory)
+    private string? ResolveExecutableName(ModpackManifest manifest, string packRoot, string mo2Directory,
+        CancellationToken cancellationToken)
     {
         var searchDirectories = CollectSearchDirectories(manifest, packRoot, mo2Directory);
 
@@ -87,7 +88,7 @@ public sealed class Mo2LaunchStrategy : ILaunchStrategy
             return Path.GetFullPath(hint);
         }
 
-        var fromMods = Mo2Locator.FindLoaderInMods(mo2Directory, manifest.GameType);
+        var fromMods = Mo2Locator.FindLoaderInMods(mo2Directory, manifest.GameType, cancellationToken);
         if (fromMods is not null)
         {
             _logger.Information("Launch executable found in mods folder: {Executable}", fromMods);

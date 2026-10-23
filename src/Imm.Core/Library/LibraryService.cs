@@ -201,8 +201,18 @@ public sealed class LibraryService : ILibraryService
 
         if (manifest.Detection.OverriddenByUser)
         {
-            // User overrides win over heuristics — detection section untouched (IMM.md Detection Markers).
-            _logger.Information("Re-scan completed but user overrides kept for entry {Id}.", entry.Id);
+            // Детект игры принадлежит пользователю (IMM.md Detection Markers) — не трогаем его.
+            // Но путь запускаемого файла остаётся фактом скана: иначе персистнутый путь лоадера
+            // Root Builder (схема «найти в модах при скане») у таких сборок не обновляется никогда.
+            var executable = scan.LaunchExecutable;
+            if (!string.IsNullOrWhiteSpace(executable)
+                && !string.Equals(manifest.Launch.Executable, executable, StringComparison.OrdinalIgnoreCase))
+            {
+                manifest.Launch.Executable = executable;
+                await SaveManifestAsync(entry.RootPath, manifest, cancellationToken).ConfigureAwait(false);
+            }
+
+            _logger.Information("Re-scan completed; user overrides kept for entry {Id}.", entry.Id);
             return scan;
         }
 

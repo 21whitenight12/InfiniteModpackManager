@@ -247,4 +247,16 @@ public sealed class ModpackScannerTests : IDisposable
     }
 
     private static string GameFolderName(GameType _) => "Skyrim Special Edition";
+
+    [Fact]
+    public async Task Scan_CancelledToken_Throws()
+    {
+        var scanner = new ModpackScanner(
+            new SystemGameLocator(new NullRegistryService(), Serilog.Log.Logger),
+            Serilog.Log.Logger);
+        using var cts = new CancellationTokenSource();
+        cts.Cancel();
+
+        await Assert.ThrowsAnyAsync<OperationCanceledException>(() => scanner.ScanAsync(_root, cts.Token));
+    }
 }

@@ -8,13 +8,15 @@ public sealed class WindowsRegistryService : IRegistryService
 {
     public string? GetString(RegistryHive hive, RegistryView view, string subKey, string valueName)
     {
-        using var key = RegistryKey.OpenBaseKey(hive, view).OpenSubKey(subKey);
+        using var baseKey = RegistryKey.OpenBaseKey(hive, view);
+        using var key = baseKey.OpenSubKey(subKey);
         return key?.GetValue(valueName) as string;
     }
 
     public IEnumerable<string> GetSubKeyNames(RegistryHive hive, RegistryView view, string subKey)
     {
-        using var key = RegistryKey.OpenBaseKey(hive, view).OpenSubKey(subKey);
+        using var baseKey = RegistryKey.OpenBaseKey(hive, view);
+        using var key = baseKey.OpenSubKey(subKey);
         return key?.GetSubKeyNames() ?? [];
     }
 }

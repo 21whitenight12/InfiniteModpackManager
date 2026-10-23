@@ -22,10 +22,11 @@ public sealed class ModpackScanner : IModpackScanner
     }
 
     public Task<ScanResult> ScanAsync(string rootPath, CancellationToken cancellationToken = default) =>
-        Task.Run(() => ScanCore(rootPath), cancellationToken);
+        Task.Run(() => ScanCore(rootPath, cancellationToken), cancellationToken);
 
-    private ScanResult ScanCore(string rootPath)
+    private ScanResult ScanCore(string rootPath, CancellationToken cancellationToken)
     {
+        cancellationToken.ThrowIfCancellationRequested();
         var warnings = new List<string>();
         var root = LongPath.Normalize(Path.GetFullPath(rootPath));
 
@@ -35,6 +36,7 @@ public sealed class ModpackScanner : IModpackScanner
             return Fail(root, "Папка не существует.");
         }
 
+        cancellationToken.ThrowIfCancellationRequested();
         var rootGameType = DetectGameAt(root);
         var portableInfo = FindPortableGameRoot(root);
 
@@ -151,7 +153,7 @@ public sealed class ModpackScanner : IModpackScanner
         string? mo2Profile = null;
         if (mo2Directory is not null)
         {
-            engine = DetectRootBuilder(mo2Directory, gameType, warnings)
+            engine = DetectRootBuilder(mo2Directory, warnings)
                 ? LaunchEngine.Mo2RootBuilder
                 : LaunchEngine.Mo2Standard;
             var iniPath = Path.Combine(mo2Directory, Markers.ModOrganizerIni);
@@ -175,7 +177,8 @@ public sealed class ModpackScanner : IModpackScanner
         var launchExecutable = DetectLaunchExecutable(gameType, gameFilesDirectory, mo2Directory is not null, warnings);
         if (engine == LaunchEngine.Mo2RootBuilder && mo2Directory is not null)
         {
-            var modsLoader = Mo2Locator.FindLoaderInMods(mo2Directory, gameType);
+            cancellationToken.ThrowIfCancellationRequested();
+            var modsLoader = Mo2Locator.FindLoaderInMods(mo2Directory, gameType, cancellationToken);
             if (modsLoader is not null)
             {
                 launchExecutable = modsLoader;
@@ -250,10 +253,14 @@ public sealed class ModpackScanner : IModpackScanner
         return null;
     }
 
-    private static bool DetectRootBuilder(string root, GameType gameType, List<string> warnings)
+    /// <summary>
+    /// Root Builder ships in two forms: a C++ plugin (plugins/RootBuilder.dll) and a Python plugin
+    /// (plugins/rootbuilder/). Plugin presence is the fact: root files may legitimately live in the
+    /// game folder right now (Root Builder migrates them back on MO2 close and re-virtualizes on
+    /// start), so scanning mods/ cannot change the answer and only burns I/O on big packs.
+    /// </summary>
+    private static bool DetectRootBuilder(string root, List<string> warnings)
     {
-        // Root Builder ships in two forms: a C++ plugin (plugins/RootBuilder.dll)
-        // and a Python plugin (plugins/rootbuilder/ with __init__.py).
         var hasCppPlugin = File.Exists(LongPath.Normalize(
             Path.Combine(root, Markers.PluginsFolder, Markers.RootBuilderDll)));
         var hasPythonPlugin = Directory.Exists(LongPath.Normalize(
@@ -263,33 +270,11 @@ public sealed class ModpackScanner : IModpackScanner
             return false;
         }
 
-        // Root Builder signature per IMM.md: root plugin + game root files inside a mod folder.
-        var modsDirectory = Path.Combine(root, Markers.ModsFolder);
-        if (!Directory.Exists(LongPath.Normalize(modsDirectory)))
+        if (!Directory.Exists(LongPath.Normalize(Path.Combine(root, Markers.ModsFolder))))
         {
             warnings.Add("Root Builder найден, но папка mods отсутствует — проверьте настройку сборки.");
-            return true;
         }
 
-        var gameFileNames = new List<string>();
-        if (gameType != GameType.Unknown)
-        {
-            gameFileNames.Add(GameExeNameFor(gameType));
-        }
-
-        // binkw64/binkw32 (Skyrim) vs bink2w64 (Fallout 4): root-level binaries Root Builder manages.
-        gameFileNames.AddRange(new[] { "binkw64.dll", "binkw32.dll", "bink2w64.dll" });
-
-        foreach (var mod in Directory.EnumerateDirectories(LongPath.Normalize(modsDirectory)))
-        {
-            if (gameFileNames.Any(name => File.Exists(Path.Combine(mod, name))))
-            {
-                return true;
-            }
-        }
-
-        // Plugin presence is the fact; root files may legitimately live in the game folder
-        // right now (Root Builder migrates them back on MO2 close and re-virtualizes on start).
         return true;
     }
 

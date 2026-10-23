@@ -64,11 +64,29 @@ public sealed class SystemGameLocator
         return null;
     }
 
+    /// <summary>
+    /// Registry reads never take the whole cascade down: a locked/missing key just skips that source
+    /// (scanning a pack must not fail because of an unrelated store entry).
+    /// </summary>
+    private string? ReadRegistryString(RegistryHive hive, RegistryView view, string subKey, string valueName)
+    {
+        try
+        {
+            return _registry.GetString(hive, view, subKey, valueName);
+        }
+        catch (Exception exception)
+            when (exception is System.Security.SecurityException or UnauthorizedAccessException or IOException)
+        {
+            _logger.Warning(exception, "Registry read failed: {Hive}\\{SubKey} {Value}", hive, subKey, valueName);
+            return null;
+        }
+    }
+
     /// <summary>Bethesda launcher-era registry keys (HKLM\SOFTWARE\Bethesda Softworks\...), exe validated.</summary>
     private string? FindBethesdaGame(GameType gameType, string executable, RegistryView view)
     {
         var subKey = $@"SOFTWARE\Bethesda Softworks\{BethesdaKeyName(gameType)}";
-        var path = _registry.GetString(RegistryHive.LocalMachine, view, subKey, "Installed Path");
+        var path = ReadRegistryString(RegistryHive.LocalMachine, view, subKey, "Installed Path");
         if (string.IsNullOrEmpty(path))
         {
             return null;
@@ -89,7 +107,7 @@ public sealed class SystemGameLocator
 
     private string? FindSteamGame(GameType gameType, string executable)
     {
-        var steamPath = _registry.GetString(
+        var steamPath = ReadRegistryString(
             RegistryHive.CurrentUser, RegistryView.Default, @"Software\Valve\Steam", "SteamPath");
         if (string.IsNullOrEmpty(steamPath))
         {
@@ -98,7 +116,14 @@ public sealed class SystemGameLocator
 
         var steamRoot = Path.GetFullPath(steamPath.Replace('/', '\\'));
         var libraries = new List<string> { steamRoot };
-        libraries.AddRange(ParseSteamLibraries(Path.Combine(steamRoot, "steamapps", "libraryfolders.vdf")));
+        try
+        {
+            libraries.AddRange(ParseSteamLibraries(Path.Combine(steamRoot, "steamapps", "libraryfolders.vdf")));
+        }
+        catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+        {
+            _logger.Warning(exception, "libraryfolders.vdf is unreadable; only the main Steam library is used.");
+        }
 
         var gameFolder = GameFolderName(gameType);
         if (gameFolder is null)
@@ -153,9 +178,21 @@ public sealed class SystemGameLocator
     private string? FindGogGame(string executable)
     {
         const string gamesKey = @"SOFTWARE\WOW6432Node\GOG.com\Games";
-        foreach (var subKey in _registry.GetSubKeyNames(RegistryHive.LocalMachine, RegistryView.Registry64, gamesKey))
+        IReadOnlyList<string> subKeys;
+        try
         {
-            var path = _registry.GetString(RegistryHive.LocalMachine, RegistryView.Registry64, $@"{gamesKey}\{subKey}", "path");
+            subKeys = _registry.GetSubKeyNames(RegistryHive.LocalMachine, RegistryView.Registry64, gamesKey).ToList();
+        }
+        catch (Exception exception)
+            when (exception is System.Security.SecurityException or UnauthorizedAccessException or IOException)
+        {
+            _logger.Warning(exception, "GOG registry is unreadable; GOG source skipped.");
+            return null;
+        }
+
+        foreach (var subKey in subKeys)
+        {
+            var path = ReadRegistryString(RegistryHive.LocalMachine, RegistryView.Registry64, $@"{gamesKey}\{subKey}", "path");
             if (string.IsNullOrEmpty(path))
             {
                 continue;

@@ -256,7 +256,7 @@ public partial class MainViewModel : ObservableObject
                 return;
             }
 
-            var scan = await _library.RescanAsync(libraryEntry).ConfigureAwait(true);
+            await _library.RescanAsync(libraryEntry).ConfigureAwait(true);
             var manifest = await _library.LoadManifestAsync(libraryEntry).ConfigureAwait(true);
             entry.UpdateManifest(manifest ?? new ModpackManifest());
             _snackbar.Show(
@@ -265,7 +265,26 @@ public partial class MainViewModel : ObservableObject
                 ControlAppearance.Info,
                 new SymbolIcon { Symbol = SymbolRegular.ArrowClockwise24 },
                 TimeSpan.FromSeconds(4));
-            _ = scan;
+        }
+        catch (InvalidOperationException exception)
+        {
+            _logger.Warning("Re-scan rejected: {Message}", exception.Message);
+            _snackbar.Show(
+                "Ре-скан невозможен",
+                exception.Message,
+                ControlAppearance.Caution,
+                new SymbolIcon { Symbol = SymbolRegular.Warning24 },
+                TimeSpan.FromSeconds(6));
+        }
+        catch (Exception exception)
+        {
+            _logger.Error(exception, "Re-scan failed for {Path}", entry.RootPath);
+            _snackbar.Show(
+                "Ошибка ре-скана",
+                exception.Message,
+                ControlAppearance.Danger,
+                new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
+                TimeSpan.FromSeconds(6));
         }
         finally
         {
@@ -384,6 +403,16 @@ public partial class MainViewModel : ObservableObject
                 new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
                 TimeSpan.FromSeconds(4));
         }
+        catch (Exception exception)
+        {
+            _logger.Error(exception, "Removing entry {Id} failed", entry.Id);
+            _snackbar.Show(
+                "Библиотека",
+                $"Не удалось убрать сборку: {exception.Message}",
+                ControlAppearance.Danger,
+                new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
+                TimeSpan.FromSeconds(6));
+        }
         finally
         {
             IsBusy = false;
@@ -408,30 +437,44 @@ public partial class MainViewModel : ObservableObject
     /// <summary>Persists a manually picked MO2 profile; survives re-scan (ProfileOverriddenByUser).</summary>
     public async Task SetProfileAsync(LibraryEntryViewModel entry, string profile)
     {
-        var libraryEntry = await FindEntryAsync(entry.Id).ConfigureAwait(true);
-        if (libraryEntry is null)
+        try
         {
-            return;
-        }
+            var libraryEntry = await FindEntryAsync(entry.Id).ConfigureAwait(true);
+            if (libraryEntry is null)
+            {
+                return;
+            }
 
-        var manifest = await _library.LoadManifestAsync(libraryEntry).ConfigureAwait(true);
-        if (manifest is null)
+            var manifest = await _library.LoadManifestAsync(libraryEntry).ConfigureAwait(true);
+            if (manifest is null)
+            {
+                return;
+            }
+
+            manifest.Mo2 ??= new Mo2Section();
+            manifest.Mo2.ProfileName = profile;
+            manifest.Detection.ProfileOverriddenByUser = true;
+            await _library.SaveManifestAsync(entry.RootPath, manifest).ConfigureAwait(true);
+            entry.UpdateManifest(manifest);
+
+            _snackbar.Show(
+                "Профиль",
+                $"Для «{entry.Name}» выбран профиль «{profile}»",
+                ControlAppearance.Success,
+                new SymbolIcon { Symbol = SymbolRegular.CheckmarkCircle24 },
+                TimeSpan.FromSeconds(4));
+        }
+        catch (Exception exception)
         {
-            return;
+            // Метод вызывается fire-and-forget из команды карточки: ошибка обязана дойти до UI.
+            _logger.Error(exception, "Saving profile {Profile} for {Path} failed", profile, entry.RootPath);
+            _snackbar.Show(
+                "Профиль",
+                $"Не удалось сохранить профиль: {exception.Message}",
+                ControlAppearance.Danger,
+                new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
+                TimeSpan.FromSeconds(6));
         }
-
-        manifest.Mo2 ??= new Mo2Section();
-        manifest.Mo2.ProfileName = profile;
-        manifest.Detection.ProfileOverriddenByUser = true;
-        await _library.SaveManifestAsync(entry.RootPath, manifest).ConfigureAwait(true);
-        entry.UpdateManifest(manifest);
-
-        _snackbar.Show(
-            "Профиль",
-            $"Для «{entry.Name}» выбран профиль «{profile}»",
-            ControlAppearance.Success,
-            new SymbolIcon { Symbol = SymbolRegular.CheckmarkCircle24 },
-            TimeSpan.FromSeconds(4));
     }
 
     public void SetProfile(LibraryEntryViewModel entry, string profile) =>
@@ -455,32 +498,45 @@ public partial class MainViewModel : ObservableObject
             return;
         }
 
-        var libraryEntry = await FindEntryAsync(entry.Id).ConfigureAwait(true);
-        if (libraryEntry is null)
+        try
         {
-            return;
-        }
+            var libraryEntry = await FindEntryAsync(entry.Id).ConfigureAwait(true);
+            if (libraryEntry is null)
+            {
+                return;
+            }
 
-        var manifest = await _library.LoadManifestAsync(libraryEntry).ConfigureAwait(true);
-        if (manifest is null)
+            var manifest = await _library.LoadManifestAsync(libraryEntry).ConfigureAwait(true);
+            if (manifest is null)
+            {
+                return;
+            }
+
+            manifest.GameType = gameType.Value;
+            manifest.SystemGamePath = folder;
+            manifest.Source = PackSource.System;
+            manifest.Launch.Executable = Mo2Locator.DetectLaunchExecutableName(folder) ?? string.Empty;
+            manifest.Detection.OverriddenByUser = true;
+            await _library.SaveManifestAsync(entry.RootPath, manifest).ConfigureAwait(true);
+            entry.UpdateManifest(manifest);
+
+            _snackbar.Show(
+                "Игра",
+                $"Для «{entry.Name}» указана папка: {folder}",
+                ControlAppearance.Success,
+                new SymbolIcon { Symbol = SymbolRegular.CheckmarkCircle24 },
+                TimeSpan.FromSeconds(4));
+        }
+        catch (Exception exception)
         {
-            return;
+            _logger.Error(exception, "Saving game folder {Folder} for {Path} failed", folder, entry.RootPath);
+            _snackbar.Show(
+                "Игра",
+                $"Не удалось сохранить папку игры: {exception.Message}",
+                ControlAppearance.Danger,
+                new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
+                TimeSpan.FromSeconds(6));
         }
-
-        manifest.GameType = gameType.Value;
-        manifest.SystemGamePath = folder;
-        manifest.Source = PackSource.System;
-        manifest.Launch.Executable = Mo2Locator.DetectLaunchExecutableName(folder) ?? string.Empty;
-        manifest.Detection.OverriddenByUser = true;
-        await _library.SaveManifestAsync(entry.RootPath, manifest).ConfigureAwait(true);
-        entry.UpdateManifest(manifest);
-
-        _snackbar.Show(
-            "Игра",
-            $"Для «{entry.Name}» указана папка: {folder}",
-            ControlAppearance.Success,
-            new SymbolIcon { Symbol = SymbolRegular.CheckmarkCircle24 },
-            TimeSpan.FromSeconds(4));
     }
 
     public void ChooseGameFolder(LibraryEntryViewModel entry)

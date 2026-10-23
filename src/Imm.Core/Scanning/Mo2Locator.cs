@@ -126,13 +126,19 @@ public static class Mo2Locator
     /// per pass &lt;mod&gt;/&lt;loader&gt; before the Root Builder layout &lt;mod&gt;/Root/&lt;loader&gt;.
     /// Returns a FULL path (Root Builder scheme: the pack's canonical loader).
     /// </summary>
-    public static string? FindLoaderInMods(string mo2Directory, GameType gameType)
+    public static string? FindLoaderInMods(string mo2Directory, GameType gameType, CancellationToken cancellationToken = default)
     {
         var modsDirectory = Path.Combine(mo2Directory, Markers.ModsFolder);
         if (!Directory.Exists(LongPath.Normalize(modsDirectory)))
         {
             return null;
         }
+
+        // Один проход по mods/ (реальные паки держат тысячи папок) и детерминированный порядок:
+        // при нескольких кандидатах результат не должен зависеть от порядка файловой системы.
+        var mods = Directory.EnumerateDirectories(LongPath.Normalize(modsDirectory))
+            .OrderBy(Path.GetFileName, StringComparer.OrdinalIgnoreCase)
+            .ToArray();
 
         var typedLoader = ModpackScanner.ScriptExtenderNameFor(gameType);
         var passes = string.IsNullOrEmpty(typedLoader)
@@ -143,8 +149,9 @@ public static class Mo2Locator
         {
             foreach (var loader in pass)
             {
-                foreach (var mod in Directory.EnumerateDirectories(modsDirectory))
+                foreach (var mod in mods)
                 {
+                    cancellationToken.ThrowIfCancellationRequested();
                     var direct = Path.Combine(mod, loader);
                     if (File.Exists(LongPath.Normalize(direct)))
                     {

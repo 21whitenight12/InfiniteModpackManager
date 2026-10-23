@@ -286,4 +286,25 @@ public sealed class LibraryServiceTests : IDisposable
         Assert.Contains("modpack.json", exception.Message);
         Assert.Equal("{ not valid json !!!", await File.ReadAllTextAsync(manifestPath));
     }
+
+    [Fact]
+    public async Task Rescan_UserOverride_StillRefreshesLaunchExecutable()
+    {
+        var (service, _) = CreateService();
+        var pack = CreateMo2Pack("Override Loader");
+        var entry = await service.ImportAsync(pack);
+
+        var manifest = await service.LoadManifestAsync(entry);
+        Assert.NotNull(manifest);
+        manifest!.Detection.OverriddenByUser = true;
+        manifest.Launch.Executable = "stale_loader.exe";
+        await service.SaveManifestAsync(entry.RootPath, manifest);
+
+        await service.RescanAsync(entry);
+
+        var after = await service.LoadManifestAsync(entry);
+        Assert.NotNull(after);
+        Assert.Equal("Fallout4.exe", after!.Launch.Executable); // путь запуска — факт скана
+        Assert.True(after.Detection.OverriddenByUser);          // а детект игры — выбор пользователя
+    }
 }
