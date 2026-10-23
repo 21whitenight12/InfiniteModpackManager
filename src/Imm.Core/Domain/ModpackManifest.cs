@@ -28,6 +28,13 @@ public sealed class DetectionSection
     public bool ProfileOverriddenByUser { get; set; }
 }
 
+/// <summary>Backup retention (IMM.md «Бэкапы»): manual archives only, limit optional.</summary>
+public sealed class BackupsSection
+{
+    /// <summary>Archives to keep per pack; 0 = unlimited (IMM.md default).</summary>
+    public int MaxBackups { get; set; }
+}
+
 /// <summary>
 /// Manifest stored as modpack.json in the root of every modpack (IMM.md Data Contracts).
 /// Invariants: schemaVersion is the first field, id is a GUID, relative paths inside the manifest.
@@ -54,4 +61,6 @@ public sealed class ModpackManifest
     public LaunchSection Launch { get; set; } = new();
 
     public DetectionSection Detection { get; set; } = new();
+
+    public BackupsSection Backups { get; set; } = new();
 }
