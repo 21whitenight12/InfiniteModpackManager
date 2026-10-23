@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text;
 using Imm.Core.Ini;
+using Imm.Core.IO;
 using Xunit;
 
 namespace Imm.Core.Tests;
@@ -257,5 +258,38 @@ public sealed class ModOrganizerIniPatcherTests : IDisposable
         Assert.Contains("base_directory=C:\\First", updated);
         Assert.Contains("base_directory=C:\\Third", updated);
         Assert.DoesNotContain("base_directory=C:\\Second", updated);
+    }
+
+    [Fact]
+    public void ReadSelectedProfile_LongPath_ReadsValue()
+    {
+        // Сканер зовёт эти методы с «сырым» путём: нормализация обязана жить внутри патчера.
+        var directory = _temp;
+        while (directory.Length < 280)
+        {
+            directory = Path.Combine(directory, "pack-" + Guid.NewGuid().ToString("N")[..8]);
+        }
+
+        try
+        {
+            Directory.CreateDirectory(LongPath.Normalize(directory));
+            var path = Path.Combine(directory, "ModOrganizer.ini");
+            File.WriteAllText(LongPath.Normalize(path), "[General]\ngameName=Fallout 4\nselected_profile=Long\n");
+
+            Assert.True(path.Length >= 260);
+            Assert.Equal("Long", _patcher.ReadSelectedProfile(path));
+            Assert.Equal("Fallout 4", _patcher.ReadGameName(path));
+        }
+        finally
+        {
+            try
+            {
+                Directory.Delete(LongPath.Normalize(_temp), recursive: true);
+            }
+            catch (IOException)
+            {
+                // Глубокая папка могла остаться — не роняем тест из-за уборки.
+            }
+        }
     }
 }

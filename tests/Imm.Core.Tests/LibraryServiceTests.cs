@@ -234,4 +234,56 @@ public sealed class LibraryServiceTests : IDisposable
 
         await Assert.ThrowsAsync<InvalidOperationException>(() => service.SetCoverAsync(pack, bmp));
     }
+
+    [Fact]
+    public async Task SetCover_CopyFails_KeepsPreviousCover()
+    {
+        var (service, _) = CreateService();
+        var pack = CreateMo2Pack("CoverKept");
+        var good = Path.Combine(_temp, "good.png");
+        await File.WriteAllBytesAsync(good, [7, 7, 7]);
+        await service.SetCoverAsync(pack, good);
+        var previous = Path.Combine(pack, "cover.png");
+        var previousBytes = await File.ReadAllBytesAsync(previous);
+
+        // Источник занят другим процессом: копирование обязано упасть, а прежняя обложка — уцелеть.
+        using (new FileStream(good, FileMode.Open, FileAccess.Read, FileShare.None))
+        {
+            await Assert.ThrowsAnyAsync<IOException>(() => service.SetCoverAsync(pack, good));
+        }
+
+        Assert.True(File.Exists(previous));
+        Assert.Equal(previousBytes, await File.ReadAllBytesAsync(previous));
+        Assert.Empty(Directory.GetFiles(pack, ".cover.tmp-*"));
+    }
+
+    [Fact]
+    public async Task LoadManifest_CorruptFile_ReturnsNullAndKeepsFile()
+    {
+        var (service, _) = CreateService();
+        var pack = CreateMo2Pack("Broken Manifest");
+        var entry = await service.ImportAsync(pack);
+        var manifestPath = LibraryService.ManifestPath(pack);
+        await File.WriteAllTextAsync(manifestPath, "{ not valid json !!!");
+
+        var manifest = await service.LoadManifestAsync(entry);
+
+        Assert.Null(manifest);
+        Assert.Equal("{ not valid json !!!", await File.ReadAllTextAsync(manifestPath));
+    }
+
+    [Fact]
+    public async Task Rescan_CorruptManifest_ThrowsAndKeepsFile()
+    {
+        var (service, _) = CreateService();
+        var pack = CreateMo2Pack("Broken Rescan");
+        var entry = await service.ImportAsync(pack);
+        var manifestPath = LibraryService.ManifestPath(pack);
+        await File.WriteAllTextAsync(manifestPath, "{ not valid json !!!");
+
+        var exception = await Assert.ThrowsAsync<InvalidOperationException>(() => service.RescanAsync(entry));
+
+        Assert.Contains("modpack.json", exception.Message);
+        Assert.Equal("{ not valid json !!!", await File.ReadAllTextAsync(manifestPath));
+    }
 }

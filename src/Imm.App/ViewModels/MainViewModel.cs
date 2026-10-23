@@ -132,16 +132,31 @@ public partial class MainViewModel : ObservableObject
 
     public async Task InitializeAsync()
     {
-        var index = await _library.LoadAsync().ConfigureAwait(true);
-        foreach (var entry in index.Entries)
+        try
         {
-            var manifest = await _library.LoadManifestAsync(entry).ConfigureAwait(true);
-            Entries.Add(new LibraryEntryViewModel(entry, manifest, this));
-        }
+            var index = await _library.LoadAsync().ConfigureAwait(true);
+            foreach (var entry in index.Entries)
+            {
+                var manifest = await _library.LoadManifestAsync(entry).ConfigureAwait(true);
+                Entries.Add(new LibraryEntryViewModel(entry, manifest, this));
+            }
 
-        SelectedEntry = Entries.FirstOrDefault();
-        OnPropertyChanged(nameof(HasNoEntries));
-        StatusText = "Готово";
+            SelectedEntry = Entries.FirstOrDefault();
+            OnPropertyChanged(nameof(HasNoEntries));
+            StatusText = "Готово";
+        }
+        catch (Exception exception)
+        {
+            // Библиотека не должна «молча пустеть»: пользователь видит сообщение, детали — в логе.
+            _logger.Error(exception, "Library initialization failed");
+            StatusText = "Библиотека не загружена";
+            _snackbar.Show(
+                "Библиотека",
+                "Не удалось загрузить библиотеку — подробности в логе (меню «Логи»).",
+                ControlAppearance.Danger,
+                new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
+                TimeSpan.FromSeconds(8));
+        }
     }
 
     [RelayCommand]

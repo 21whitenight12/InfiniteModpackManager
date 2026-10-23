@@ -292,8 +292,11 @@ public sealed class ModOrganizerIniPatcher
 
     // ---------- file IO (encoding by BOM, atomic write) ----------
 
-    private static ParsedIni ReadIni(string normalizedPath)
+    private static ParsedIni ReadIni(string path)
     {
+        // Единственная точка нормализации: сканер зовёт ReadBaseDirectory / ReadSelectedProfile /
+        // ReadGameName с «сырым» путём, а сборки живут и за пределами MAX_PATH.
+        var normalizedPath = LongPath.Normalize(path);
         var bytes = File.ReadAllBytes(normalizedPath);
         var (encoding, bomLength) = DetectEncoding(bytes);
         var content = encoding.GetString(bytes, bomLength, bytes.Length - bomLength);

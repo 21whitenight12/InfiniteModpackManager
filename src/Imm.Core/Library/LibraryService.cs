@@ -1,3 +1,4 @@
+using System.Text.Json;
 using Imm.Core.Domain;
 using Imm.Core.IO;
 using Imm.Core.Scanning;
@@ -16,6 +17,8 @@ public sealed class LibraryService : ILibraryService
     private readonly ImmPaths _paths;
     private readonly IModpackScanner _scanner;
     private readonly ILogger _logger;
+
+    private static readonly string[] CoverFileNames = ["cover.png", "cover.jpg", "cover.jpeg", "cover.webp"];
 
     public LibraryService(ImmPaths paths, IModpackScanner scanner, ILogger logger)
     {
@@ -36,7 +39,7 @@ public sealed class LibraryService : ILibraryService
             return await AtomicFile.ReadJsonAsync<LibraryIndex>(_paths.LibraryFilePath, cancellationToken)
                 .ConfigureAwait(false);
         }
-        catch (Exception exception) when (exception is System.Text.Json.JsonException or IOException)
+        catch (Exception exception) when (exception is JsonException or IOException or UnauthorizedAccessException)
         {
             // Broken index must not brick the app: keep data on disk, start fresh, surface via log.
             _logger.Error(exception, "library.json is unreadable; starting with an empty index. File kept at {Path}",
@@ -127,21 +130,55 @@ public sealed class LibraryService : ILibraryService
 
         var targetName = extension is ".jpg" or ".jpeg" ? "cover.jpg" : $"cover{extension}";
         var target = LongPath.Normalize(Path.Combine(packRoot, targetName));
+        var temp = LongPath.Normalize(Path.Combine(packRoot, $".cover.tmp-{Guid.NewGuid():N}{extension}"));
 
-        foreach (var previous in new[] { "cover.png", "cover.jpg", "cover.jpeg", "cover.webp" })
+        try
         {
-            var previousPath = LongPath.Normalize(Path.Combine(packRoot, previous));
-            if (!string.Equals(previousPath, target, StringComparison.OrdinalIgnoreCase)
-                && File.Exists(previousPath))
+            // File.Copy does not accept long paths; a raw Stream copy keeps the pack root untouched otherwise.
+            await using (var sourceStream = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.Read))
+            await using (var targetStream = new FileStream(temp, FileMode.CreateNew, FileAccess.Write, FileShare.None))
             {
-                File.Delete(previousPath);
+                await sourceStream.CopyToAsync(targetStream, cancellationToken).ConfigureAwait(false);
+            }
+
+            // Новая обложка целиком записана — только теперь её можно ставить на место.
+            File.Move(temp, target, overwrite: true);
+        }
+        finally
+        {
+            if (File.Exists(temp))
+            {
+                try
+                {
+                    File.Delete(temp);
+                }
+                catch (IOException)
+                {
+                    // Best-effort cleanup; the temp file is inert garbage.
+                }
             }
         }
 
-        // File.Copy does not accept long paths; a raw Stream copy keeps the pack root untouched otherwise.
-        await using var sourceStream = new FileStream(source, FileMode.Open, FileAccess.Read, FileShare.Read);
-        await using var targetStream = new FileStream(target, FileMode.Create, FileAccess.Write, FileShare.None);
-        await sourceStream.CopyToAsync(targetStream, cancellationToken).ConfigureAwait(false);
+        // Прежние обложки убираем ПОСЛЕ успешной записи новой: падение копирования
+        // не должно оставлять сборку без обложки вообще.
+        foreach (var previous in CoverFileNames)
+        {
+            var previousPath = LongPath.Normalize(Path.Combine(packRoot, previous));
+            if (string.Equals(previousPath, target, StringComparison.OrdinalIgnoreCase) || !File.Exists(previousPath))
+            {
+                continue;
+            }
+
+            try
+            {
+                File.Delete(previousPath);
+            }
+            catch (Exception exception) when (exception is IOException or UnauthorizedAccessException)
+            {
+                // Прежняя обложка занята другим процессом — не валим операцию: новая уже на месте.
+                _logger.Warning(exception, "Could not delete previous cover {Path}", previousPath);
+            }
+        }
 
         _logger.Information("Cover set for pack at {Root}: {Target}", packRoot, target);
         return target;
@@ -155,8 +192,7 @@ public sealed class LibraryService : ILibraryService
         ModpackManifest manifest;
         if (File.Exists(LongPath.Normalize(manifestPath)))
         {
-            manifest = await AtomicFile.ReadJsonAsync<ModpackManifest>(manifestPath, cancellationToken)
-                .ConfigureAwait(false);
+            manifest = await ReadManifestForRescanAsync(manifestPath, cancellationToken).ConfigureAwait(false);
         }
         else
         {
@@ -191,7 +227,18 @@ public sealed class LibraryService : ILibraryService
             return null;
         }
 
-        return await AtomicFile.ReadJsonAsync<ModpackManifest>(path, cancellationToken).ConfigureAwait(false);
+        try
+        {
+            return await AtomicFile.ReadJsonAsync<ModpackManifest>(path, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is JsonException or IOException or UnauthorizedAccessException)
+        {
+            // Один битый modpack.json не должен ронять загрузку всей библиотеки: файл оставляем
+            // на диске, сборка показывается как не сканированная, диагностика — в логе.
+            _logger.Error(exception, "modpack.json is unreadable for {Root}; file kept, pack treated as unscanned",
+                entry.RootPath);
+            return null;
+        }
     }
 
     public Task SaveManifestAsync(string packRoot, ModpackManifest manifest, CancellationToken cancellationToken = default)
@@ -199,6 +246,25 @@ public sealed class LibraryService : ILibraryService
         var path = ManifestPath(packRoot);
         _logger.Debug("Writing manifest {Path}", path);
         return AtomicFile.WriteJsonAsync(path, manifest, cancellationToken);
+    }
+
+    /// <summary>
+    /// Re-scan must never silently rewrite a broken manifest (user overrides live there):
+    /// a corrupt file stops the operation with a user-facing message and stays untouched.
+    /// </summary>
+    private static async Task<ModpackManifest> ReadManifestForRescanAsync(string path, CancellationToken cancellationToken)
+    {
+        try
+        {
+            return await AtomicFile.ReadJsonAsync<ModpackManifest>(path, cancellationToken).ConfigureAwait(false);
+        }
+        catch (Exception exception) when (exception is JsonException or IOException or UnauthorizedAccessException)
+        {
+            throw new InvalidOperationException(
+                "modpack.json повреждён или недоступен — ре-скан остановлен, файл не изменён. "
+                + "Исправьте или удалите его и повторите.",
+                exception);
+        }
     }
 
     public Task SaveAsync(LibraryIndex index, CancellationToken cancellationToken = default) =>

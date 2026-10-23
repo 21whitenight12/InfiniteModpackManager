@@ -1,7 +1,10 @@
 using System.IO;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Imm.Core.Domain;
+using Imm.Core.IO;
 using Imm.Core.Scanning;
 
 namespace Imm.App.ViewModels;
@@ -26,26 +29,104 @@ public partial class LibraryEntryViewModel : ObservableObject
 
     public string RootPath => _entry.RootPath;
 
-    /// <summary>Notifies when the cover file appears/disappears (import, manual change, removal).</summary>
+    private static readonly string[] CoverFileNames = ["cover.png", "cover.jpg", "cover.jpeg", "cover.webp"];
+
+    private string? _coverPath;
+    private bool _coverPathResolved;
+    private string? _coverImageKey;
+    private ImageSource? _coverImage;
+
+    /// <summary>Cover file in the pack root (fixed lookup order); cached until <see cref="Refresh"/>.</summary>
     public string? CoverPath
     {
         get
         {
-            foreach (var name in new[] { "cover.png", "cover.jpg", "cover.jpeg", "cover.webp" })
+            if (!_coverPathResolved)
             {
-                var path = Path.Combine(_entry.RootPath, name);
-                if (File.Exists(path))
-                {
-                    return path;
-                }
+                _coverPath = FindCoverPath();
+                _coverPathResolved = true;
             }
 
+            return _coverPath;
+        }
+    }
+
+    /// <summary>
+    /// Decoded cover. Loaded with <see cref="BitmapCacheOption.OnLoad"/> and frozen on purpose:
+    /// WPF must not hold a handle on cover.* — otherwise the next SetCoverAsync cannot replace
+    /// the file (a string-bound ImageSource keeps the file open; verified on this machine).
+    /// </summary>
+    public ImageSource? CoverImage
+    {
+        get
+        {
+            var path = CoverPath;
+            if (path is null)
+            {
+                return null;
+            }
+
+            var key = CoverKey(path);
+            if (_coverImage is not null && string.Equals(_coverImageKey, key, StringComparison.Ordinal))
+            {
+                return _coverImage;
+            }
+
+            _coverImage = LoadFrozen(path);
+            _coverImageKey = _coverImage is null ? null : key;
+            return _coverImage;
+        }
+    }
+
+    private string? FindCoverPath()
+    {
+        foreach (var name in CoverFileNames)
+        {
+            if (File.Exists(LongPath.Normalize(Path.Combine(_entry.RootPath, name))))
+            {
+                return Path.Combine(_entry.RootPath, name);
+            }
+        }
+
+        return null;
+    }
+
+    /// <summary>Path + size + write time: a replaced cover with the same name still invalidates the cache.</summary>
+    private static string CoverKey(string path)
+    {
+        var info = new FileInfo(LongPath.Normalize(path));
+        return info.Exists ? $"{path}|{info.Length}|{info.LastWriteTimeUtc.Ticks}" : path;
+    }
+
+    private static ImageSource? LoadFrozen(string path)
+    {
+        try
+        {
+            using var stream = File.OpenRead(LongPath.Normalize(path));
+            var bitmap = new BitmapImage();
+            bitmap.BeginInit();
+            bitmap.CacheOption = BitmapCacheOption.OnLoad;
+            bitmap.StreamSource = stream;
+            bitmap.EndInit();
+            bitmap.Freeze();
+            return bitmap;
+        }
+        catch (Exception exception)
+            when (exception is IOException or UnauthorizedAccessException or NotSupportedException or FileFormatException)
+        {
+            // Битая или недоступная картинка → плейсхолдер карточки, приложение не падает.
             return null;
         }
     }
 
     /// <summary>UI hook after RenameAsync / SetCoverAsync touch the entry.</summary>
-    public void Refresh() => OnPropertyChanged(string.Empty);
+    public void Refresh()
+    {
+        _coverPathResolved = false;
+        _coverImage = null;
+        _coverImageKey = null;
+        OnPropertyChanged(string.Empty);
+    }
 
     /// <summary>
     /// Applies a user rename to the wrapped entry: the service updates its own deserialized copy,
