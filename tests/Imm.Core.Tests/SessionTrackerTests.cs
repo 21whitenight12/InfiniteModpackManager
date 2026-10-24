@@ -27,6 +27,31 @@ public sealed class SessionTrackerTests
     private static GameProcessSnapshot SnapshotOf(DateTime startUtc, string? mainModule = null, int id = 42) =>
         new(id, "Fallout4.exe", startUtc, mainModule);
 
+    /// <summary>Probe that walks a script of visible-process frames: each WaitForExit advances one frame.</summary>
+    private sealed class ScriptedProbe : IGameProcessProbe
+    {
+        private readonly GameProcessSnapshot[][] _frames;
+        private int _frame;
+
+        public ScriptedProbe(params GameProcessSnapshot[][] frames) => _frames = frames;
+
+        public List<int> WaitedFor { get; } = [];
+
+        public IReadOnlyList<GameProcessSnapshot> Snapshot(string exeName) =>
+            _frames[Math.Min(_frame, _frames.Length - 1)];
+
+        public Task WaitForExitAsync(int processId, CancellationToken cancellationToken)
+        {
+            WaitedFor.Add(processId);
+            if (_frame < _frames.Length - 1)
+            {
+                _frame++;
+            }
+
+            return Task.CompletedTask;
+        }
+    }
+
     [Fact]
     public void IsOurs_ProcessStartedAfterLaunch_Matches()
     {
@@ -92,6 +117,26 @@ public sealed class SessionTrackerTests
 
         Assert.NotNull(result);
         Assert.Equal(777, Assert.Single(probe.WaitedFor));
+    }
+
+    [Fact]
+    public async Task TrackAsync_Mo2_SessionContinuesWhenTheLoaderHandsOverToANewPid()
+    {
+        var launch = DateTime.UtcNow.AddSeconds(-1);
+        // F4SE/SKSE bootstrap: pid 111 exits, the real game continues as pid 222, then nothing is left.
+        var probe = new ScriptedProbe(
+            [SnapshotOf(launch.AddMilliseconds(300), id: 111)],
+            [SnapshotOf(launch.AddSeconds(1), id: 222)],
+            []);
+        var tracker = new SessionTracker(probe, Log.Logger,
+            pollInterval: TimeSpan.FromMilliseconds(10),
+            gameWaitTimeout: TimeSpan.FromSeconds(2));
+        var manifest = new ModpackManifest { Engine = LaunchEngine.Mo2RootBuilder, GameType = GameType.Fallout4 };
+
+        var result = await tracker.TrackAsync(manifest, launch, launchedProcess: null, expectedGameDirectory: null);
+
+        Assert.NotNull(result);
+        Assert.Equal(new[] { 111, 222 }, probe.WaitedFor);
     }
 
     [Fact]

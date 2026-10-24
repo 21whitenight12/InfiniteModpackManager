@@ -1,5 +1,6 @@
 using System.ComponentModel;
 using System.Diagnostics;
+using Serilog;
 
 namespace Imm.Core.Tracking;
 
@@ -9,6 +10,19 @@ namespace Imm.Core.Tracking;
 /// </summary>
 public sealed class GameProcessProbe : IGameProcessProbe
 {
+    private static readonly TimeSpan DefaultPollInterval = TimeSpan.FromSeconds(2);
+
+    private readonly ILogger _logger;
+    private readonly TimeSpan _pollInterval;
+    private readonly Func<int, bool> _isAlive;
+
+    public GameProcessProbe(ILogger logger, TimeSpan? pollInterval = null, Func<int, bool>? isAlive = null)
+    {
+        _logger = logger.ForContext<GameProcessProbe>();
+        _pollInterval = pollInterval ?? DefaultPollInterval;
+        _isAlive = isAlive ?? IsProcessAlive;
+    }
+
     public IReadOnlyList<GameProcessSnapshot> Snapshot(string exeName)
     {
         var processName = Path.GetFileNameWithoutExtension(exeName);
@@ -37,28 +51,83 @@ public sealed class GameProcessProbe : IGameProcessProbe
         return snapshots;
     }
 
+    /// <summary>
+    /// Waits for the process to exit. A handle-based wait needs SYNCHRONIZE, which Windows refuses for
+    /// a game started elevated (MO2 run as administrator) or protected by anti-cheat — a common case
+    /// for modded setups, so a denial must fall back to polling the pid instead of ending tracking.
+    /// </summary>
     public async Task WaitForExitAsync(int processId, CancellationToken cancellationToken)
     {
-        Process process;
         try
         {
-            process = Process.GetProcessById(processId);
+            using var process = Process.GetProcessById(processId);
+            await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+            return;
         }
         catch (ArgumentException)
         {
             return; // уже завершился
         }
-
-        using (process)
+        catch (InvalidOperationException)
         {
-            try
+            // Процесс исчез между получением и ожиданием — сессия всё равно закончилась.
+            return;
+        }
+        catch (Win32Exception exception)
+        {
+            _logger.Information(
+                "WaitForExit denied for pid={ProcessId} (win32 {Error}); falling back to pid polling.",
+                processId, exception.NativeErrorCode);
+        }
+        catch (NotSupportedException)
+        {
+            // Удалённый процесс — тоже только опрос.
+        }
+
+        await PollUntilGoneAsync(processId, cancellationToken).ConfigureAwait(false);
+    }
+
+    /// <summary>Polling loop for the no-handle case; ends as soon as the pid disappears.</summary>
+    internal async Task PollUntilGoneAsync(int processId, CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            cancellationToken.ThrowIfCancellationRequested();
+
+            if (!_isAlive(processId))
             {
-                await process.WaitForExitAsync(cancellationToken).ConfigureAwait(false);
+                return;
             }
-            catch (InvalidOperationException)
+
+            await Task.Delay(_pollInterval, cancellationToken).ConfigureAwait(false);
+        }
+    }
+
+    /// <summary>
+    /// Enumeration only: opening a per-process handle is exactly what access control denies, while the
+    /// pid list comes from one system-wide query.
+    /// </summary>
+    internal static bool IsProcessAlive(int processId)
+    {
+        try
+        {
+            foreach (var process in Process.GetProcesses())
             {
-                // Процесс исчез между получением и ожиданием — сессия всё равно закончилась.
+                using (process)
+                {
+                    if (process.Id == processId)
+                    {
+                        return true;
+                    }
+                }
             }
+
+            return false;
+        }
+        catch (Exception exception) when (exception is InvalidOperationException or Win32Exception)
+        {
+            // Посмотреть не смогли — не обрываем сессию из-за этого.
+            return true;
         }
     }
 

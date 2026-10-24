@@ -82,7 +82,8 @@ public sealed class SessionTracker : ISessionTracker
             if (game is not null)
             {
                 _logger.Information("Game process found for session tracking: pid={ProcessId} {Exe}", game.ProcessId, exeName);
-                await _probe.WaitForExitAsync(game.ProcessId, cancellationToken).ConfigureAwait(false);
+                await FollowSessionAsync(game, exeName, launchStartedUtc, expectedGameDirectory, cancellationToken)
+                    .ConfigureAwait(false);
                 return Result(launchStartedUtc);
             }
 
@@ -91,6 +92,28 @@ public sealed class SessionTracker : ISessionTracker
 
         _logger.Warning("Game process {Exe} did not appear within {Timeout}s; session not counted.", exeName, _gameWaitTimeout.TotalSeconds);
         return null;
+    }
+
+    /// <summary>
+    /// Follows the game until it is really gone. A loader may hand the session over to a new pid
+    /// (F4SE/SKSE bootstrap, MO2 relaunch), so the end of the first process is not the end of the session.
+    /// </summary>
+    private async Task FollowSessionAsync(GameProcessSnapshot game, string exeName, DateTime launchStartedUtc,
+        string? expectedGameDirectory, CancellationToken cancellationToken)
+    {
+        while (true)
+        {
+            await _probe.WaitForExitAsync(game.ProcessId, cancellationToken).ConfigureAwait(false);
+
+            var next = FindGame(exeName, launchStartedUtc, expectedGameDirectory);
+            if (next is null || next.ProcessId == game.ProcessId)
+            {
+                return;
+            }
+
+            _logger.Information("Game session continues in pid={ProcessId} {Exe}", next.ProcessId, exeName);
+            game = next;
+        }
     }
 
     private GameProcessSnapshot? FindGame(string exeName, DateTime launchStartedUtc, string? expectedGameDirectory)

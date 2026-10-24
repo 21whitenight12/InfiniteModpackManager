@@ -1216,10 +1216,14 @@ public partial class MainViewModel : ObservableObject
     /// Session tracking in the background (IMM.md «Трекинг сессии»): the UI never waits for the game to
     /// close, and a tracking failure must not affect the launch result.
     /// </summary>
+    /// <summary>Session in flight: IMM.md writes the result «по завершении сессии и при выходе».</summary>
+    private (Guid EntryId, DateTime StartedUtc)? _openSession;
+
     private void TrackSession(LibraryEntryViewModel entry, ModpackManifest manifest,
         System.Diagnostics.Process process, DateTime launchStartedUtc)
     {
         var expectedGameDirectory = manifest.Source == PackSource.System ? manifest.SystemGamePath : null;
+        _openSession = (entry.Id, launchStartedUtc);
 
         _ = Task.Run(async () =>
         {
@@ -1260,9 +1264,36 @@ public partial class MainViewModel : ObservableObject
             }
             finally
             {
+                _openSession = null;
                 process.Dispose();
             }
         });
+    }
+
+    /// <summary>
+    /// IMM.md: the result is written «по завершении сессии и при выходе». Closing IMM mid-game must not
+    /// throw the elapsed time away, so the open session is flushed synchronously on shutdown.
+    /// </summary>
+    public void FlushOpenSession()
+    {
+        if (_openSession is not { } open)
+        {
+            return;
+        }
+
+        _openSession = null;
+        var minutes = Math.Max(0, (int)Math.Round((DateTime.UtcNow - open.StartedUtc).TotalMinutes));
+
+        try
+        {
+            // Shutdown path: the host is about to stop, so the write cannot be awaited.
+            _library.RecordSessionAsync(open.EntryId, minutes, DateTime.UtcNow).GetAwaiter().GetResult();
+            _logger.Information("Open session flushed on exit: +{Minutes} min", minutes);
+        }
+        catch (Exception exception)
+        {
+            _logger.Warning(exception, "Flushing the open session on exit failed");
+        }
     }
 
     private async Task<LibraryEntry?> FindEntryAsync(Guid id)

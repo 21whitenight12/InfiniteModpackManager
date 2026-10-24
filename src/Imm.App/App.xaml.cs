@@ -31,6 +31,8 @@ namespace Imm.App;
 public partial class App : Application
 {
     private readonly IHost _host = BuildHost();
+
+    private MainWindow? _mainWindow;
     private volatile bool _startupCompleted;
 
     public App()
@@ -107,6 +109,7 @@ public partial class App : Application
 
         _host.Start();
         var mainWindow = _host.Services.GetRequiredService<MainWindow>();
+        _mainWindow = mainWindow;
         MainWindow = mainWindow;
         mainWindow.Show();
         _startupCompleted = true;
@@ -115,6 +118,17 @@ public partial class App : Application
     protected override async void OnExit(ExitEventArgs e)
     {
         Log.Information("Application exiting with code {ExitCode}.", e.ApplicationExitCode);
+
+        // A game session still in flight would otherwise lose its playtime (IMM.md «Трекинг сессии»).
+        try
+        {
+            _mainWindow?.ViewModel.FlushOpenSession();
+        }
+        catch (Exception exception)
+        {
+            Log.Warning(exception, "Flushing the open session on exit failed.");
+        }
+
         await _host.StopAsync(TimeSpan.FromSeconds(5)).ConfigureAwait(true);
         _host.Dispose();
         await Log.CloseAndFlushAsync().ConfigureAwait(true);
