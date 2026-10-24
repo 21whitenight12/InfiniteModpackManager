@@ -342,7 +342,7 @@
 
           <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
             <ComboBox ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSortOption}"
-                      Width="124" Height="34" FontSize="12.5" VerticalContentAlignment="Center" />
+                      Width="160" Height="34" FontSize="12.5" VerticalContentAlignment="Center" />
             <Border Background="{StaticResource ImmSurface2Brush}" BorderBrush="{StaticResource ImmLineBrush}"
                     BorderThickness="1" CornerRadius="10" Margin="8,0,0,0" Padding="3">
               <StackPanel Orientation="Horizontal">
@@ -394,7 +394,7 @@
         </Grid>
 
         <ListBox Grid.Row="2" x:Name="PacksList" ItemsSource="{Binding EntriesView}"
-                 Background="Transparent" BorderThickness="0" Padding="0,4,0,0"
+                 Background="Transparent" BorderThickness="0" Padding="0"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                  ScrollViewer.VerticalScrollBarVisibility="Auto">
           <ListBox.Style>
@@ -412,7 +412,7 @@
                   <Style TargetType="ListBoxItem">
                     <Setter Property="Background" Value="Transparent" />
                     <Setter Property="Height" Value="188" />
-                    <Setter Property="Margin" Value="0,0,14,14" />
+                    <Setter Property="Margin" Value="0,4,14,10" />
                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                     <Setter Property="VerticalContentAlignment" Value="Stretch" />
                     <Setter Property="Template">

@@ -86,7 +86,7 @@ public partial class MainViewModel : ObservableObject
     /// <summary>Sorted view fed to the ItemsControl (Entries is the source of truth).</summary>
     public ICollectionView EntriesView { get; }
 
-    public IReadOnlyList<string> SortOptions { get; } = ["По названию", "По последнему запуску", "По времени игры"];
+    public IReadOnlyList<string> SortOptions { get; } = ["По названию", "По дате запуска", "По времени"];
 
     [ObservableProperty]
     private string _selectedSortOption = "По названию";
@@ -322,8 +322,8 @@ public partial class MainViewModel : ObservableObject
         EntriesView.SortDescriptions.Clear();
         SortDescription description = SelectedSortOption switch
         {
-            "По последнему запуску" => new(nameof(LibraryEntryViewModel.LastPlayedAtUtc), ListSortDirection.Descending),
-            "По времени игры" => new(nameof(LibraryEntryViewModel.PlaytimeMinutes), ListSortDirection.Descending),
+            "По дате запуска" => new(nameof(LibraryEntryViewModel.LastPlayedAtUtc), ListSortDirection.Descending),
+            "По времени" => new(nameof(LibraryEntryViewModel.PlaytimeMinutes), ListSortDirection.Descending),
             _ => new(nameof(LibraryEntryViewModel.Name), ListSortDirection.Ascending),
         };
         EntriesView.SortDescriptions.Add(description);
