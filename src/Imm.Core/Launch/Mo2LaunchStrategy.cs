@@ -4,6 +4,7 @@ using Imm.Core.Ini;
 using Imm.Core.IO;
 using Imm.Core.Scanning;
 using Serilog;
+using Imm.Core.Localization;
 
 namespace Imm.Core.Launch;
 
@@ -33,18 +34,18 @@ public sealed class Mo2LaunchStrategy : ILaunchStrategy
         cancellationToken.ThrowIfCancellationRequested();
 
         var mo2Directory = ResolveMo2Directory(manifest, packRoot)
-            ?? throw new InvalidOperationException("ModOrganizer.exe не найден — поддерживаются только portable-инстансы MO2.");
+            ?? throw new InvalidOperationException(Loc.T("Err_Mo2ExeMissing"));
 
         var profile = manifest.Mo2?.ProfileName;
         if (string.IsNullOrWhiteSpace(profile))
         {
-            throw new InvalidOperationException("Профиль MO2 не выбран — выберите профиль и выполните ре-скан.");
+            throw new InvalidOperationException(Loc.T("Err_ProfileNotSelected"));
         }
 
         EnsureManagedGameUsable(manifest, packRoot, mo2Directory);
 
         var executable = ResolveExecutableName(manifest, packRoot, mo2Directory, cancellationToken)
-            ?? throw new InvalidOperationException("Не удалось определить запускаемый exe игры — проверьте сборку или выполните ре-скан.");
+            ?? throw new InvalidOperationException(Loc.T("Err_LaunchExeUnknown"));
 
         var mo2Exe = Path.Combine(mo2Directory, Markers.ModOrganizerExe);
         return Task.FromResult(new LaunchPlan(mo2Exe, mo2Directory, ["-p", profile, executable], Elevate: true));
@@ -198,7 +199,7 @@ public sealed class Mo2LaunchStrategy : ILaunchStrategy
 
             var actualGame = ResolveActualGame(manifest, packRoot)
                 ?? throw new InvalidOperationException(
-                    "Папка игры не найдена: base_directory в ModOrganizer.ini указывает на несуществующий путь, а игровой корень в сборке отсутствует.");
+                    Loc.T("Err_GameFolderMissing"));
 
             _logger.Information(
                 "MO2 base_directory {Old} is missing; patching ModOrganizer.ini to {New}",
@@ -215,7 +216,7 @@ public sealed class Mo2LaunchStrategy : ILaunchStrategy
         }
 
         throw new InvalidOperationException(
-            $"gamePath в ModOrganizer.ini указывает на несуществующую папку («{gamePath}») — исправьте путь к игре в MO2 вручную.");
+            Loc.F("Err_IniGamePathMissing", gamePath));
     }
 
     /// <summary>System packs heal towards the detected Steam/GOG install; portable packs use their own game folder.</summary>

@@ -19,6 +19,7 @@ using Serilog;
 using Wpf.Ui;
 using Wpf.Ui.Controls;
 using Wpf.Ui.Extensions;
+using Imm.Core.Localization;
 
 namespace Imm.App.ViewModels;
 
@@ -67,7 +68,15 @@ public partial class MainViewModel : ObservableObject
         _dialog = dialog;
         _logWindow = logWindow;
         _logger = logger.ForContext<MainViewModel>();
-        Entries.CollectionChanged += (_, _) => OnPropertyChanged(nameof(HasNoEntries));
+        Entries.CollectionChanged += (_, _) =>
+        {
+            OnPropertyChanged(nameof(HasNoEntries));
+            OnPropertyChanged(nameof(PacksCountText));
+            OnPropertyChanged(nameof(PacksInLibraryText));
+        };
+
+        // A language switch must repaint the strings this VM produced itself.
+        Loc.Instance.PropertyChanged += (_, _) => OnLanguageChanged();
         EntriesView = CollectionViewSource.GetDefaultView(Entries);
         if (EntriesView is ListCollectionView listView && listView.CanChangeLiveSorting)
         {
@@ -86,10 +95,10 @@ public partial class MainViewModel : ObservableObject
     /// <summary>Sorted view fed to the ItemsControl (Entries is the source of truth).</summary>
     public ICollectionView EntriesView { get; }
 
-    public IReadOnlyList<string> SortOptions { get; } = ["По названию", "По дате запуска", "По времени"];
+    public IReadOnlyList<string> SortOptions { get; } = [Loc.T("Lib_SortName"), Loc.T("Lib_SortDate"), Loc.T("Lib_SortTime")];
 
     [ObservableProperty]
-    private string _selectedSortOption = "По названию";
+    private string _selectedSortOption = Loc.T("Lib_SortName");
 
     [ObservableProperty]
     private bool _isGridView = true;
@@ -146,7 +155,7 @@ public partial class MainViewModel : ObservableObject
     private bool _isDiagnosticsBusy;
 
     [ObservableProperty]
-    private string _diagnosticsStatus = "Проверка не выполнялась";
+    private string _diagnosticsStatus = Loc.T("Scan_StatusNever");
 
     public bool HasNoDiagnostics => Diagnostics.Count == 0;
 
@@ -159,7 +168,7 @@ public partial class MainViewModel : ObservableObject
         }
 
         IsDiagnosticsBusy = true;
-        DiagnosticsStatus = "Проверка сборок…";
+        DiagnosticsStatus = Loc.T("Scan_StatusBusy");
         try
         {
             var snapshot = Entries.ToArray();
@@ -184,16 +193,16 @@ public partial class MainViewModel : ObservableObject
             }
 
             DiagnosticsStatus = results.Count == 0
-                ? "В библиотеке нет сборок"
-                : $"Проверено: {results.Count}, с замечаниями: {results.Count(result => result.HasProblems)}";
+                ? Loc.T("Scan_StatusEmpty")
+                : Loc.F("Scan_StatusDone", results.Count, results.Count(result => result.HasProblems));
         }
         catch (Exception exception)
         {
             _logger.Error(exception, "Diagnostics failed");
-            DiagnosticsStatus = "Проверка не удалась";
+            DiagnosticsStatus = Loc.T("Scan_StatusFailed");
             _snackbar.Show(
-                "Сканер",
-                $"Не удалось проверить сборки: {exception.Message}",
+                Loc.T("Scan_Title"),
+                Loc.F("Scan_Failed", exception.Message),
                 ControlAppearance.Danger,
                 new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
                 TimeSpan.FromSeconds(6));
@@ -221,6 +230,44 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private string _settingsStatus = string.Empty;
 
+    // ===== Language =====
+
+    /// <summary>Endonyms on purpose: the picker must be readable whatever language is active.</summary>
+    public IReadOnlyList<string> Languages { get; } = ["English", "Русский"];
+
+    [ObservableProperty]
+    private string _selectedLanguage = "English";
+
+    partial void OnSelectedLanguageChanged(string value)
+    {
+        if (!_settingsLoaded)
+        {
+            return;
+        }
+
+        var code = string.Equals(value, "Русский", StringComparison.Ordinal) ? Loc.Russian : Loc.English;
+        _settings.Language = code;
+        Loc.Instance.SetLanguage(code);
+        _ = SaveSettingsAsync();
+    }
+
+    /// <summary>Keeps the chosen sort order across a language switch and repaints VM strings.</summary>
+    private void OnLanguageChanged()
+    {
+        var index = SelectedSortOption == Loc.T("Lib_SortDate") ? 1
+            : SelectedSortOption == Loc.T("Lib_SortTime") ? 2
+            : 0;
+
+        SelectedSortOption = SortOptions[index];
+        ApplySort();
+        OnPropertyChanged(string.Empty);
+    }
+
+    /// <summary>Localized counts for the header and the sidebar footer.</summary>
+    public string PacksCountText => Loc.PacksCount(Entries.Count);
+
+    public string PacksInLibraryText => $"{PacksCountText} {Loc.T("Plural_PacksInLibrary")}";
+
     /// <summary>Archives live in Documents\&lt;packId&gt; — this is the shared root (IMM.md «Бэкапы»).</summary>
     public string BackupsFolderPath => _paths.DocumentsDirectory;
 
@@ -231,8 +278,8 @@ public partial class MainViewModel : ObservableObject
     public string LibraryFolderPath => Path.GetDirectoryName(_paths.LibraryFilePath) ?? _paths.LibraryFilePath;
 
     public string LibraryModeText => _paths.Portable
-        ? "портативный (library.json рядом с exe)"
-        : @"обычный (%LOCALAPPDATA%\IMM)";
+        ? Loc.T("Set_ModePortable")
+        : Loc.T("Set_ModeStandard");
 
     private async Task LoadSettingsAsync()
     {
@@ -249,7 +296,14 @@ public partial class MainViewModel : ObservableObject
         // Загрузка не должна тут же писать файл обратно.
         _settingsLoaded = false;
         BackupsLimit = Math.Max(0, _settings.MaxBackups);
+        SelectedLanguage = string.Equals(_settings.Language, Loc.Russian, StringComparison.OrdinalIgnoreCase)
+            ? "Русский"
+            : "English";
+        Loc.Instance.SetLanguage(_settings.Language);
         _settingsLoaded = true;
+
+        OnPropertyChanged(nameof(PacksCountText));
+        OnPropertyChanged(nameof(PacksInLibraryText));
 
         OnPropertyChanged(nameof(BackupsFolderPath));
         OnPropertyChanged(nameof(LogsFolderPath));
@@ -264,15 +318,15 @@ public partial class MainViewModel : ObservableObject
         {
             _settings.MaxBackups = Math.Max(0, BackupsLimit);
             await _appSettings.SaveAsync(_settings).ConfigureAwait(true);
-            SettingsStatus = "Сохранено";
+            SettingsStatus = Loc.T("Set_Saved");
         }
         catch (Exception exception)
         {
             _logger.Error(exception, "Saving settings failed");
-            SettingsStatus = "Не сохранено";
+            SettingsStatus = Loc.T("Set_NotSaved");
             _snackbar.Show(
-                "Настройки",
-                $"Не удалось сохранить настройки: {exception.Message}",
+                Loc.T("Set_Title"),
+                Loc.F("Set_SaveFailed", exception.Message),
                 ControlAppearance.Danger,
                 new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
                 TimeSpan.FromSeconds(6));
@@ -301,8 +355,8 @@ public partial class MainViewModel : ObservableObject
         {
             _logger.Error(exception, "Opening folder {Path} failed", path);
             _snackbar.Show(
-                "Проводник",
-                $"Не удалось открыть папку: {exception.Message}",
+                Loc.T("Msg_Explorer"),
+                Loc.F("Msg_OpenFolderFailed", exception.Message),
                 ControlAppearance.Danger,
                 new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
                 TimeSpan.FromSeconds(6));
@@ -322,8 +376,10 @@ public partial class MainViewModel : ObservableObject
         EntriesView.SortDescriptions.Clear();
         SortDescription description = SelectedSortOption switch
         {
-            "По дате запуска" => new(nameof(LibraryEntryViewModel.LastPlayedAtUtc), ListSortDirection.Descending),
-            "По времени" => new(nameof(LibraryEntryViewModel.PlaytimeMinutes), ListSortDirection.Descending),
+            var date when date == Loc.T("Lib_SortDate") =>
+                new(nameof(LibraryEntryViewModel.LastPlayedAtUtc), ListSortDirection.Descending),
+            var time when time == Loc.T("Lib_SortTime") =>
+                new(nameof(LibraryEntryViewModel.PlaytimeMinutes), ListSortDirection.Descending),
             _ => new(nameof(LibraryEntryViewModel.Name), ListSortDirection.Ascending),
         };
         EntriesView.SortDescriptions.Add(description);
@@ -353,7 +409,7 @@ public partial class MainViewModel : ObservableObject
     private bool _isBusy;
 
     [ObservableProperty]
-    private string _statusText = "Готово";
+    private string _statusText = Loc.T("Common_Done");
 
     public bool HasNoEntries => Entries.Count == 0;
 
@@ -376,16 +432,16 @@ public partial class MainViewModel : ObservableObject
 
             SelectedEntry = Entries.FirstOrDefault();
             OnPropertyChanged(nameof(HasNoEntries));
-            StatusText = "Готово";
+            StatusText = Loc.T("Common_Done");
         }
         catch (Exception exception)
         {
             // Библиотека не должна «молча пустеть»: пользователь видит сообщение, детали — в логе.
             _logger.Error(exception, "Library initialization failed");
-            StatusText = "Библиотека не загружена";
+            StatusText = Loc.T("Msg_LibraryNotLoaded");
             _snackbar.Show(
-                "Библиотека",
-                "Не удалось загрузить библиотеку — подробности в логе (меню «Логи»).",
+                Loc.T("Msg_Library"),
+                Loc.T("Msg_LibraryLoadFailed"),
                 ControlAppearance.Danger,
                 new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
                 TimeSpan.FromSeconds(8));
@@ -397,7 +453,7 @@ public partial class MainViewModel : ObservableObject
     {
         var dialog = new OpenFolderDialog
         {
-            Title = "Выберите папку сборки",
+            Title = Loc.T("Msg_ChoosePackFolder"),
         };
 
         if (dialog.ShowDialog() is not true)
@@ -416,7 +472,7 @@ public partial class MainViewModel : ObservableObject
         }
 
         IsBusy = true;
-        StatusText = "Сканирование…";
+        StatusText = Loc.T("Msg_Scanning");
         try
         {
             var entry = await _library.ImportAsync(folderPath).ConfigureAwait(true);
@@ -424,7 +480,7 @@ public partial class MainViewModel : ObservableObject
             var viewModel = new LibraryEntryViewModel(entry, manifest, this);
             Entries.Add(viewModel);
             SelectedEntry = viewModel;
-            StatusText = "Готово";
+            StatusText = Loc.T("Common_Done");
 
             // Post-import customization: name + cover (defaults = folder name / no cover).
             var (displayName, coverImagePath) = await ShowImportDialogAsync(viewModel.Name).ConfigureAwait(true);
@@ -442,8 +498,8 @@ public partial class MainViewModel : ObservableObject
 
             // Подтверждение — на любой успешный импорт, а не только на переименованный.
             _snackbar.Show(
-                "Библиотека",
-                $"Сборка «{entry.Name}» добавлена",
+                Loc.T("Msg_Library"),
+                Loc.F("Msg_PackAdded", entry.Name),
                 ControlAppearance.Success,
                 new SymbolIcon { Symbol = SymbolRegular.CheckmarkCircle24 },
                 TimeSpan.FromSeconds(4));
@@ -452,7 +508,7 @@ public partial class MainViewModel : ObservableObject
         {
             _logger.Warning("Import rejected: {Message}", exception.Message);
             _snackbar.Show(
-                "Импорт невозможен",
+                Loc.T("Msg_ImportRejected"),
                 exception.Message,
                 ControlAppearance.Caution,
                 new SymbolIcon { Symbol = SymbolRegular.Warning24 },
@@ -462,7 +518,7 @@ public partial class MainViewModel : ObservableObject
         {
             _logger.Error(exception, "Import failed for {Path}", folderPath);
             _snackbar.Show(
-                "Ошибка импорта",
+                Loc.T("Msg_ImportError"),
                 exception.Message,
                 ControlAppearance.Danger,
                 new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
@@ -495,8 +551,8 @@ public partial class MainViewModel : ObservableObject
             var manifest = await _library.LoadManifestAsync(libraryEntry).ConfigureAwait(true);
             entry.UpdateManifest(manifest ?? new ModpackManifest());
             _snackbar.Show(
-                "Ре-скан",
-                $"Игра: {entry.GameDisplayName}, движок: {entry.EngineDisplayName}",
+                Loc.T("Msg_Rescan"),
+                Loc.F("Msg_RescanDone", entry.GameDisplayName, entry.EngineDisplayName),
                 ControlAppearance.Info,
                 new SymbolIcon { Symbol = SymbolRegular.ArrowClockwise24 },
                 TimeSpan.FromSeconds(4));
@@ -511,7 +567,7 @@ public partial class MainViewModel : ObservableObject
         {
             _logger.Warning("Re-scan rejected: {Message}", exception.Message);
             _snackbar.Show(
-                "Ре-скан невозможен",
+                Loc.T("Msg_RescanRejected"),
                 exception.Message,
                 ControlAppearance.Caution,
                 new SymbolIcon { Symbol = SymbolRegular.Warning24 },
@@ -521,7 +577,7 @@ public partial class MainViewModel : ObservableObject
         {
             _logger.Error(exception, "Re-scan failed for {Path}", entry.RootPath);
             _snackbar.Show(
-                "Ошибка ре-скана",
+                Loc.T("Msg_RescanError"),
                 exception.Message,
                 ControlAppearance.Danger,
                 new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
@@ -542,7 +598,7 @@ public partial class MainViewModel : ObservableObject
         }
 
         IsBusy = true;
-        StatusText = "Запуск…";
+        StatusText = Loc.T("Msg_Launching");
         try
         {
             var libraryEntry = await FindEntryAsync(entry.Id).ConfigureAwait(true);
@@ -551,7 +607,7 @@ public partial class MainViewModel : ObservableObject
                 : await _library.LoadManifestAsync(libraryEntry).ConfigureAwait(true);
             if (manifest is null)
             {
-                throw new InvalidOperationException("Манифест сборки не найден — выполните ре-скан.");
+                throw new InvalidOperationException(Loc.T("Msg_ManifestMissing"));
             }
 
             var launchStartedUtc = DateTime.UtcNow;
@@ -559,8 +615,8 @@ public partial class MainViewModel : ObservableObject
             _logger.Information("Launched {Name} (pid={ProcessId})", entry.Name, process.Id);
             TrackSession(entry, manifest, process, launchStartedUtc);
             _snackbar.Show(
-                "Запуск",
-                $"Сборка «{entry.Name}» запущена",
+                Loc.T("Msg_Launch"),
+                Loc.F("Msg_Launched", entry.Name),
                 ControlAppearance.Success,
                 new SymbolIcon { Symbol = SymbolRegular.Play24 },
                 TimeSpan.FromSeconds(4));
@@ -570,8 +626,8 @@ public partial class MainViewModel : ObservableObject
             // UAC prompt refused — a cancel, not an error (FEHLauncher scheme).
             _logger.Information("Launch cancelled by user (UAC refused) for {Path}", entry.RootPath);
             _snackbar.Show(
-                "Запуск отменён",
-                "Запрос UAC отклонён — запуск без прав администратора невозможен.",
+                Loc.T("Msg_LaunchCancelled"),
+                Loc.T("Msg_UacLaunchDenied"),
                 ControlAppearance.Light,
                 new SymbolIcon { Symbol = SymbolRegular.Info24 },
                 TimeSpan.FromSeconds(4));
@@ -580,7 +636,7 @@ public partial class MainViewModel : ObservableObject
         {
             _logger.Warning("Launch rejected: {Message}", exception.Message);
             _snackbar.Show(
-                "Запуск невозможен",
+                Loc.T("Msg_LaunchRejected"),
                 exception.Message,
                 ControlAppearance.Caution,
                 new SymbolIcon { Symbol = SymbolRegular.Warning24 },
@@ -590,7 +646,7 @@ public partial class MainViewModel : ObservableObject
         {
             _logger.Error(exception, "Launch failed for {Path}", entry.RootPath);
             _snackbar.Show(
-                "Ошибка запуска",
+                Loc.T("Msg_LaunchError"),
                 exception.Message,
                 ControlAppearance.Danger,
                 new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
@@ -599,7 +655,7 @@ public partial class MainViewModel : ObservableObject
         finally
         {
             IsBusy = false;
-            StatusText = "Готово";
+            StatusText = Loc.T("Common_Done");
         }
     }
 
@@ -612,9 +668,9 @@ public partial class MainViewModel : ObservableObject
         }
 
         var removeDialog = CreateDialog(
-            "Убрать сборку из библиотеки?",
-            $"«{entry.Name}» будет убрана из списка IMM. Папка сборки на диске не удаляется.",
-            "Убрать", "Отмена", SymbolRegular.Delete24, danger: true);
+            Loc.T("Msg_RemoveTitle"),
+            Loc.F("Msg_RemoveBody", entry.Name),
+            Loc.T("Msg_Remove"), Loc.T("Common_Cancel"), SymbolRegular.Delete24, danger: true);
         var dialogResult = await _dialog.ShowAsync(removeDialog, CancellationToken.None).ConfigureAwait(true);
 
         if (dialogResult is not ContentDialogResult.Primary)
@@ -639,10 +695,10 @@ public partial class MainViewModel : ObservableObject
                 SelectedEntry = Entries.FirstOrDefault();
             }
 
-            StatusText = "Готово";
+            StatusText = Loc.T("Common_Done");
             _snackbar.Show(
-                "Библиотека",
-                "Сборка убрана из библиотеки (папка не тронута)",
+                Loc.T("Msg_Library"),
+                Loc.T("Msg_Removed"),
                 ControlAppearance.Info,
                 new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
                 TimeSpan.FromSeconds(4));
@@ -651,8 +707,8 @@ public partial class MainViewModel : ObservableObject
         {
             _logger.Error(exception, "Removing entry {Id} failed", entry.Id);
             _snackbar.Show(
-                "Библиотека",
-                $"Не удалось убрать сборку: {exception.Message}",
+                Loc.T("Msg_Library"),
+                Loc.F("Msg_RemoveFailed", exception.Message),
                 ControlAppearance.Danger,
                 new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
                 TimeSpan.FromSeconds(6));
@@ -702,8 +758,8 @@ public partial class MainViewModel : ObservableObject
             entry.UpdateManifest(manifest);
 
             _snackbar.Show(
-                "Профиль",
-                $"Для «{entry.Name}» выбран профиль «{profile}»",
+                Loc.T("Msg_Profile"),
+                Loc.F("Msg_ProfileSet", entry.Name, profile),
                 ControlAppearance.Success,
                 new SymbolIcon { Symbol = SymbolRegular.CheckmarkCircle24 },
                 TimeSpan.FromSeconds(4));
@@ -713,8 +769,8 @@ public partial class MainViewModel : ObservableObject
             // Метод вызывается fire-and-forget из команды карточки: ошибка обязана дойти до UI.
             _logger.Error(exception, "Saving profile {Profile} for {Path} failed", profile, entry.RootPath);
             _snackbar.Show(
-                "Профиль",
-                $"Не удалось сохранить профиль: {exception.Message}",
+                Loc.T("Msg_Profile"),
+                Loc.F("Msg_ProfileFailed", exception.Message),
                 ControlAppearance.Danger,
                 new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
                 TimeSpan.FromSeconds(6));
@@ -734,8 +790,8 @@ public partial class MainViewModel : ObservableObject
         if (gameType is null)
         {
             _snackbar.Show(
-                "Папка не подходит",
-                "В выбранной папке нет exe поддерживаемой игры (Skyrim LE/SE, Fallout 4/NV).",
+                Loc.T("Msg_FolderRejected"),
+                Loc.T("Msg_FolderRejectedBody"),
                 ControlAppearance.Caution,
                 new SymbolIcon { Symbol = SymbolRegular.Warning24 },
                 TimeSpan.FromSeconds(6));
@@ -765,8 +821,8 @@ public partial class MainViewModel : ObservableObject
             entry.UpdateManifest(manifest);
 
             _snackbar.Show(
-                "Игра",
-                $"Для «{entry.Name}» указана папка: {folder}",
+                Loc.T("Msg_Game"),
+                Loc.F("Msg_GameFolderSet", entry.Name, folder),
                 ControlAppearance.Success,
                 new SymbolIcon { Symbol = SymbolRegular.CheckmarkCircle24 },
                 TimeSpan.FromSeconds(4));
@@ -775,8 +831,8 @@ public partial class MainViewModel : ObservableObject
         {
             _logger.Error(exception, "Saving game folder {Folder} for {Path} failed", folder, entry.RootPath);
             _snackbar.Show(
-                "Игра",
-                $"Не удалось сохранить папку игры: {exception.Message}",
+                Loc.T("Msg_Game"),
+                Loc.F("Msg_GameFolderFailed", exception.Message),
                 ControlAppearance.Danger,
                 new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
                 TimeSpan.FromSeconds(6));
@@ -787,7 +843,7 @@ public partial class MainViewModel : ObservableObject
     {
         var dialog = new OpenFolderDialog
         {
-            Title = "Выберите папку с игрой",
+            Title = Loc.T("Msg_ChooseGameFolder"),
         };
 
         if (dialog.ShowDialog() is not true)
@@ -825,19 +881,19 @@ public partial class MainViewModel : ObservableObject
         var textBox = new Wpf.Ui.Controls.TextBox
         {
             Text = defaultName,
-            PlaceholderText = "Название сборки",
+            PlaceholderText = Loc.T("Msg_PackNamePlaceholder"),
             Margin = new System.Windows.Thickness(0, 4, 0, 4),
         };
         var coverButton = new Wpf.Ui.Controls.Button
         {
-            Content = "Выбрать обложку…",
+            Content = Loc.T("Msg_ChooseCover"),
             Icon = new SymbolIcon { Symbol = SymbolRegular.Image24 },
             Appearance = ControlAppearance.Secondary,
             HorizontalAlignment = System.Windows.HorizontalAlignment.Left,
         };
         var coverText = new System.Windows.Controls.TextBlock
         {
-            Text = "Обложка не выбрана (PNG/JPG/WebP)",
+            Text = Loc.T("Msg_NoCover"),
             Opacity = 0.7,
             Margin = new System.Windows.Thickness(0, 4, 0, 0),
         };
@@ -846,8 +902,8 @@ public partial class MainViewModel : ObservableObject
         {
             var dialog = new OpenFileDialog
             {
-                Title = "Выберите обложку",
-                Filter = "Изображения|*.png;*.jpg;*.jpeg;*.webp",
+                Title = Loc.T("Msg_ChooseCoverTitle"),
+                Filter = Loc.T("Msg_ImageFilter"),
                 CheckFileExists = true,
             };
             if (dialog.ShowDialog() is true)
@@ -860,14 +916,14 @@ public partial class MainViewModel : ObservableObject
         var panel = new System.Windows.Controls.StackPanel { Margin = new System.Windows.Thickness(0, 8, 0, 0) };
         panel.Children.Add(new System.Windows.Controls.TextBlock
         {
-            Text = "Название:",
+            Text = Loc.T("Common_NameLabel"),
             Opacity = 0.8,
         });
         panel.Children.Add(textBox);
         panel.Children.Add(coverButton);
         panel.Children.Add(coverText);
 
-        var dialog = CreateDialog("Новая сборка", panel, "Сохранить", "Пропустить", SymbolRegular.CheckmarkCircle24);
+        var dialog = CreateDialog(Loc.T("Msg_NewPack"), panel, Loc.T("Common_Save"), Loc.T("Common_Skip"), SymbolRegular.CheckmarkCircle24);
         var result = await _dialog.ShowAsync(dialog, CancellationToken.None).ConfigureAwait(true);
 
         return result is ContentDialogResult.Primary
@@ -881,19 +937,19 @@ public partial class MainViewModel : ObservableObject
         var textBox = new Wpf.Ui.Controls.TextBox
         {
             Text = entry.Name,
-            PlaceholderText = "Название сборки",
+            PlaceholderText = Loc.T("Msg_PackNamePlaceholder"),
             Margin = new System.Windows.Thickness(0, 4, 0, 4),
         };
 
         var panel = new System.Windows.Controls.StackPanel { Margin = new System.Windows.Thickness(0, 8, 0, 0) };
         panel.Children.Add(new System.Windows.Controls.TextBlock
         {
-            Text = "Название:",
+            Text = Loc.T("Common_NameLabel"),
             Opacity = 0.8,
         });
         panel.Children.Add(textBox);
 
-        var dialog = CreateDialog("Переименовать сборку", panel, "Сохранить", "Отмена", SymbolRegular.CheckmarkCircle24);
+        var dialog = CreateDialog(Loc.T("Msg_RenameTitle"), panel, Loc.T("Common_Save"), Loc.T("Common_Cancel"), SymbolRegular.CheckmarkCircle24);
         var result = await _dialog.ShowAsync(dialog, CancellationToken.None).ConfigureAwait(true);
 
         if (result is not ContentDialogResult.Primary || string.IsNullOrWhiteSpace(textBox.Text))
@@ -918,8 +974,8 @@ public partial class MainViewModel : ObservableObject
     {
         var dialog = new OpenFileDialog
         {
-            Title = "Выберите обложку",
-            Filter = "Изображения|*.png;*.jpg;*.jpeg;*.webp",
+            Title = Loc.T("Msg_ChooseCoverTitle"),
+            Filter = Loc.T("Msg_ImageFilter"),
             CheckFileExists = true,
         };
         if (dialog.ShowDialog() is not true)
@@ -932,8 +988,8 @@ public partial class MainViewModel : ObservableObject
             await _library.SetCoverAsync(entry.RootPath, dialog.FileName).ConfigureAwait(true);
             entry.Refresh();
             _snackbar.Show(
-                "Обложка",
-                $"Обложка «{entry.Name}» обновлена",
+                Loc.T("Msg_Cover"),
+                Loc.F("Msg_CoverUpdated", entry.Name),
                 ControlAppearance.Success,
                 new SymbolIcon { Symbol = SymbolRegular.CheckmarkCircle24 },
                 TimeSpan.FromSeconds(4));
@@ -942,7 +998,7 @@ public partial class MainViewModel : ObservableObject
         {
             _logger.Error(exception, "Cover change failed for {Path}", entry.RootPath);
             _snackbar.Show(
-                "Обложка",
+                Loc.T("Msg_Cover"),
                 exception.Message,
                 ControlAppearance.Danger,
                 new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
@@ -962,20 +1018,20 @@ public partial class MainViewModel : ObservableObject
         }
 
         IsBusy = true;
-        StatusText = "Резервная копия…";
+        StatusText = Loc.T("Msg_BackupBusy");
         try
         {
             var libraryEntry = await FindEntryAsync(entry.Id).ConfigureAwait(true)
-                ?? throw new InvalidOperationException("Сборка не найдена в библиотеке.");
+                ?? throw new InvalidOperationException(Loc.T("Msg_PackNotFound"));
             var manifest = await _library.LoadManifestAsync(libraryEntry).ConfigureAwait(true)
-                ?? throw new InvalidOperationException("Манифест сборки не найден — выполните ре-скан.");
+                ?? throw new InvalidOperationException(Loc.T("Msg_ManifestMissing"));
 
             var archive = await _backups
                 .CreateBackupAsync(libraryEntry, manifest, retentionOverride: _settings.MaxBackups)
                 .ConfigureAwait(true);
             _snackbar.Show(
-                "Бэкап",
-                $"Архив сохранён: {Path.GetFileName(archive)}",
+                Loc.T("Msg_Backup"),
+                Loc.F("Msg_BackupSaved", Path.GetFileName(archive)),
                 ControlAppearance.Success,
                 new SymbolIcon { Symbol = SymbolRegular.Archive24 },
                 TimeSpan.FromSeconds(6));
@@ -984,7 +1040,7 @@ public partial class MainViewModel : ObservableObject
         {
             _logger.Warning("Backup rejected: {Message}", exception.Message);
             _snackbar.Show(
-                "Бэкап невозможен",
+                Loc.T("Msg_BackupRejected"),
                 exception.Message,
                 ControlAppearance.Caution,
                 new SymbolIcon { Symbol = SymbolRegular.Warning24 },
@@ -994,7 +1050,7 @@ public partial class MainViewModel : ObservableObject
         {
             _logger.Error(exception, "Backup failed for {Path}", entry.RootPath);
             _snackbar.Show(
-                "Ошибка бэкапа",
+                Loc.T("Msg_BackupError"),
                 exception.Message,
                 ControlAppearance.Danger,
                 new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
@@ -1003,7 +1059,7 @@ public partial class MainViewModel : ObservableObject
         finally
         {
             IsBusy = false;
-            StatusText = "Готово";
+            StatusText = Loc.T("Common_Done");
         }
     }
 
@@ -1030,8 +1086,8 @@ public partial class MainViewModel : ObservableObject
         {
             _logger.Error(exception, "Opening backups folder for {Path} failed", entry.RootPath);
             _snackbar.Show(
-                "Бэкапы",
-                $"Не удалось открыть папку: {exception.Message}",
+                Loc.T("Msg_Backups"),
+                Loc.F("Msg_OpenFolderFailed", exception.Message),
                 ControlAppearance.Danger,
                 new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
                 TimeSpan.FromSeconds(6));
@@ -1054,13 +1110,13 @@ public partial class MainViewModel : ObservableObject
         try
         {
             var libraryEntry = await FindEntryAsync(entry.Id).ConfigureAwait(true)
-                ?? throw new InvalidOperationException("Сборка не найдена в библиотеке.");
+                ?? throw new InvalidOperationException(Loc.T("Msg_PackNotFound"));
             var manifest = await _library.LoadManifestAsync(libraryEntry).ConfigureAwait(true)
-                ?? throw new InvalidOperationException("Манифест сборки не найден — выполните ре-скан.");
+                ?? throw new InvalidOperationException(Loc.T("Msg_ManifestMissing"));
 
             var instance = Mo2Locator.ResolveInstance(libraryEntry.RootPath, manifest.Mo2?.Directory)
                 ?? throw new InvalidOperationException(
-                    "ModOrganizer.exe не найден — поддерживаются только portable-инстансы MO2.");
+                    Loc.T("Msg_Mo2ExeMissing"));
             var mo2Exe = Path.Combine(instance, "ModOrganizer.exe");
 
             if (_windowActivation.TryActivate(mo2Exe))
@@ -1068,7 +1124,7 @@ public partial class MainViewModel : ObservableObject
                 _logger.Information("Mod Organizer window activated for {Path}", entry.RootPath);
                 _snackbar.Show(
                     "MO2",
-                    "Окно Mod Organizer 2 выведено на передний план",
+                    Loc.T("Msg_Mo2Activated"),
                     ControlAppearance.Info,
                     new SymbolIcon { Symbol = SymbolRegular.Window24 },
                     TimeSpan.FromSeconds(4));
@@ -1078,7 +1134,7 @@ public partial class MainViewModel : ObservableObject
             await _launch.OpenModOrganizerAsync(manifest, libraryEntry.RootPath).ConfigureAwait(true);
             _snackbar.Show(
                 "MO2",
-                "Mod Organizer 2 запущен (без игры)",
+                Loc.T("Msg_Mo2Started"),
                 ControlAppearance.Success,
                 new SymbolIcon { Symbol = SymbolRegular.Settings24 },
                 TimeSpan.FromSeconds(4));
@@ -1087,8 +1143,8 @@ public partial class MainViewModel : ObservableObject
         {
             _logger.Information("Opening MO2 cancelled by user (UAC refused) for {Path}", entry.RootPath);
             _snackbar.Show(
-                "Запуск отменён",
-                "Запрос UAC отклонён — MO2 не запущен.",
+                Loc.T("Msg_LaunchCancelled"),
+                Loc.T("Msg_UacMo2Denied"),
                 ControlAppearance.Light,
                 new SymbolIcon { Symbol = SymbolRegular.Info24 },
                 TimeSpan.FromSeconds(4));
@@ -1097,7 +1153,7 @@ public partial class MainViewModel : ObservableObject
         {
             _logger.Warning("Opening MO2 rejected: {Message}", exception.Message);
             _snackbar.Show(
-                "MO2 не открыт",
+                Loc.T("Msg_Mo2NotOpened"),
                 exception.Message,
                 ControlAppearance.Caution,
                 new SymbolIcon { Symbol = SymbolRegular.Warning24 },
@@ -1107,7 +1163,7 @@ public partial class MainViewModel : ObservableObject
         {
             _logger.Error(exception, "Opening MO2 failed for {Path}", entry.RootPath);
             _snackbar.Show(
-                "Ошибка запуска MO2",
+                Loc.T("Msg_Mo2LaunchError"),
                 exception.Message,
                 ControlAppearance.Danger,
                 new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },

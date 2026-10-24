@@ -3,6 +3,7 @@ using Imm.Core.Domain;
 using Imm.Core.Ini;
 using Imm.Core.IO;
 using Serilog;
+using Imm.Core.Localization;
 
 namespace Imm.Core.Scanning;
 
@@ -33,7 +34,7 @@ public sealed class ModpackScanner : IModpackScanner
         if (!Directory.Exists(root))
         {
             _logger.Warning("Scan target does not exist: {Root}", root);
-            return Fail(root, "Папка не существует.");
+            return Fail(root, Loc.T("Err_FolderMissing"));
         }
 
         cancellationToken.ThrowIfCancellationRequested();
@@ -45,10 +46,8 @@ public sealed class ModpackScanner : IModpackScanner
         var nestedMo2Instances = Mo2Locator.FindSubdirectoryInstances(root);
         if (nestedMo2Instances.Count > 1)
         {
-            warnings.Add(
-                "Найдено несколько вложенных папок MO2 ("
-                + string.Join(", ", nestedMo2Instances.Select(Path.GetFileName))
-                + ") — укажите инстанс вручную.");
+            warnings.Add(Loc.F("Warn_MultipleMo2",
+                string.Join(", ", nestedMo2Instances.Select(Path.GetFileName))));
         }
 
         var mo2Directory = Mo2Locator.IsPortableInstance(root)
@@ -68,7 +67,7 @@ public sealed class ModpackScanner : IModpackScanner
             gameFilesDirectory = portableInfo.Value.Path;
             if (rootGameType != GameType.Unknown)
             {
-                warnings.Add("Exe игры найден и в корне сборки, и в портативной папке игры — используется портативная.");
+                warnings.Add(Loc.T("Warn_ExeInRootAndPortable"));
             }
         }
         else if (rootGameType != GameType.Unknown)
@@ -91,7 +90,7 @@ public sealed class ModpackScanner : IModpackScanner
                 systemGamePath = _systemLocator.FindGamePath(gameType);
                 if (systemGamePath is null)
                 {
-                    warnings.Add("Системная установка игры не найдена — укажите путь к игре вручную.");
+                    warnings.Add(Loc.T("Warn_SystemGameMissing"));
                 }
                 else
                 {
@@ -124,7 +123,7 @@ public sealed class ModpackScanner : IModpackScanner
                         if (!Directory.Exists(LongPath.Normalize(managedGame)))
                         {
                             warnings.Add(
-                                $"ModOrganizer.ini указывает на несуществующую папку игры («{managedGame}») — выберите папку игры вручную.");
+                                Loc.F("Warn_IniGameFolderMissing", managedGame));
                         }
                     }
                     else
@@ -132,7 +131,7 @@ public sealed class ModpackScanner : IModpackScanner
                         systemGamePath = _systemLocator.FindGamePath(gameType);
                         if (systemGamePath is null)
                         {
-                            warnings.Add("Системная установка игры не найдена — укажите путь к игре вручную.");
+                            warnings.Add(Loc.T("Warn_SystemGameMissing"));
                         }
                         else
                         {
@@ -189,7 +188,7 @@ public sealed class ModpackScanner : IModpackScanner
         var looksLikeModpack = gameType != GameType.Unknown || mo2Directory is not null;
         if (!looksLikeModpack)
         {
-            warnings.Add("Не найдено известных маркеров (exe игры, MO2) — папка не похожа на поддерживаемую сборку.");
+            warnings.Add(Loc.T("Warn_NoMarkers"));
         }
 
         _logger.Information(
@@ -272,7 +271,7 @@ public sealed class ModpackScanner : IModpackScanner
 
         if (!Directory.Exists(LongPath.Normalize(Path.Combine(root, Markers.ModsFolder))))
         {
-            warnings.Add("Root Builder найден, но папка mods отсутствует — проверьте настройку сборки.");
+            warnings.Add(Loc.T("Warn_RootBuilderNoMods"));
         }
 
         return true;
@@ -303,7 +302,7 @@ public sealed class ModpackScanner : IModpackScanner
         var profilesDirectory = LongPath.Normalize(Path.Combine(root, Markers.ProfilesFolder));
         if (!Directory.Exists(profilesDirectory))
         {
-            warnings.Add("Папка profiles у MO2 не найдена — выберите профиль вручную.");
+            warnings.Add(Loc.T("Warn_NoProfilesFolder"));
             return null;
         }
 
@@ -320,7 +319,7 @@ public sealed class ModpackScanner : IModpackScanner
             case 0:
                 return null; // fresh MO2 install; the user creates a profile in MO2 first
             default:
-                warnings.Add($"Найдено несколько профилей ({string.Join(", ", profiles)}) — выберите нужный вручную.");
+                warnings.Add(Loc.F("Warn_MultipleProfiles", string.Join(", ", profiles)));
                 return null;
         }
     }
@@ -332,7 +331,7 @@ public sealed class ModpackScanner : IModpackScanner
         {
             if (hasMo2)
             {
-                warnings.Add("Игра не распознана — укажите запускаемый exe вручную.");
+                warnings.Add(Loc.T("Warn_GameNotRecognized"));
             }
 
             return null;

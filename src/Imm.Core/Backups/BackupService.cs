@@ -4,6 +4,7 @@ using Imm.Core.Domain;
 using Imm.Core.IO;
 using Imm.Core.Scanning;
 using Serilog;
+using Imm.Core.Localization;
 
 namespace Imm.Core.Backups;
 
@@ -54,8 +55,8 @@ public sealed class BackupService : IBackupService
     {
         var (sourceDirectory, sourceKind) = ResolveSource(manifest, entry.RootPath)
             ?? throw new InvalidOperationException(manifest.Engine is LaunchEngine.Mo2Standard or LaunchEngine.Mo2RootBuilder
-                ? "Не найдена папка профиля MO2 — проверьте профиль сборки и выполните ре-скан."
-                : "Не найдена папка сейвов игры (Документы\\My Games\\<Игра>\\Saves) — бэкап невозможен.");
+                ? Loc.T("Err_BackupNoProfile")
+                : Loc.T("Err_BackupNoSaves"));
 
         var directory = PackDirectory(entry.Id);
         Directory.CreateDirectory(LongPath.Normalize(directory));
@@ -133,13 +134,13 @@ public sealed class BackupService : IBackupService
 
             var profileDirectory = Path.Combine(instance, Markers.ProfilesFolder, profile);
             return Directory.Exists(LongPath.Normalize(profileDirectory))
-                ? (profileDirectory, $"профиль MO2 «{profile}»")
+                ? (profileDirectory, Loc.F("Label_BackupProfile", profile))
                 : null;
         }
 
         var savesDirectory = GameSavesDirectory(manifest.GameType);
         return savesDirectory is not null && Directory.Exists(LongPath.Normalize(savesDirectory))
-            ? (savesDirectory, "сейвы игры")
+            ? (savesDirectory, Loc.T("Label_BackupSaves"))
             : null;
     }
 

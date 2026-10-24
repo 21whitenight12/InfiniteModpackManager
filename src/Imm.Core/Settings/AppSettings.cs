@@ -20,6 +20,9 @@ public sealed class AppSettings
     /// A non-zero <c>backups.maxBackups</c> in the pack manifest always wins.
     /// </summary>
     public int MaxBackups { get; set; }
+
+    /// <summary>UI language: "en" (default) or "ru".</summary>
+    public string Language { get; set; } = "en";
 }
 
 /// <summary>Persistence for <see cref="AppSettings"/>; a broken file must never block the app.</summary>
@@ -30,6 +33,9 @@ public interface IAppSettingsService
     Task<AppSettings> LoadAsync(CancellationToken cancellationToken = default);
 
     Task SaveAsync(AppSettings settings, CancellationToken cancellationToken = default);
+
+    /// <summary>Synchronous load for startup (the language must be known before the first window).</summary>
+    AppSettings LoadSync();
 }
 
 public sealed class AppSettingsService : IAppSettingsService
@@ -63,6 +69,25 @@ public sealed class AppSettingsService : IAppSettingsService
         {
             // Битые настройки не должны мешать запуску: работаем на дефолтах, файл не трогаем.
             _logger.Error(exception, "settings.json is unreadable; defaults used. File kept at {Path}", _path);
+            return new AppSettings();
+        }
+    }
+
+    public AppSettings LoadSync()
+    {
+        if (!File.Exists(LongPath.Normalize(_path)))
+        {
+            return new AppSettings();
+        }
+
+        try
+        {
+            var json = File.ReadAllText(LongPath.Normalize(_path));
+            return Imm.Core.Serialization.ImmJson.Deserialize<AppSettings>(json);
+        }
+        catch (Exception exception) when (exception is System.Text.Json.JsonException or IOException or UnauthorizedAccessException)
+        {
+            _logger.Error(exception, "settings.json is unreadable at startup; defaults used. File kept at {Path}", _path);
             return new AppSettings();
         }
     }

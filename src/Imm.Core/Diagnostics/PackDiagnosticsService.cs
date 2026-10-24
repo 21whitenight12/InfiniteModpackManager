@@ -3,6 +3,7 @@ using Imm.Core.Domain;
 using Imm.Core.IO;
 using Imm.Core.Scanning;
 using Serilog;
+using Imm.Core.Localization;
 
 namespace Imm.Core.Diagnostics;
 
@@ -31,10 +32,10 @@ public sealed class PackDiagnosticsService : IPackDiagnosticsService
                 EntryId = entry.Id,
                 Name = entry.Name,
                 RootPath = entry.RootPath,
-                Summary = "папка не найдена",
+                Summary = Loc.T("Badge_FolderMissing"),
                 RootExists = false,
                 ManifestMissing = manifest is null,
-                Warnings = ["Папка сборки не найдена на диске — проверьте путь или уберите сборку из библиотеки."],
+                Warnings = [Loc.T("Err_PackFolderGone")],
             };
         }
 
@@ -44,13 +45,13 @@ public sealed class PackDiagnosticsService : IPackDiagnosticsService
         var warnings = new List<string>(scan.Warnings);
         if (manifest is null)
         {
-            warnings.Add("modpack.json отсутствует или повреждён — сборка показывается как не сканированная.");
+            warnings.Add(Loc.T("Err_ManifestMissingOrBroken"));
         }
 
         var stale = manifest is not null && DiffersFromScan(scan, manifest);
         if (stale)
         {
-            warnings.Add("Манифест расходится с текущим сканом — выполните ре-скан, чтобы применить факты.");
+            warnings.Add(Loc.T("Err_ManifestStale"));
         }
 
         _logger.Information(
@@ -79,27 +80,27 @@ public sealed class PackDiagnosticsService : IPackDiagnosticsService
 
         return
         [
-            new DiagnosticRow("Игра", Labels.Game(scan.GameType),
+            new DiagnosticRow(Loc.T("Common_Game"), Labels.Game(scan.GameType),
                 scan.GameType == GameType.Unknown ? DiagnosticSeverity.Warning : DiagnosticSeverity.Ok),
-            new DiagnosticRow("Движок", Labels.Engine(scan.Engine, scan.Source)),
-            new DiagnosticRow("Источник", Labels.Source(scan.Source)),
-            new DiagnosticRow("Папка игры",
-                gamePath is null ? "внутри сборки" : gamePath,
+            new DiagnosticRow(Loc.T("Common_Engine"), Labels.Engine(scan.Engine, scan.Source)),
+            new DiagnosticRow(Loc.T("Common_Source"), Labels.Source(scan.Source)),
+            new DiagnosticRow(Loc.T("Common_GameFolder"),
+                gamePath is null ? Loc.T("Common_InPack") : gamePath,
                 gamePathMissing ? DiagnosticSeverity.Warning : DiagnosticSeverity.Ok),
-            new DiagnosticRow("Инстанс MO2", instance is null
-                ? "не найден"
+            new DiagnosticRow(Loc.T("Common_Mo2Instance"), instance is null
+                ? Loc.T("Common_NotFound")
                 : Labels.Instance(scan.RootPath, instance),
                 instance is null && scan.Engine != LaunchEngine.Direct
                     ? DiagnosticSeverity.Warning
                     : DiagnosticSeverity.Ok),
-            new DiagnosticRow("Профиль MO2", scan.Mo2ProfileName ?? "—",
+            new DiagnosticRow(Loc.T("Common_ProfileMo2"), scan.Mo2ProfileName ?? "—",
                 string.IsNullOrWhiteSpace(scan.Mo2ProfileName) && scan.Engine != LaunchEngine.Direct
                     ? DiagnosticSeverity.Warning
                     : DiagnosticSeverity.Ok),
-            new DiagnosticRow("Root Builder", scan.Engine == LaunchEngine.Mo2RootBuilder ? "да" : "нет"),
-            new DiagnosticRow("Запускаемый файл", scan.LaunchExecutable ?? "не определён",
+            new DiagnosticRow(Loc.T("Common_RootBuilder"), scan.Engine == LaunchEngine.Mo2RootBuilder ? Loc.T("Common_Yes") : Loc.T("Common_No")),
+            new DiagnosticRow(Loc.T("Common_LaunchFile"), scan.LaunchExecutable ?? Loc.T("Common_NotDetected"),
                 string.IsNullOrWhiteSpace(scan.LaunchExecutable) ? DiagnosticSeverity.Warning : DiagnosticSeverity.Ok),
-            new DiagnosticRow("Похоже на сборку", scan.LooksLikeModpack ? "да" : "нет",
+            new DiagnosticRow(Loc.T("Common_LooksLikePack"), scan.LooksLikeModpack ? Loc.T("Common_Yes") : Loc.T("Common_No"),
                 scan.LooksLikeModpack ? DiagnosticSeverity.Ok : DiagnosticSeverity.Error),
         ];
     }
@@ -119,18 +120,18 @@ public sealed class PackDiagnosticsService : IPackDiagnosticsService
 
         return
         [
-            new DiagnosticRow("Движок", Labels.Engine(manifest.Engine, manifest.Source)),
-            new DiagnosticRow("Игра", Labels.Game(manifest.GameType),
+            new DiagnosticRow(Loc.T("Common_Engine"), Labels.Engine(manifest.Engine, manifest.Source)),
+            new DiagnosticRow(Loc.T("Common_Game"), Labels.Game(manifest.GameType),
                 manifest.GameType == GameType.Unknown ? DiagnosticSeverity.Warning : DiagnosticSeverity.Ok),
-            new DiagnosticRow("Источник", Labels.Source(manifest.Source)),
-            new DiagnosticRow("Папка игры",
-                string.IsNullOrWhiteSpace(gamePath) ? "внутри сборки" : gamePath,
+            new DiagnosticRow(Loc.T("Common_Source"), Labels.Source(manifest.Source)),
+            new DiagnosticRow(Loc.T("Common_GameFolder"),
+                string.IsNullOrWhiteSpace(gamePath) ? Loc.T("Common_InPack") : gamePath,
                 gamePathMissing ? DiagnosticSeverity.Warning : DiagnosticSeverity.Ok),
-            new DiagnosticRow("Профиль MO2", string.IsNullOrWhiteSpace(profile) ? "—" : profile,
+            new DiagnosticRow(Loc.T("Common_ProfileMo2"), string.IsNullOrWhiteSpace(profile) ? "—" : profile,
                 profileOnDisk ? DiagnosticSeverity.Ok : DiagnosticSeverity.Warning),
-            new DiagnosticRow("Запускаемый файл", string.IsNullOrWhiteSpace(executable) ? "не задан" : executable,
+            new DiagnosticRow(Loc.T("Common_LaunchFile"), string.IsNullOrWhiteSpace(executable) ? Loc.T("Common_NotSet") : executable,
                 executableOk ? DiagnosticSeverity.Ok : DiagnosticSeverity.Warning),
-            new DiagnosticRow("Переопределено вручную", manifest.Detection.OverriddenByUser ? "да" : "нет",
+            new DiagnosticRow(Loc.T("Common_Overridden"), manifest.Detection.OverriddenByUser ? Loc.T("Common_Yes") : Loc.T("Common_No"),
                 DiagnosticSeverity.Info),
         ];
     }
@@ -224,25 +225,25 @@ internal static class Labels
         GameType.SkyrimSE => "Skyrim SE",
         GameType.Fallout4 => "Fallout 4",
         GameType.FalloutNV => "Fallout NV",
-        _ => "не определена",
+        _ => Loc.T("Game_Unknown"),
     };
 
     public static string Engine(LaunchEngine engine, PackSource source) => (engine, source) switch
     {
-        (LaunchEngine.Mo2RootBuilder, _) => "MO2 + Root Builder",
-        (LaunchEngine.Mo2Standard, _) => "MO2 Portable",
-        (LaunchEngine.Direct, PackSource.Portable) => "Direct · портативная игра",
-        _ => "Direct",
+        (LaunchEngine.Mo2RootBuilder, _) => Loc.T("Engine_Mo2RootBuilder"),
+        (LaunchEngine.Mo2Standard, _) => Loc.T("Engine_Mo2Portable"),
+        (LaunchEngine.Direct, PackSource.Portable) => Loc.T("Engine_DirectPortable"),
+        _ => Loc.T("Engine_Direct"),
     };
 
     public static string Source(PackSource source) => source == PackSource.Portable
-        ? "портативная (игра внутри сборки)"
-        : "системная игра";
+        ? Loc.T("Source_Portable")
+        : Loc.T("Common_SystemGame");
 
     /// <summary>Instance folder relative to the pack root, or "в корне сборки" for the classic layout.</summary>
     public static string Instance(string packRoot, string instance)
     {
         var relative = Path.GetRelativePath(packRoot, instance);
-        return string.Equals(relative, ".", StringComparison.Ordinal) ? "в корне сборки" : relative;
+        return string.Equals(relative, ".", StringComparison.Ordinal) ? Loc.T("Common_InPackRoot") : relative;
     }
 }

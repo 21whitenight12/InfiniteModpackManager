@@ -1,4 +1,5 @@
 using Imm.Core.Diagnostics;
+using Imm.Core.Localization;
 
 namespace Imm.App.ViewModels;
 
@@ -47,21 +48,21 @@ public sealed class PackDiagnosticsViewModel
     private string? RowValue(string label) =>
         Diagnostics.Detected.FirstOrDefault(row => row.Label == label)?.Value;
 
-    public string GameText => RowValue("Игра") ?? "—";
+    public string GameText => RowValue(Loc.T("Common_Game")) ?? "—";
 
-    public string SourceText => RowValue("Источник") ?? "—";
+    public string SourceText => RowValue(Loc.T("Common_Source")) ?? "—";
 
-    public string ProfileText => RowValue("Профиль MO2") ?? "—";
+    public string ProfileText => RowValue(Loc.T("Common_ProfileMo2")) ?? "—";
 
-    public string LoaderText => RowValue("Запускаемый файл") ?? "—";
+    public string LoaderText => RowValue(Loc.T("Common_LaunchFile")) ?? "—";
 
     /// <summary>Badge text for the card header; null when everything is clean.</summary>
     public string? ProblemBadge => Diagnostics switch
     {
-        { RootExists: false } => "папка не найдена",
-        { ManifestMissing: true } => "манифеста нет",
-        { ManifestStale: true } => "нужен ре-скан",
-        { HasProblems: true } => "есть замечания",
+        { RootExists: false } => Loc.T("Badge_FolderMissing"),
+        { ManifestMissing: true } => Loc.T("Badge_NoManifest"),
+        { ManifestStale: true } => Loc.T("Badge_NeedRescan"),
+        { HasProblems: true } => Loc.T("Badge_HasIssues"),
         _ => null,
     };
 }

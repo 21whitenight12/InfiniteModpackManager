@@ -1,0 +1,792 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Common_Open" xml:space="preserve">
+    <value>Открыть</value>
+  </data>
+  <data name="Common_Save" xml:space="preserve">
+    <value>Сохранить</value>
+  </data>
+  <data name="Common_Cancel" xml:space="preserve">
+    <value>Отмена</value>
+  </data>
+  <data name="Common_Close" xml:space="preserve">
+    <value>Закрыть</value>
+  </data>
+  <data name="Common_Skip" xml:space="preserve">
+    <value>Пропустить</value>
+  </data>
+  <data name="Common_Yes" xml:space="preserve">
+    <value>да</value>
+  </data>
+  <data name="Common_No" xml:space="preserve">
+    <value>нет</value>
+  </data>
+  <data name="Common_None" xml:space="preserve">
+    <value>—</value>
+  </data>
+  <data name="Common_NotSet" xml:space="preserve">
+    <value>не задан</value>
+  </data>
+  <data name="Common_NotFound" xml:space="preserve">
+    <value>не найден</value>
+  </data>
+  <data name="Common_NotDetected" xml:space="preserve">
+    <value>не определён</value>
+  </data>
+  <data name="Common_Done" xml:space="preserve">
+    <value>Готово</value>
+  </data>
+  <data name="Common_NameLabel" xml:space="preserve">
+    <value>Название:</value>
+  </data>
+  <data name="Common_Path" xml:space="preserve">
+    <value>Путь</value>
+  </data>
+  <data name="Common_Game" xml:space="preserve">
+    <value>Игра</value>
+  </data>
+  <data name="Common_Source" xml:space="preserve">
+    <value>Источник</value>
+  </data>
+  <data name="Common_Engine" xml:space="preserve">
+    <value>Движок</value>
+  </data>
+  <data name="Common_Notes" xml:space="preserve">
+    <value>ЗАМЕТКИ</value>
+  </data>
+  <data name="Common_ProfileMo2" xml:space="preserve">
+    <value>Профиль MO2</value>
+  </data>
+  <data name="Common_LaunchFile" xml:space="preserve">
+    <value>Запускаемый файл</value>
+  </data>
+  <data name="Common_GameFolder" xml:space="preserve">
+    <value>Папка игры</value>
+  </data>
+  <data name="Common_Mo2Instance" xml:space="preserve">
+    <value>Инстанс MO2</value>
+  </data>
+  <data name="Common_RootBuilder" xml:space="preserve">
+    <value>Root Builder</value>
+  </data>
+  <data name="Common_LooksLikePack" xml:space="preserve">
+    <value>Похоже на сборку</value>
+  </data>
+  <data name="Common_Overridden" xml:space="preserve">
+    <value>Переопределено вручную</value>
+  </data>
+  <data name="Common_InPack" xml:space="preserve">
+    <value>внутри сборки</value>
+  </data>
+  <data name="Common_SystemGame" xml:space="preserve">
+    <value>системная игра</value>
+  </data>
+  <data name="Common_InPackRoot" xml:space="preserve">
+    <value>в корне сборки</value>
+  </data>
+  <data name="Common_UnknownGame" xml:space="preserve">
+    <value>Игра не определена</value>
+  </data>
+  <data name="Common_NeverLaunched" xml:space="preserve">
+    <value>ещё не запускалась</value>
+  </data>
+  <data name="Common_LastLaunch" xml:space="preserve">
+    <value>последний запуск</value>
+  </data>
+  <data name="Common_InGame" xml:space="preserve">
+    <value>в игре</value>
+  </data>
+  <data name="Common_Ok" xml:space="preserve">
+    <value>в порядке</value>
+  </data>
+  <data name="Common_OpenFolder" xml:space="preserve">
+    <value>Открыть</value>
+  </data>
+  <data name="Plural_Packs_One" xml:space="preserve">
+    <value>сборка</value>
+  </data>
+  <data name="Plural_Packs_Few" xml:space="preserve">
+    <value>сборки</value>
+  </data>
+  <data name="Plural_Packs_Many" xml:space="preserve">
+    <value>сборок</value>
+  </data>
+  <data name="Plural_PacksInLibrary" xml:space="preserve">
+    <value>в библиотеке</value>
+  </data>
+  <data name="Plural_Lines_One" xml:space="preserve">
+    <value>строка</value>
+  </data>
+  <data name="Plural_Lines_Few" xml:space="preserve">
+    <value>строки</value>
+  </data>
+  <data name="Plural_Lines_Many" xml:space="preserve">
+    <value>строк</value>
+  </data>
+  <data name="Playtime_Minutes" xml:space="preserve">
+    <value>{0} мин</value>
+  </data>
+  <data name="Playtime_HoursMinutes" xml:space="preserve">
+    <value>{0} ч {1} мин</value>
+  </data>
+  <data name="Nav_Library" xml:space="preserve">
+    <value>Библиотека</value>
+  </data>
+  <data name="Nav_Scanner" xml:space="preserve">
+    <value>Сканер</value>
+  </data>
+  <data name="Nav_Settings" xml:space="preserve">
+    <value>Настройки</value>
+  </data>
+  <data name="Nav_Log" xml:space="preserve">
+    <value>Лог</value>
+  </data>
+  <data name="Tip_NavLibrary" xml:space="preserve">
+    <value>Коллекция сборок</value>
+  </data>
+  <data name="Tip_NavScanner" xml:space="preserve">
+    <value>Что IMM видит в сборках: детект, предупреждения, расхождения с манифестом</value>
+  </data>
+  <data name="Tip_NavSettings" xml:space="preserve">
+    <value>Настройки приложения</value>
+  </data>
+  <data name="Tip_NavLog" xml:space="preserve">
+    <value>Окно с подробным логом (Information+)</value>
+  </data>
+  <data name="Lib_Title" xml:space="preserve">
+    <value>Библиотека</value>
+  </data>
+  <data name="Lib_Add" xml:space="preserve">
+    <value>Добавить сборку</value>
+  </data>
+  <data name="Lib_AddTip" xml:space="preserve">
+    <value>Добавить сборку в библиотеку</value>
+  </data>
+  <data name="Lib_Rescan" xml:space="preserve">
+    <value>Ре-скан</value>
+  </data>
+  <data name="Lib_RescanTip" xml:space="preserve">
+    <value>Пере-сканировать выбранную сборку</value>
+  </data>
+  <data name="Lib_Search" xml:space="preserve">
+    <value>Поиск сборок…</value>
+  </data>
+  <data name="Lib_GridView" xml:space="preserve">
+    <value>Сетка</value>
+  </data>
+  <data name="Lib_ListView" xml:space="preserve">
+    <value>Список</value>
+  </data>
+  <data name="Lib_SortName" xml:space="preserve">
+    <value>По названию</value>
+  </data>
+  <data name="Lib_SortDate" xml:space="preserve">
+    <value>По дате запуска</value>
+  </data>
+  <data name="Lib_SortTime" xml:space="preserve">
+    <value>По времени</value>
+  </data>
+  <data name="Lib_EmptyTitle" xml:space="preserve">
+    <value>Библиотека пуста</value>
+  </data>
+  <data name="Lib_EmptyHint" xml:space="preserve">
+    <value>Перетащите папку сборки в окно или нажмите «Добавить сборку»</value>
+  </data>
+  <data name="Lib_PackActions" xml:space="preserve">
+    <value>Действия со сборкой</value>
+  </data>
+  <data name="Det_Launch" xml:space="preserve">
+    <value>ЗАПУСТИТЬ</value>
+  </data>
+  <data name="Det_LaunchTip" xml:space="preserve">
+    <value>Запустить сборку</value>
+  </data>
+  <data name="Det_Backup" xml:space="preserve">
+    <value>Бэкап профиля</value>
+  </data>
+  <data name="Det_PackFolder" xml:space="preserve">
+    <value>Папка сборки</value>
+  </data>
+  <data name="Det_OpenMo2" xml:space="preserve">
+    <value>Открыть Mod Organizer 2</value>
+  </data>
+  <data name="Det_OpenMo2Tip" xml:space="preserve">
+    <value>Открыть Mod Organizer 2 этой сборки (без запуска игры)</value>
+  </data>
+  <data name="Menu_Profile" xml:space="preserve">
+    <value>Профиль</value>
+  </data>
+  <data name="Menu_GameFolder" xml:space="preserve">
+    <value>Указать папку игры…</value>
+  </data>
+  <data name="Menu_GameFolderTip" xml:space="preserve">
+    <value>Игра лежит отдельно от сборки — выбрать папку вручную</value>
+  </data>
+  <data name="Menu_Rename" xml:space="preserve">
+    <value>Переименовать…</value>
+  </data>
+  <data name="Menu_Cover" xml:space="preserve">
+    <value>Сменить обложку…</value>
+  </data>
+  <data name="Menu_OpenFolder" xml:space="preserve">
+    <value>Открыть папку сборки</value>
+  </data>
+  <data name="Menu_Backup" xml:space="preserve">
+    <value>Создать бэкап…</value>
+  </data>
+  <data name="Menu_BackupTip" xml:space="preserve">
+    <value>zip профиля MO2 (или сейвов игры) в папку «Документы»</value>
+  </data>
+  <data name="Menu_OpenBackups" xml:space="preserve">
+    <value>Открыть папку бэкапов</value>
+  </data>
+  <data name="Menu_Rescan" xml:space="preserve">
+    <value>Ре-скан</value>
+  </data>
+  <data name="Menu_Remove" xml:space="preserve">
+    <value>Убрать из библиотеки</value>
+  </data>
+  <data name="Scan_Title" xml:space="preserve">
+    <value>Сканер</value>
+  </data>
+  <data name="Scan_Check" xml:space="preserve">
+    <value>Проверить</value>
+  </data>
+  <data name="Scan_CheckTip" xml:space="preserve">
+    <value>Просканировать все сборки библиотеки и сравнить с их манифестами</value>
+  </data>
+  <data name="Scan_Hint" xml:space="preserve">
+    <value>Проверка ничего не записывает — ре-скан применяет факты</value>
+  </data>
+  <data name="Scan_EmptyTitle" xml:space="preserve">
+    <value>Проверять нечего</value>
+  </data>
+  <data name="Scan_EmptyHint" xml:space="preserve">
+    <value>Добавьте сборку — здесь появятся её детект и предупреждения</value>
+  </data>
+  <data name="Scan_ChipGame" xml:space="preserve">
+    <value>ИГРА</value>
+  </data>
+  <data name="Scan_ChipSource" xml:space="preserve">
+    <value>ИСТОЧНИК</value>
+  </data>
+  <data name="Scan_ChipProfile" xml:space="preserve">
+    <value>ПРОФИЛЬ MO2</value>
+  </data>
+  <data name="Scan_ChipLoader" xml:space="preserve">
+    <value>ЗАПУСКАЕТСЯ</value>
+  </data>
+  <data name="Scan_RescanTip" xml:space="preserve">
+    <value>Пере-сканировать сборку и записать факты в манифест</value>
+  </data>
+  <data name="Scan_GameFolder" xml:space="preserve">
+    <value>Папка игры…</value>
+  </data>
+  <data name="Scan_GameFolderTip" xml:space="preserve">
+    <value>Игра лежит отдельно от сборки — указать папку вручную</value>
+  </data>
+  <data name="Scan_StatusNever" xml:space="preserve">
+    <value>Проверка не выполнялась</value>
+  </data>
+  <data name="Scan_StatusBusy" xml:space="preserve">
+    <value>Проверка сборок…</value>
+  </data>
+  <data name="Scan_StatusEmpty" xml:space="preserve">
+    <value>В библиотеке нет сборок</value>
+  </data>
+  <data name="Scan_StatusDone" xml:space="preserve">
+    <value>Проверено: {0}, с замечаниями: {1}</value>
+  </data>
+  <data name="Scan_StatusFailed" xml:space="preserve">
+    <value>Проверка не удалась</value>
+  </data>
+  <data name="Scan_Failed" xml:space="preserve">
+    <value>Не удалось проверить сборки: {0}</value>
+  </data>
+  <data name="Badge_FolderMissing" xml:space="preserve">
+    <value>папка не найдена</value>
+  </data>
+  <data name="Badge_NoManifest" xml:space="preserve">
+    <value>манифеста нет</value>
+  </data>
+  <data name="Badge_NeedRescan" xml:space="preserve">
+    <value>нужен ре-скан</value>
+  </data>
+  <data name="Badge_HasIssues" xml:space="preserve">
+    <value>есть замечания</value>
+  </data>
+  <data name="Set_Title" xml:space="preserve">
+    <value>Настройки</value>
+  </data>
+  <data name="Set_Subtitle" xml:space="preserve">
+    <value>Хранятся в settings.json рядом с library.json; данные сборок остаются в их modpack.json</value>
+  </data>
+  <data name="Set_Backups" xml:space="preserve">
+    <value>Бэкапы</value>
+  </data>
+  <data name="Set_Limit" xml:space="preserve">
+    <value>Лимит хранимых архивов на сборку</value>
+  </data>
+  <data name="Set_LimitHint" xml:space="preserve">
+    <value>0 — без лимита; лимит из modpack.json сборки важнее</value>
+  </data>
+  <data name="Set_BackupsFolder" xml:space="preserve">
+    <value>Папка бэкапов</value>
+  </data>
+  <data name="Set_Logs" xml:space="preserve">
+    <value>Логи</value>
+  </data>
+  <data name="Set_LogsFolder" xml:space="preserve">
+    <value>Папка логов</value>
+  </data>
+  <data name="Set_Data" xml:space="preserve">
+    <value>Данные</value>
+  </data>
+  <data name="Set_LibraryFile" xml:space="preserve">
+    <value>Библиотека (library.json)</value>
+  </data>
+  <data name="Set_Mode" xml:space="preserve">
+    <value>Режим</value>
+  </data>
+  <data name="Set_ModePortable" xml:space="preserve">
+    <value>портативный (library.json рядом с exe)</value>
+  </data>
+  <data name="Set_ModeStandard" xml:space="preserve">
+    <value>обычный (%LOCALAPPDATA%\IMM)</value>
+  </data>
+  <data name="Set_Saved" xml:space="preserve">
+    <value>Сохранено</value>
+  </data>
+  <data name="Set_NotSaved" xml:space="preserve">
+    <value>Не сохранено</value>
+  </data>
+  <data name="Set_SaveFailed" xml:space="preserve">
+    <value>Не удалось сохранить настройки: {0}</value>
+  </data>
+  <data name="Set_Language" xml:space="preserve">
+    <value>Язык</value>
+  </data>
+  <data name="Set_LanguageHint" xml:space="preserve">
+    <value>Применяется сразу</value>
+  </data>
+  <data name="Log_Title" xml:space="preserve">
+    <value>Лог — Infinite Modpack Manager</value>
+  </data>
+  <data name="Log_Copy" xml:space="preserve">
+    <value>Копировать</value>
+  </data>
+  <data name="Log_CopyTip" xml:space="preserve">
+    <value>Скопировать весь лог в буфер обмена</value>
+  </data>
+  <data name="Log_Pause" xml:space="preserve">
+    <value>Пауза</value>
+  </data>
+  <data name="Log_Resume" xml:space="preserve">
+    <value>Продолжить</value>
+  </data>
+  <data name="Log_PauseTip" xml:space="preserve">
+    <value>Пауза обновления (логирование продолжается)</value>
+  </data>
+  <data name="Log_Clear" xml:space="preserve">
+    <value>Очистить экран</value>
+  </data>
+  <data name="Log_ClearTip" xml:space="preserve">
+    <value>Очистить только экран (файл лога не трогается)</value>
+  </data>
+  <data name="Log_BufferTip" xml:space="preserve">
+    <value>Строк в буфере (жёсткий лимит 4000)</value>
+  </data>
+  <data name="Log_FileTip" xml:space="preserve">
+    <value>Файловый лог: %LOCALAPPDATA%\IMM\logs (или logs\ рядом с exe в portable-режиме)</value>
+  </data>
+  <data name="Msg_Library" xml:space="preserve">
+    <value>Библиотека</value>
+  </data>
+  <data name="Msg_LibraryNotLoaded" xml:space="preserve">
+    <value>Библиотека не загружена</value>
+  </data>
+  <data name="Msg_LibraryLoadFailed" xml:space="preserve">
+    <value>Не удалось загрузить библиотеку — подробности в логе (меню «Логи»).</value>
+  </data>
+  <data name="Msg_ChoosePackFolder" xml:space="preserve">
+    <value>Выберите папку сборки</value>
+  </data>
+  <data name="Msg_Scanning" xml:space="preserve">
+    <value>Сканирование…</value>
+  </data>
+  <data name="Msg_PackAdded" xml:space="preserve">
+    <value>Сборка «{0}» добавлена</value>
+  </data>
+  <data name="Msg_ImportRejected" xml:space="preserve">
+    <value>Импорт невозможен</value>
+  </data>
+  <data name="Msg_ImportError" xml:space="preserve">
+    <value>Ошибка импорта</value>
+  </data>
+  <data name="Msg_Rescan" xml:space="preserve">
+    <value>Ре-скан</value>
+  </data>
+  <data name="Msg_RescanDone" xml:space="preserve">
+    <value>Игра: {0}, движок: {1}</value>
+  </data>
+  <data name="Msg_RescanRejected" xml:space="preserve">
+    <value>Ре-скан невозможен</value>
+  </data>
+  <data name="Msg_RescanError" xml:space="preserve">
+    <value>Ошибка ре-скана</value>
+  </data>
+  <data name="Msg_Launching" xml:space="preserve">
+    <value>Запуск…</value>
+  </data>
+  <data name="Msg_ManifestMissing" xml:space="preserve">
+    <value>Манифест сборки не найден — выполните ре-скан.</value>
+  </data>
+  <data name="Msg_Launch" xml:space="preserve">
+    <value>Запуск</value>
+  </data>
+  <data name="Msg_Launched" xml:space="preserve">
+    <value>Сборка «{0}» запущена</value>
+  </data>
+  <data name="Msg_LaunchCancelled" xml:space="preserve">
+    <value>Запуск отменён</value>
+  </data>
+  <data name="Msg_UacLaunchDenied" xml:space="preserve">
+    <value>Запрос UAC отклонён — запуск без прав администратора невозможен.</value>
+  </data>
+  <data name="Msg_LaunchRejected" xml:space="preserve">
+    <value>Запуск невозможен</value>
+  </data>
+  <data name="Msg_LaunchError" xml:space="preserve">
+    <value>Ошибка запуска</value>
+  </data>
+  <data name="Msg_RemoveTitle" xml:space="preserve">
+    <value>Убрать сборку из библиотеки?</value>
+  </data>
+  <data name="Msg_RemoveBody" xml:space="preserve">
+    <value>«{0}» будет убрана из списка IMM. Папка сборки на диске не удаляется.</value>
+  </data>
+  <data name="Msg_Remove" xml:space="preserve">
+    <value>Убрать</value>
+  </data>
+  <data name="Msg_Removed" xml:space="preserve">
+    <value>Сборка убрана из библиотеки (папка не тронута)</value>
+  </data>
+  <data name="Msg_RemoveFailed" xml:space="preserve">
+    <value>Не удалось убрать сборку: {0}</value>
+  </data>
+  <data name="Msg_Profile" xml:space="preserve">
+    <value>Профиль</value>
+  </data>
+  <data name="Msg_ProfileSet" xml:space="preserve">
+    <value>Для «{0}» выбран профиль «{1}»</value>
+  </data>
+  <data name="Msg_ProfileFailed" xml:space="preserve">
+    <value>Не удалось сохранить профиль: {0}</value>
+  </data>
+  <data name="Msg_FolderRejected" xml:space="preserve">
+    <value>Папка не подходит</value>
+  </data>
+  <data name="Msg_FolderRejectedBody" xml:space="preserve">
+    <value>В выбранной папке нет exe поддерживаемой игры (Skyrim LE/SE, Fallout 4/NV).</value>
+  </data>
+  <data name="Msg_Game" xml:space="preserve">
+    <value>Игра</value>
+  </data>
+  <data name="Msg_GameFolderSet" xml:space="preserve">
+    <value>Для «{0}» указана папка: {1}</value>
+  </data>
+  <data name="Msg_GameFolderFailed" xml:space="preserve">
+    <value>Не удалось сохранить папку игры: {0}</value>
+  </data>
+  <data name="Msg_ChooseGameFolder" xml:space="preserve">
+    <value>Выберите папку с игрой</value>
+  </data>
+  <data name="Msg_PackNamePlaceholder" xml:space="preserve">
+    <value>Название сборки</value>
+  </data>
+  <data name="Msg_ChooseCover" xml:space="preserve">
+    <value>Выбрать обложку…</value>
+  </data>
+  <data name="Msg_NoCover" xml:space="preserve">
+    <value>Обложка не выбрана (PNG/JPG/WebP)</value>
+  </data>
+  <data name="Msg_ChooseCoverTitle" xml:space="preserve">
+    <value>Выберите обложку</value>
+  </data>
+  <data name="Msg_ImageFilter" xml:space="preserve">
+    <value>Изображения|*.png;*.jpg;*.jpeg;*.webp</value>
+  </data>
+  <data name="Msg_NewPack" xml:space="preserve">
+    <value>Новая сборка</value>
+  </data>
+  <data name="Msg_RenameTitle" xml:space="preserve">
+    <value>Переименовать сборку</value>
+  </data>
+  <data name="Msg_Cover" xml:space="preserve">
+    <value>Обложка</value>
+  </data>
+  <data name="Msg_CoverUpdated" xml:space="preserve">
+    <value>Обложка «{0}» обновлена</value>
+  </data>
+  <data name="Msg_BackupBusy" xml:space="preserve">
+    <value>Резервная копия…</value>
+  </data>
+  <data name="Msg_PackNotFound" xml:space="preserve">
+    <value>Сборка не найдена в библиотеке.</value>
+  </data>
+  <data name="Msg_Backup" xml:space="preserve">
+    <value>Бэкап</value>
+  </data>
+  <data name="Msg_BackupSaved" xml:space="preserve">
+    <value>Архив сохранён: {0}</value>
+  </data>
+  <data name="Msg_BackupRejected" xml:space="preserve">
+    <value>Бэкап невозможен</value>
+  </data>
+  <data name="Msg_BackupError" xml:space="preserve">
+    <value>Ошибка бэкапа</value>
+  </data>
+  <data name="Msg_Backups" xml:space="preserve">
+    <value>Бэкапы</value>
+  </data>
+  <data name="Msg_OpenFolderFailed" xml:space="preserve">
+    <value>Не удалось открыть папку: {0}</value>
+  </data>
+  <data name="Msg_Explorer" xml:space="preserve">
+    <value>Проводник</value>
+  </data>
+  <data name="Msg_Mo2ExeMissing" xml:space="preserve">
+    <value>ModOrganizer.exe не найден — поддерживаются только portable-инстансы MO2.</value>
+  </data>
+  <data name="Msg_Mo2Activated" xml:space="preserve">
+    <value>Окно Mod Organizer 2 выведено на передний план</value>
+  </data>
+  <data name="Msg_Mo2Started" xml:space="preserve">
+    <value>Mod Organizer 2 запущен (без игры)</value>
+  </data>
+  <data name="Msg_Mo2NotOpened" xml:space="preserve">
+    <value>MO2 не открыт</value>
+  </data>
+  <data name="Msg_Mo2LaunchError" xml:space="preserve">
+    <value>Ошибка запуска MO2</value>
+  </data>
+  <data name="Msg_UacMo2Denied" xml:space="preserve">
+    <value>Запрос UAC отклонён — MO2 не запущен.</value>
+  </data>
+  <data name="Fatal_UiError" xml:space="preserve">
+    <value>Ошибка интерфейса</value>
+  </data>
+  <data name="Fatal_Critical" xml:space="preserve">
+    <value>Критическая ошибка</value>
+  </data>
+  <data name="Fatal_Body" xml:space="preserve">
+    <value>{0}
+
+Подробности — в логе.</value>
+  </data>
+  <data name="Err_FolderMissing" xml:space="preserve">
+    <value>Папка не существует.</value>
+  </data>
+  <data name="Err_PackFolderGone" xml:space="preserve">
+    <value>Папка сборки не найдена на диске — проверьте путь или уберите сборку из библиотеки.</value>
+  </data>
+  <data name="Err_ManifestMissingOrBroken" xml:space="preserve">
+    <value>modpack.json отсутствует или повреждён — сборка показывается как не сканированная.</value>
+  </data>
+  <data name="Err_ManifestStale" xml:space="preserve">
+    <value>Манифест расходится с текущим сканом — выполните ре-скан, чтобы применить факты.</value>
+  </data>
+  <data name="Warn_MultipleMo2" xml:space="preserve">
+    <value>Найдено несколько вложенных папок MO2 ({0}) — укажите инстанс вручную.</value>
+  </data>
+  <data name="Warn_ExeInRootAndPortable" xml:space="preserve">
+    <value>Exe игры найден и в корне сборки, и в портативной папке игры — используется портативная.</value>
+  </data>
+  <data name="Warn_SystemGameMissing" xml:space="preserve">
+    <value>Системная установка игры не найдена — укажите путь к игре вручную.</value>
+  </data>
+  <data name="Warn_IniGameFolderMissing" xml:space="preserve">
+    <value>ModOrganizer.ini указывает на несуществующую папку игры («{0}») — выберите папку игры вручную.</value>
+  </data>
+  <data name="Warn_NoMarkers" xml:space="preserve">
+    <value>Не найдено известных маркеров (exe игры, MO2) — папка не похожа на поддерживаемую сборку.</value>
+  </data>
+  <data name="Warn_RootBuilderNoMods" xml:space="preserve">
+    <value>Root Builder найден, но папка mods отсутствует — проверьте настройку сборки.</value>
+  </data>
+  <data name="Warn_NoProfilesFolder" xml:space="preserve">
+    <value>Папка profiles у MO2 не найдена — выберите профиль вручную.</value>
+  </data>
+  <data name="Warn_MultipleProfiles" xml:space="preserve">
+    <value>Найдено несколько профилей ({0}) — выберите нужный вручную.</value>
+  </data>
+  <data name="Warn_GameNotRecognized" xml:space="preserve">
+    <value>Игра не распознана — укажите запускаемый exe вручную.</value>
+  </data>
+  <data name="Err_IniNotFound" xml:space="preserve">
+    <value>ModOrganizer.ini не найден — поддерживаются только portable-инстансы MO2.</value>
+  </data>
+  <data name="Err_GamePathNotAbsolute" xml:space="preserve">
+    <value>Новый путь к игре должен быть абсолютным.</value>
+  </data>
+  <data name="Err_BaseDirectoryKeyMissing" xml:space="preserve">
+    <value>В секции [General] не найден ключ base_directory — структура ini неожиданная, файл не изменён.</value>
+  </data>
+  <data name="Err_BaseDirectoryBinary" xml:space="preserve">
+    <value>base_directory хранится в бинарном формате Qt (@ByteArray) — файл не изменён, требуется ручная проверка.</value>
+  </data>
+  <data name="Err_BaseDirectoryRelative" xml:space="preserve">
+    <value>base_directory указывает на относительный путь («{0}») — такие пути не исправляются автоматически.</value>
+  </data>
+  <data name="Err_IniEncoding" xml:space="preserve">
+    <value>ModOrganizer.ini сохранён в кодировке, отличной от UTF-8/UTF-16 (например, ANSI) — файл не изменён. Пересохраните его в UTF-8 и повторите.</value>
+  </data>
+  <data name="Err_IniCorrupt" xml:space="preserve">
+    <value>ModOrganizer.ini повреждён (недопустимая последовательность байт) — файл не изменён. Восстановите его из .bak-копии.</value>
+  </data>
+  <data name="Err_PackAlreadyInLibrary" xml:space="preserve">
+    <value>Эта сборка уже есть в библиотеке.</value>
+  </data>
+  <data name="Err_NotAModpack" xml:space="preserve">
+    <value>Папка не похожа на поддерживаемую сборку: не найдены exe игры или MO2.</value>
+  </data>
+  <data name="Err_EmptyName" xml:space="preserve">
+    <value>Название сборки не может быть пустым.</value>
+  </data>
+  <data name="Err_PackNotInLibrary" xml:space="preserve">
+    <value>Сборка не найдена в библиотеке.</value>
+  </data>
+  <data name="Err_CoverNotFound" xml:space="preserve">
+    <value>Файл обложки не найден.</value>
+  </data>
+  <data name="Err_CoverFormat" xml:space="preserve">
+    <value>Обложка должна быть PNG, JPG или WebP.</value>
+  </data>
+  <data name="Err_ManifestCorrupt" xml:space="preserve">
+    <value>modpack.json повреждён или недоступен — ре-скан остановлен, файл не изменён. Исправьте или удалите его и повторите.</value>
+  </data>
+  <data name="Err_BackupNoProfile" xml:space="preserve">
+    <value>Не найдена папка профиля MO2 — проверьте профиль сборки и выполните ре-скан.</value>
+  </data>
+  <data name="Err_BackupNoSaves" xml:space="preserve">
+    <value>Не найдена папка сейвов игры (Документы\My Games\&lt;Игра&gt;\Saves) — бэкап невозможен.</value>
+  </data>
+  <data name="Label_BackupProfile" xml:space="preserve">
+    <value>профиль MO2 «{0}»</value>
+  </data>
+  <data name="Label_BackupSaves" xml:space="preserve">
+    <value>сейвы игры</value>
+  </data>
+  <data name="Err_Mo2ExeMissing" xml:space="preserve">
+    <value>ModOrganizer.exe не найден — поддерживаются только portable-инстансы MO2.</value>
+  </data>
+  <data name="Err_ProfileNotSelected" xml:space="preserve">
+    <value>Профиль MO2 не выбран — выберите профиль и выполните ре-скан.</value>
+  </data>
+  <data name="Err_LaunchExeUnknown" xml:space="preserve">
+    <value>Не удалось определить запускаемый exe игры — проверьте сборку или выполните ре-скан.</value>
+  </data>
+  <data name="Err_GameFolderMissing" xml:space="preserve">
+    <value>Папка игры не найдена: base_directory в ModOrganizer.ini указывает на несуществующий путь, а игровой корень в сборке отсутствует.</value>
+  </data>
+  <data name="Err_IniGamePathMissing" xml:space="preserve">
+    <value>gamePath в ModOrganizer.ini указывает на несуществующую папку («{0}») — исправьте путь к игре в MO2 вручную.</value>
+  </data>
+  <data name="Err_EngineUnsupported" xml:space="preserve">
+    <value>Движок запуска «{0}» не поддерживается.</value>
+  </data>
+  <data name="Err_ProcessNotStarted" xml:space="preserve">
+    <value>Процесс не был запущен (система вернула null).</value>
+  </data>
+  <data name="Err_GameFolderGone" xml:space="preserve">
+    <value>Папка игры не найдена — выполните ре-скан или добавьте сборку заново.</value>
+  </data>
+  <data name="Engine_DirectPortable" xml:space="preserve">
+    <value>Direct · портативная игра</value>
+  </data>
+  <data name="Engine_Mo2Portable" xml:space="preserve">
+    <value>MO2 Portable</value>
+  </data>
+  <data name="Engine_Mo2RootBuilder" xml:space="preserve">
+    <value>MO2 + Root Builder</value>
+  </data>
+  <data name="Engine_Direct" xml:space="preserve">
+    <value>Direct</value>
+  </data>
+  <data name="Source_Portable" xml:space="preserve">
+    <value>портативная (игра внутри сборки)</value>
+  </data>
+  <data name="Game_SkyrimLE" xml:space="preserve">
+    <value>Skyrim LE</value>
+  </data>
+  <data name="Game_SkyrimSE" xml:space="preserve">
+    <value>Skyrim SE</value>
+  </data>
+  <data name="Game_Fallout4" xml:space="preserve">
+    <value>Fallout 4</value>
+  </data>
+  <data name="Game_FalloutNV" xml:space="preserve">
+    <value>Fallout NV</value>
+  </data>
+  <data name="Game_Unknown" xml:space="preserve">
+    <value>не определена</value>
+  </data>
+</root>

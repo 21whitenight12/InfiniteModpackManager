@@ -1,6 +1,7 @@
 using System.IO;
 using System.Text;
 using Imm.Core.IO;
+using Imm.Core.Localization;
 
 namespace Imm.Core.Ini;
 
@@ -121,23 +122,23 @@ public sealed class ModOrganizerIniPatcher
         var normalized = LongPath.Normalize(iniPath);
         if (!File.Exists(normalized))
         {
-            throw new InvalidOperationException("ModOrganizer.ini не найден — поддерживаются только portable-инстансы MO2.");
+            throw new InvalidOperationException(Loc.T("Err_IniNotFound"));
         }
 
         if (!Path.IsPathRooted(newBaseDirectory))
         {
-            throw new InvalidOperationException("Новый путь к игре должен быть абсолютным.");
+            throw new InvalidOperationException(Loc.T("Err_GamePathNotAbsolute"));
         }
 
         var ini = ReadIni(normalized);
         var match = FindIniKey(ini.Lines, BaseDirectoryKey)
             ?? throw new InvalidOperationException(
-                "В секции [General] не найден ключ base_directory — структура ini неожиданная, файл не изменён.");
+                Loc.T("Err_BaseDirectoryKeyMissing"));
 
         if (match.ValueRaw.TrimStart().StartsWith("@ByteArray(", StringComparison.Ordinal))
         {
             throw new InvalidOperationException(
-                "base_directory хранится в бинарном формате Qt (@ByteArray) — файл не изменён, требуется ручная проверка.");
+                Loc.T("Err_BaseDirectoryBinary"));
         }
 
         var oldValue = UnescapeQt(StripTrailingComment(match.ValueRaw));
@@ -145,7 +146,7 @@ public sealed class ModOrganizerIniPatcher
         {
             // IMM.md: relative paths are not touched.
             throw new InvalidOperationException(
-                $"base_directory указывает на относительный путь («{oldValue}») — такие пути не исправляются автоматически.");
+                Loc.F("Err_BaseDirectoryRelative", oldValue));
         }
 
         if (SamePath(oldValue, newBaseDirectory))
@@ -310,15 +311,14 @@ public sealed class ModOrganizerIniPatcher
         {
             // Не «повреждён», а «не та кодировка»: файл не трогаем, но и диагноз не врём.
             throw new InvalidOperationException(
-                "ModOrganizer.ini сохранён в кодировке, отличной от UTF-8/UTF-16 (например, ANSI) — файл не изменён. "
-                + "Пересохраните его в UTF-8 и повторите.");
+                Loc.T("Err_IniEncoding"));
         }
 
         if (content.Contains('\uFFFD'))
         {
             // Corrupt ini: never rewrite (IMM.md). Decoding already lost bytes — stop here.
             throw new InvalidOperationException(
-                "ModOrganizer.ini повреждён (недопустимая последовательность байт) — файл не изменён. Восстановите его из .bak-копии.");
+                Loc.T("Err_IniCorrupt"));
         }
 
         return new ParsedIni

@@ -3,6 +3,7 @@ using System.IO;
 using Imm.Core.Domain;
 using Imm.Core.Scanning;
 using Serilog;
+using Imm.Core.Localization;
 
 namespace Imm.Core.Launch;
 
@@ -33,7 +34,7 @@ public sealed class LaunchService : ILaunchService
     public async Task<Process> LaunchAsync(ModpackManifest manifest, string packRoot, CancellationToken cancellationToken = default)
     {
         var strategy = _strategies.FirstOrDefault(s => s.Handles(manifest.Engine))
-            ?? throw new InvalidOperationException($"Движок запуска «{manifest.Engine}» не поддерживается.");
+            ?? throw new InvalidOperationException(Loc.F("Err_EngineUnsupported", manifest.Engine));
 
         var plan = await strategy.BuildPlanAsync(manifest, packRoot, cancellationToken).ConfigureAwait(false);
 
@@ -56,7 +57,7 @@ public sealed class LaunchService : ILaunchService
         }
 
         return Process.Start(startInfo)
-            ?? throw new InvalidOperationException("Процесс не был запущен (система вернула null).");
+            ?? throw new InvalidOperationException(Loc.T("Err_ProcessNotStarted"));
     }
 
     /// <inheritdoc />
@@ -67,7 +68,7 @@ public sealed class LaunchService : ILaunchService
 
         var instance = Mo2Locator.ResolveInstance(packRoot, manifest.Mo2?.Directory)
             ?? throw new InvalidOperationException(
-                "ModOrganizer.exe не найден — поддерживаются только portable-инстансы MO2.");
+                Loc.T("Err_Mo2ExeMissing"));
 
         var mo2Exe = Path.Combine(instance, Markers.ModOrganizerExe);
         _logger.Information("Opening Mod Organizer without a game: {Exe}", mo2Exe);
@@ -81,6 +82,6 @@ public sealed class LaunchService : ILaunchService
         };
 
         return Task.FromResult(Process.Start(startInfo)
-            ?? throw new InvalidOperationException("Процесс не был запущен (система вернула null)."));
+            ?? throw new InvalidOperationException(Loc.T("Err_ProcessNotStarted")));
     }
 }

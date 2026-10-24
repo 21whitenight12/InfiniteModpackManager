@@ -6,6 +6,7 @@ using CommunityToolkit.Mvvm.Input;
 using Imm.Core.Domain;
 using Imm.Core.IO;
 using Imm.Core.Scanning;
+using Imm.Core.Localization;
 
 namespace Imm.App.ViewModels;
 
@@ -146,26 +147,26 @@ public partial class LibraryEntryViewModel : ObservableObject
 
     public string GameDisplayName => GameType switch
     {
-        GameType.SkyrimLE => "Skyrim LE",
-        GameType.SkyrimSE => "Skyrim SE",
-        GameType.Fallout4 => "Fallout 4",
-        GameType.FalloutNV => "Fallout NV",
-        _ => "Игра не определена",
+        GameType.SkyrimLE => Loc.T("Game_SkyrimLE"),
+        GameType.SkyrimSE => Loc.T("Game_SkyrimSE"),
+        GameType.Fallout4 => Loc.T("Game_Fallout4"),
+        GameType.FalloutNV => Loc.T("Game_FalloutNV"),
+        _ => Loc.T("Common_UnknownGame"),
     };
 
     public string EngineDisplayName => (Engine, Source) switch
     {
-        (LaunchEngine.Mo2RootBuilder, _) => "MO2 + Root Builder",
-        (LaunchEngine.Mo2Standard, _) => "MO2 Portable",
-        (LaunchEngine.Direct, PackSource.Portable) => "Direct · Портативная игра",
-        _ => "Direct",
+        (LaunchEngine.Mo2RootBuilder, _) => Loc.T("Engine_Mo2RootBuilder"),
+        (LaunchEngine.Mo2Standard, _) => Loc.T("Engine_Mo2Portable"),
+        (LaunchEngine.Direct, PackSource.Portable) => Loc.T("Engine_DirectPortable"),
+        _ => Loc.T("Engine_Direct"),
     };
 
     /// <summary>MO2 packs get the «Открыть MO2» action (Direct packs have no MO2 to open).</summary>
     public bool IsMo2 => Engine is LaunchEngine.Mo2Standard or LaunchEngine.Mo2RootBuilder;
 
     public string LastPlayedText => _entry.LastPlayedAtUtc is null
-        ? "—"
+        ? Loc.T("Common_None")
         : _entry.LastPlayedAtUtc.Value.ToLocalTime().ToString("dd.MM.yyyy");
 
     /// <summary>Raw sort key (CollectionView SortDescriptions binds this).</summary>
@@ -179,7 +180,9 @@ public partial class LibraryEntryViewModel : ObservableObject
         get
         {
             var minutes = _entry.PlaytimeMinutes;
-            return minutes < 60 ? $"{minutes} мин" : $"{minutes / 60} ч {minutes % 60} мин";
+            return minutes < 60
+                ? Loc.F("Playtime_Minutes", minutes)
+                : Loc.F("Playtime_HoursMinutes", minutes / 60, minutes % 60);
         }
     }
 
@@ -194,13 +197,13 @@ public partial class LibraryEntryViewModel : ObservableObject
     /// <summary>Portable pack vs detected system game copy.</summary>
     public string SourceText => Source switch
     {
-        PackSource.Portable => "Портативная",
-        PackSource.System => "Системная игра",
+        PackSource.Portable => Loc.T("Common_InPack"),
+        PackSource.System => Loc.T("Common_SystemGame"),
         _ => "—",
     };
 
     /// <summary>Plain-language source for the details pane (no jargon).</summary>
-    public string SourceShortText => Source == PackSource.Portable ? "внутри сборки" : "системная игра";
+    public string SourceShortText => Source == PackSource.Portable ? Loc.T("Common_InPack") : Loc.T("Common_SystemGame");
 
     /// <summary>One compact line under the card title: game · playtime · last launch.</summary>
     public string MetaText
@@ -214,7 +217,7 @@ public partial class LibraryEntryViewModel : ObservableObject
             }
 
             parts.Add(_entry.LastPlayedAtUtc is null
-                ? "ещё не запускалась"
+                ? Loc.T("Common_NeverLaunched")
                 : _entry.LastPlayedAtUtc.Value.ToLocalTime().ToString("dd.MM.yyyy"));
             return string.Join("  ·  ", parts);
         }

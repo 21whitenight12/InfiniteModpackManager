@@ -3,6 +3,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:vm="clr-namespace:Imm.App.ViewModels"
+      xmlns:loc="clr-namespace:Imm.Core.Localization;assembly=Imm.Core"
       xmlns:views="clr-namespace:Imm.App.Views"
       Background="Transparent">
 
@@ -11,7 +12,7 @@
          Declared BEFORE the card templates: StaticResource inside a template cannot forward-reference. -->
     <ContextMenu x:Key="PackMenu"
                  DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
-      <MenuItem Header="Профиль" Icon="{ui:SymbolIcon PeopleTeam24}" ItemsSource="{Binding AvailableProfiles}">
+      <MenuItem Header="{Binding [Menu_Profile], Source={x:Static loc:Loc.Instance}}" Icon="{ui:SymbolIcon PeopleTeam24}" ItemsSource="{Binding AvailableProfiles}">
         <MenuItem.ItemContainerStyle>
           <Style TargetType="MenuItem">
             <Setter Property="Header" Value="{Binding}" />
@@ -20,28 +21,28 @@
           </Style>
         </MenuItem.ItemContainerStyle>
       </MenuItem>
-      <MenuItem Header="Указать папку игры…" Icon="{ui:SymbolIcon FolderOpen24}"
+      <MenuItem Header="{Binding [Menu_GameFolder], Source={x:Static loc:Loc.Instance}}" Icon="{ui:SymbolIcon FolderOpen24}"
                 Command="{Binding ChooseGameFolderCommand}"
-                ToolTip="Игра лежит отдельно от сборки — выбрать папку вручную" />
+                ToolTip="{Binding [Menu_GameFolderTip], Source={x:Static loc:Loc.Instance}}" />
       <Separator />
-      <MenuItem Header="Переименовать…" Icon="{ui:SymbolIcon Edit24}"
+      <MenuItem Header="{Binding [Menu_Rename], Source={x:Static loc:Loc.Instance}}" Icon="{ui:SymbolIcon Edit24}"
                 Command="{Binding RenameCommand}" />
-      <MenuItem Header="Сменить обложку…" Icon="{ui:SymbolIcon ImageEdit24}"
+      <MenuItem Header="{Binding [Menu_Cover], Source={x:Static loc:Loc.Instance}}" Icon="{ui:SymbolIcon ImageEdit24}"
                 Command="{Binding ChangeCoverCommand}" />
       <Separator />
-      <MenuItem Header="Открыть папку сборки" Icon="{ui:SymbolIcon Folder24}"
+      <MenuItem Header="{Binding [Menu_OpenFolder], Source={x:Static loc:Loc.Instance}}" Icon="{ui:SymbolIcon Folder24}"
                 Command="{Binding OpenFolderCommand}" />
       <Separator />
-      <MenuItem Header="Создать бэкап…" Icon="{ui:SymbolIcon Archive24}"
+      <MenuItem Header="{Binding [Menu_Backup], Source={x:Static loc:Loc.Instance}}" Icon="{ui:SymbolIcon Archive24}"
                 Command="{Binding CreateBackupCommand}"
-                ToolTip="zip профиля MO2 (или сейвов игры) в папку «Документы»" />
-      <MenuItem Header="Открыть папку бэкапов" Icon="{ui:SymbolIcon Folder24}"
+                ToolTip="{Binding [Menu_BackupTip], Source={x:Static loc:Loc.Instance}}" />
+      <MenuItem Header="{Binding [Menu_OpenBackups], Source={x:Static loc:Loc.Instance}}" Icon="{ui:SymbolIcon Folder24}"
                 Command="{Binding OpenBackupsFolderCommand}" />
       <Separator />
-      <MenuItem Header="Ре-скан" Icon="{ui:SymbolIcon ArrowClockwise24}"
+      <MenuItem Header="{Binding [Menu_Rescan], Source={x:Static loc:Loc.Instance}}" Icon="{ui:SymbolIcon ArrowClockwise24}"
                 Command="{Binding RescanCommand}" />
       <Separator />
-      <MenuItem Header="Убрать из библиотеки" Icon="{ui:SymbolIcon Delete24}"
+      <MenuItem Header="{Binding [Menu_Remove], Source={x:Static loc:Loc.Instance}}" Icon="{ui:SymbolIcon Delete24}"
                 Command="{Binding DeleteCommand}" />
     </ContextMenu>
 
@@ -100,7 +101,7 @@
             <Button x:Name="MoreButton" Style="{StaticResource ImmOverlayButtonStyle}"
                     HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,7,7,0"
                     Click="OpenCardMenu" ContextMenu="{StaticResource PackMenu}"
-                    Visibility="Collapsed" ToolTip="Действия со сборкой">
+                    Visibility="Collapsed" ToolTip="{Binding [Lib_PackActions], Source={x:Static loc:Loc.Instance}}">
               <StackPanel Orientation="Horizontal">
                 <Ellipse Width="2.5" Height="2.5" Fill="{StaticResource ImmTextPrimaryBrush}" />
                 <Ellipse Width="2.5" Height="2.5" Margin="2.5,0" Fill="{StaticResource ImmTextPrimaryBrush}" />
@@ -196,7 +197,7 @@
                      Foreground="{StaticResource ImmTextSecondaryBrush}" />
           <Button Grid.Column="5" Style="{StaticResource ImmOverlayButtonStyle}" VerticalAlignment="Center"
                   Click="OpenCardMenu" ContextMenu="{StaticResource PackMenu}"
-                  ToolTip="Действия со сборкой">
+                  ToolTip="{Binding [Lib_PackActions], Source={x:Static loc:Loc.Instance}}">
             <StackPanel Orientation="Horizontal">
               <Ellipse Width="2.5" Height="2.5" Fill="{StaticResource ImmTextPrimaryBrush}" />
               <Ellipse Width="2.5" Height="2.5" Margin="2.5,0" Fill="{StaticResource ImmTextPrimaryBrush}" />
@@ -250,11 +251,11 @@
                        IsChecked="{Binding IsLibrarySection, Mode=OneWay}"
                        Command="{Binding ShowSectionCommand}"
                        CommandParameter="{x:Static vm:AppSection.Library}"
-                       ToolTip="Коллекция сборок">
+                       ToolTip="{Binding [Tip_NavLibrary], Source={x:Static loc:Loc.Instance}}">
             <StackPanel Orientation="Horizontal">
               <ui:SymbolIcon Symbol="Library24" FontSize="16"
                              Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
-              <TextBlock Text="Библиотека" Margin="10,0,0,0" VerticalAlignment="Center"
+              <TextBlock Text="{Binding [Nav_Library], Source={x:Static loc:Loc.Instance}}" Margin="10,0,0,0" VerticalAlignment="Center"
                          Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
             </StackPanel>
           </RadioButton>
@@ -263,11 +264,11 @@
                        IsChecked="{Binding IsScannerSection, Mode=OneWay}"
                        Command="{Binding ShowSectionCommand}"
                        CommandParameter="{x:Static vm:AppSection.Scanner}"
-                       ToolTip="Что IMM видит в сборках: детект, предупреждения, расхождения с манифестом">
+                       ToolTip="{Binding [Tip_NavScanner], Source={x:Static loc:Loc.Instance}}">
             <StackPanel Orientation="Horizontal">
               <ui:SymbolIcon Symbol="ScanType24" FontSize="16"
                              Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
-              <TextBlock Text="Сканер" Margin="10,0,0,0" VerticalAlignment="Center"
+              <TextBlock Text="{Binding [Nav_Scanner], Source={x:Static loc:Loc.Instance}}" Margin="10,0,0,0" VerticalAlignment="Center"
                          Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
             </StackPanel>
           </RadioButton>
@@ -276,11 +277,11 @@
                        IsChecked="{Binding IsSettingsSection, Mode=OneWay}"
                        Command="{Binding ShowSectionCommand}"
                        CommandParameter="{x:Static vm:AppSection.Settings}"
-                       ToolTip="Настройки приложения">
+                       ToolTip="{Binding [Tip_NavSettings], Source={x:Static loc:Loc.Instance}}">
             <StackPanel Orientation="Horizontal">
               <ui:SymbolIcon Symbol="Settings24" FontSize="16"
                              Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
-              <TextBlock Text="Настройки" Margin="10,0,0,0" VerticalAlignment="Center"
+              <TextBlock Text="{Binding [Nav_Settings], Source={x:Static loc:Loc.Instance}}" Margin="10,0,0,0" VerticalAlignment="Center"
                          Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
             </StackPanel>
           </RadioButton>
@@ -288,11 +289,11 @@
           <RadioButton Style="{StaticResource ImmNavStyle}" GroupName="ImmNav" Margin="0,6,0,0"
                        IsChecked="False"
                        Command="{Binding OpenLogWindowCommand}"
-                       ToolTip="Окно с подробным логом (Information+)">
+                       ToolTip="{Binding [Tip_NavLog], Source={x:Static loc:Loc.Instance}}">
             <StackPanel Orientation="Horizontal">
               <ui:SymbolIcon Symbol="SlideText24" FontSize="16"
                              Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
-              <TextBlock Text="Лог" Margin="10,0,0,0" VerticalAlignment="Center"
+              <TextBlock Text="{Binding [Nav_Log], Source={x:Static loc:Loc.Instance}}" Margin="10,0,0,0" VerticalAlignment="Center"
                          Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
             </StackPanel>
           </RadioButton>
@@ -309,7 +310,7 @@
                        Foreground="{StaticResource ImmTextSecondaryBrush}" />
           </StackPanel>
           <TextBlock Margin="14,5,0,0" FontSize="10.5" Foreground="{StaticResource ImmTextTertiaryBrush}"
-                     Text="{Binding Entries.Count, StringFormat={}{0} сборки в библиотеке}" />
+                     Text="{Binding PacksInLibraryText}" />
         </StackPanel>
       </Grid>
     </Border>
@@ -333,11 +334,11 @@
           </Grid.ColumnDefinitions>
 
           <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
-            <TextBlock Text="Библиотека" FontSize="26" FontWeight="SemiBold"
+            <TextBlock Text="{Binding [Lib_Title], Source={x:Static loc:Loc.Instance}}" FontSize="26" FontWeight="SemiBold"
                        Foreground="{StaticResource ImmTextPrimaryBrush}" />
             <TextBlock Margin="10,0,0,4" VerticalAlignment="Bottom" FontSize="13"
                        Foreground="{StaticResource ImmTextTertiaryBrush}"
-                       Text="{Binding Entries.Count, StringFormat='{}{0} сборки'}" />
+                       Text="{Binding PacksCountText}" />
           </StackPanel>
 
           <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
@@ -347,12 +348,12 @@
                     BorderThickness="1" CornerRadius="10" Margin="8,0,0,0" Padding="3">
               <StackPanel Orientation="Horizontal">
                 <Button Style="{StaticResource ImmSegmentButtonStyle}" Command="{Binding SetGridViewCommand}"
-                        ToolTip="Сетка">
+                        ToolTip="{Binding [Lib_GridView], Source={x:Static loc:Loc.Instance}}">
                   <ui:SymbolIcon Symbol="GridDots24" FontSize="14"
                                  Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
                 </Button>
                 <Button Style="{StaticResource ImmSegmentButtonStyle}" Command="{Binding SetListViewCommand}"
-                        ToolTip="Список">
+                        ToolTip="{Binding [Lib_ListView], Source={x:Static loc:Loc.Instance}}">
                   <ui:SymbolIcon Symbol="TextBulletListLtr24" FontSize="14"
                                  Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
                 </Button>
@@ -370,24 +371,24 @@
 
           <StackPanel Grid.Column="0" Orientation="Horizontal">
             <Button Style="{StaticResource ImmPrimaryButtonStyle}" Height="34" Command="{Binding ImportCommand}"
-                    ToolTip="Добавить сборку в библиотеку">
+                    ToolTip="{Binding [Lib_AddTip], Source={x:Static loc:Loc.Instance}}">
               <StackPanel Orientation="Horizontal">
                 <ui:SymbolIcon Symbol="Add24" FontSize="14" Foreground="White" />
-                <TextBlock Text="Добавить сборку" Margin="7,0,0,0" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding [Lib_Add], Source={x:Static loc:Loc.Instance}}" Margin="7,0,0,0" VerticalAlignment="Center" />
               </StackPanel>
             </Button>
             <Button Style="{StaticResource ImmGhostButtonStyle}" Margin="8,0,0,0"
                     Command="{Binding RescanCommand}" CommandParameter="{Binding SelectedEntry}"
-                    ToolTip="Пере-сканировать выбранную сборку">
+                    ToolTip="{Binding [Lib_RescanTip], Source={x:Static loc:Loc.Instance}}">
               <StackPanel Orientation="Horizontal">
                 <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="13"
                                Foreground="{StaticResource ImmTextSecondaryBrush}" />
-                <TextBlock Text="Ре-скан" Margin="6,0,0,0" VerticalAlignment="Center" />
+                <TextBlock Text="{Binding [Lib_Rescan], Source={x:Static loc:Loc.Instance}}" Margin="6,0,0,0" VerticalAlignment="Center" />
               </StackPanel>
             </Button>
           </StackPanel>
 
-          <ui:TextBox Grid.Column="1" Icon="{ui:SymbolIcon Search24}" PlaceholderText="Поиск сборок…"
+          <ui:TextBox Grid.Column="1" Icon="{ui:SymbolIcon Search24}" PlaceholderText="{Binding [Lib_Search], Source={x:Static loc:Loc.Instance}}"
                       Height="34" FontSize="12.5" Margin="12,0,0,0" MinWidth="0"
                       HorizontalAlignment="Stretch" VerticalContentAlignment="Center"
                       Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
@@ -462,9 +463,9 @@
                     Visibility="{Binding HasNoEntries, Converter={StaticResource BoolToVisibleConverter}}">
           <ui:SymbolIcon Symbol="Library24" FontSize="44" HorizontalAlignment="Center"
                          Foreground="{StaticResource ImmTextTertiaryBrush}" />
-          <TextBlock Text="Библиотека пуста" FontSize="17" FontWeight="SemiBold" Margin="0,14,0,0"
+          <TextBlock Text="{Binding [Lib_EmptyTitle], Source={x:Static loc:Loc.Instance}}" FontSize="17" FontWeight="SemiBold" Margin="0,14,0,0"
                      HorizontalAlignment="Center" Foreground="{StaticResource ImmTextPrimaryBrush}" />
-          <TextBlock Text="Перетащите папку сборки в окно или нажмите «Добавить сборку»" FontSize="12.5"
+          <TextBlock Text="{Binding [Lib_EmptyHint], Source={x:Static loc:Loc.Instance}}" FontSize="12.5"
                      Margin="0,6,0,0" HorizontalAlignment="Center"
                      Foreground="{StaticResource ImmTextTertiaryBrush}" />
         </StackPanel>
@@ -534,7 +535,7 @@
                       <StackPanel>
                         <TextBlock Text="{Binding PlaytimeText}" FontSize="14" FontWeight="SemiBold"
                                    Foreground="{StaticResource ImmTextPrimaryBrush}" />
-                        <TextBlock Text="в игре" FontSize="10.5" Margin="0,3,0,0"
+                        <TextBlock Text="{Binding [Common_InGame], Source={x:Static loc:Loc.Instance}}" FontSize="10.5" Margin="0,3,0,0"
                                    Foreground="{StaticResource ImmTextTertiaryBrush}" />
                       </StackPanel>
                     </Border>
@@ -543,7 +544,7 @@
                       <StackPanel>
                         <TextBlock Text="{Binding LastPlayedText}" FontSize="14" FontWeight="SemiBold"
                                    Foreground="{StaticResource ImmTextPrimaryBrush}" />
-                        <TextBlock Text="последний запуск" FontSize="10.5" Margin="0,3,0,0"
+                        <TextBlock Text="{Binding [Common_LastLaunch], Source={x:Static loc:Loc.Instance}}" FontSize="10.5" Margin="0,3,0,0"
                                    Foreground="{StaticResource ImmTextTertiaryBrush}" />
                       </StackPanel>
                     </Border>
@@ -556,7 +557,7 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                       </Grid.ColumnDefinitions>
-                      <TextBlock Text="Игра" FontSize="12" Foreground="{StaticResource ImmTextTertiaryBrush}" />
+                      <TextBlock Text="{Binding [Common_Game], Source={x:Static loc:Loc.Instance}}" FontSize="12" Foreground="{StaticResource ImmTextTertiaryBrush}" />
                       <TextBlock Grid.Column="1" Text="{Binding GameDisplayName}" FontSize="12"
                                  HorizontalAlignment="Right" Foreground="#CFD9E6" />
                     </Grid>
@@ -566,7 +567,7 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                       </Grid.ColumnDefinitions>
-                      <TextBlock Text="Профиль MO2" FontSize="12" Foreground="{StaticResource ImmTextTertiaryBrush}" />
+                      <TextBlock Text="{Binding [Common_ProfileMo2], Source={x:Static loc:Loc.Instance}}" FontSize="12" Foreground="{StaticResource ImmTextTertiaryBrush}" />
                       <TextBlock Grid.Column="1" Text="{Binding ProfileText}" FontSize="12"
                                  HorizontalAlignment="Right" Foreground="#CFD9E6" />
                     </Grid>
@@ -575,7 +576,7 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                       </Grid.ColumnDefinitions>
-                      <TextBlock Text="Источник" FontSize="12" Foreground="{StaticResource ImmTextTertiaryBrush}" />
+                      <TextBlock Text="{Binding [Common_Source], Source={x:Static loc:Loc.Instance}}" FontSize="12" Foreground="{StaticResource ImmTextTertiaryBrush}" />
                       <TextBlock Grid.Column="1" Text="{Binding SourceShortText}" FontSize="12"
                                  HorizontalAlignment="Right" Foreground="#CFD9E6" />
                     </Grid>
@@ -584,7 +585,7 @@
                         <ColumnDefinition Width="Auto" />
                         <ColumnDefinition Width="*" />
                       </Grid.ColumnDefinitions>
-                      <TextBlock Text="Путь" FontSize="12" Foreground="{StaticResource ImmTextTertiaryBrush}" />
+                      <TextBlock Text="{Binding [Common_Path], Source={x:Static loc:Loc.Instance}}" FontSize="12" Foreground="{StaticResource ImmTextTertiaryBrush}" />
                       <TextBlock Grid.Column="1" Text="{Binding RootPath}" FontSize="10.5"
                                  HorizontalAlignment="Right" TextTrimming="CharacterEllipsis"
                                  Foreground="{StaticResource ImmTextSecondaryBrush}"
@@ -597,7 +598,7 @@
                           BorderThickness="1" CornerRadius="10" Padding="11,10"
                           Visibility="{Binding NotesText, Converter={StaticResource NullToCollapsedConverter}}">
                     <StackPanel>
-                      <TextBlock Text="ЗАМЕТКИ" FontSize="10" FontWeight="SemiBold" Margin="0,0,0,5"
+                      <TextBlock Text="{Binding [Common_Notes], Source={x:Static loc:Loc.Instance}}" FontSize="10" FontWeight="SemiBold" Margin="0,0,0,5"
                                  Foreground="{StaticResource ImmTextTertiaryBrush}" />
                       <TextBlock Text="{Binding NotesText}" FontSize="12" LineHeight="17" TextWrapping="Wrap"
                                  Foreground="{StaticResource ImmTextSecondaryBrush}" />
@@ -612,10 +613,10 @@
                 <StackPanel>
                   <Button Style="{StaticResource ImmPrimaryButtonStyle}" Height="44" FontSize="13.5"
                           Command="{Binding DataContext.LaunchCommand, RelativeSource={RelativeSource AncestorType=Page}}"
-                          CommandParameter="{Binding}" ToolTip="Запустить сборку">
+                          CommandParameter="{Binding}" ToolTip="{Binding [Det_LaunchTip], Source={x:Static loc:Loc.Instance}}">
                     <StackPanel Orientation="Horizontal">
                       <ui:SymbolIcon Symbol="Play24" FontSize="14" Foreground="White" />
-                      <TextBlock Text="ЗАПУСТИТЬ" Margin="8,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" />
+                      <TextBlock Text="{Binding [Det_Launch], Source={x:Static loc:Loc.Instance}}" Margin="8,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" />
                     </StackPanel>
                   </Button>
 
@@ -627,21 +628,21 @@
                     </Grid.ColumnDefinitions>
                     <Button Grid.Column="0" Style="{StaticResource ImmGhostButtonStyle}"
                             Command="{Binding DataContext.CreateBackupCommand, RelativeSource={RelativeSource AncestorType=Page}}"
-                            CommandParameter="{Binding}" Content="Бэкап профиля" />
+                            CommandParameter="{Binding}" Content="{Binding [Det_Backup], Source={x:Static loc:Loc.Instance}}" />
                     <Button Grid.Column="2" Style="{StaticResource ImmGhostButtonStyle}"
                             Command="{Binding DataContext.OpenPackFolderCommand, RelativeSource={RelativeSource AncestorType=Page}}"
-                            CommandParameter="{Binding}" Content="Папка сборки" />
+                            CommandParameter="{Binding}" Content="{Binding [Det_PackFolder], Source={x:Static loc:Loc.Instance}}" />
                   </Grid>
 
                   <Button Style="{StaticResource ImmGhostButtonStyle}" Height="32" Margin="0,8,0,0"
                           Command="{Binding DataContext.OpenMo2Command, RelativeSource={RelativeSource AncestorType=Page}}"
                           CommandParameter="{Binding}"
                           Visibility="{Binding IsMo2, Converter={StaticResource BoolToVisibleConverter}}"
-                          ToolTip="Открыть Mod Organizer 2 этой сборки (без запуска игры)">
+                          ToolTip="{Binding [Det_OpenMo2Tip], Source={x:Static loc:Loc.Instance}}">
                     <StackPanel Orientation="Horizontal">
                       <ui:SymbolIcon Symbol="Settings24" FontSize="13"
                                      Foreground="{StaticResource ImmTextSecondaryBrush}" />
-                      <TextBlock Text="Открыть Mod Organizer 2" FontSize="11.5" Margin="7,0,0,0"
+                      <TextBlock Text="{Binding [Det_OpenMo2], Source={x:Static loc:Loc.Instance}}" FontSize="11.5" Margin="7,0,0,0"
                                  VerticalAlignment="Center" />
                     </StackPanel>
                   </Button>

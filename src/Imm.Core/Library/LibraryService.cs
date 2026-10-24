@@ -3,6 +3,7 @@ using Imm.Core.Domain;
 using Imm.Core.IO;
 using Imm.Core.Scanning;
 using Serilog;
+using Imm.Core.Localization;
 
 namespace Imm.Core.Library;
 
@@ -60,14 +61,14 @@ public sealed class LibraryService : ILibraryService
         var index = await LoadAsync(cancellationToken).ConfigureAwait(false);
         if (index.Entries.Any(e => string.Equals(LongPath.Normalize(e.RootPath), root, StringComparison.OrdinalIgnoreCase)))
         {
-            throw new InvalidOperationException("Эта сборка уже есть в библиотеке.");
+            throw new InvalidOperationException(Loc.T("Err_PackAlreadyInLibrary"));
         }
 
         var scan = await _scanner.ScanAsync(root, cancellationToken).ConfigureAwait(false);
         if (!scan.LooksLikeModpack)
         {
             throw new InvalidOperationException(
-                "Папка не похожа на поддерживаемую сборку: не найдены exe игры или MO2.");
+                Loc.T("Err_NotAModpack"));
         }
 
         var entry = new LibraryEntry
@@ -100,12 +101,12 @@ public sealed class LibraryService : ILibraryService
         var trimmed = newName.Trim();
         if (string.IsNullOrWhiteSpace(trimmed))
         {
-            throw new InvalidOperationException("Название сборки не может быть пустым.");
+            throw new InvalidOperationException(Loc.T("Err_EmptyName"));
         }
 
         var index = await LoadAsync(cancellationToken).ConfigureAwait(false);
         var indexed = index.Entries.FirstOrDefault(e => e.Id == entry.Id)
-            ?? throw new InvalidOperationException("Сборка не найдена в библиотеке.");
+            ?? throw new InvalidOperationException(Loc.T("Err_PackNotInLibrary"));
 
         indexed.Name = trimmed;
         await SaveAsync(index, cancellationToken).ConfigureAwait(false);
@@ -119,13 +120,13 @@ public sealed class LibraryService : ILibraryService
         var source = LongPath.Normalize(Path.GetFullPath(coverImagePath));
         if (!File.Exists(source))
         {
-            throw new FileNotFoundException("Файл обложки не найден.", coverImagePath);
+            throw new FileNotFoundException(Loc.T("Err_CoverNotFound"), coverImagePath);
         }
 
         var extension = Path.GetExtension(source).ToLowerInvariant();
         if (extension is not ".png" and not ".jpg" and not ".jpeg" and not ".webp")
         {
-            throw new InvalidOperationException("Обложка должна быть PNG, JPG или WebP.");
+            throw new InvalidOperationException(Loc.T("Err_CoverFormat"));
         }
 
         var targetName = extension is ".jpg" or ".jpeg" ? "cover.jpg" : $"cover{extension}";
@@ -271,8 +272,7 @@ public sealed class LibraryService : ILibraryService
         catch (Exception exception) when (exception is JsonException or IOException or UnauthorizedAccessException)
         {
             throw new InvalidOperationException(
-                "modpack.json повреждён или недоступен — ре-скан остановлен, файл не изменён. "
-                + "Исправьте или удалите его и повторите.",
+                Loc.T("Err_ManifestCorrupt"),
                 exception);
         }
     }

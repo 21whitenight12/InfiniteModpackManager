@@ -2,6 +2,7 @@ using System.IO;
 using Imm.Core.Domain;
 using Imm.Core.IO;
 using Imm.Core.Scanning;
+using Imm.Core.Localization;
 
 namespace Imm.Core.Launch;
 
@@ -15,7 +16,7 @@ public sealed class DirectLaunchStrategy : ILaunchStrategy
         cancellationToken.ThrowIfCancellationRequested();
 
         var gameRoot = GameRootLocator.FindGameRoot(packRoot)
-            ?? throw new InvalidOperationException("Папка игры не найдена — выполните ре-скан или добавьте сборку заново.");
+            ?? throw new InvalidOperationException(Loc.T("Err_GameFolderGone"));
 
         // Script extender loader preferred over the bare game exe (IMM.md ILaunchStrategy).
         // Лоадер СВОЕЙ игры приоритетнее прочих: порядок общего списка — не приоритет.
@@ -34,7 +35,7 @@ public sealed class DirectLaunchStrategy : ILaunchStrategy
 
         var gameExe = Markers.GameExecutables.Keys
             .FirstOrDefault(exe => File.Exists(LongPath.Normalize(Path.Combine(gameRoot, exe))))
-            ?? throw new InvalidOperationException("Не удалось определить запускаемый exe игры — проверьте сборку или выполните ре-скан.");
+            ?? throw new InvalidOperationException(Loc.T("Err_LaunchExeUnknown"));
 
         return Task.FromResult(new LaunchPlan(Path.Combine(gameRoot, gameExe), gameRoot, []));
     }

@@ -3,6 +3,7 @@ using System.Windows;
 using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Imm.Core.Logging;
+using Imm.Core.Localization;
 
 namespace Imm.App.ViewModels;
 
@@ -25,6 +26,8 @@ public partial class LogViewModel : ObservableObject
         }
 
         _sink.LineAppended += OnLineAppended;
+        Lines.CollectionChanged += (_, _) => OnPropertyChanged(nameof(LinesCountText));
+        Loc.Instance.PropertyChanged += (_, _) => OnPropertyChanged(string.Empty);
     }
 
     public ObservableCollection<string> Lines { get; } = [];
@@ -35,7 +38,7 @@ public partial class LogViewModel : ObservableObject
     [ObservableProperty]
     private bool _isPaused;
 
-    public string PauseButtonText => IsPaused ? "Продолжить" : "Пауза";
+    public string PauseButtonText => IsPaused ? Loc.T("Log_Resume") : Loc.T("Log_Pause");
 
     partial void OnIsPausedChanged(bool value) => OnPropertyChanged(nameof(PauseButtonText));
 
@@ -86,4 +89,7 @@ public partial class LogViewModel : ObservableObject
             Lines.RemoveAt(0);
         }
     }
+
+    /// <summary>Localized "N lines" for the log window footer.</summary>
+    public string LinesCountText => Loc.LinesCount(Lines.Count);
 }

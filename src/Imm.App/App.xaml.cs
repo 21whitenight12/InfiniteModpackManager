@@ -20,6 +20,7 @@ using Serilog;
 using Wpf.Ui;
 using Wpf.Ui.Appearance;
 using Wpf.Ui.Extensions;
+using Imm.Core.Localization;
 
 namespace Imm.App;
 
@@ -100,6 +101,10 @@ public partial class App : Application
             ApplicationTheme.Dark,
             systemGlassColor: false);
 
+        // Language must be resolved before the first window renders its bindings.
+        var settings = _host.Services.GetRequiredService<Imm.Core.Settings.IAppSettingsService>().LoadSync();
+        Loc.Instance.SetLanguage(settings.Language);
+
         _host.Start();
         var mainWindow = _host.Services.GetRequiredService<MainWindow>();
         MainWindow = mainWindow;
@@ -119,7 +124,7 @@ public partial class App : Application
     private void OnDispatcherUnhandledException(object sender, DispatcherUnhandledExceptionEventArgs args)
     {
         Log.Fatal(args.Exception, "Unhandled UI-thread exception.");
-        ShowFatalDialog("Ошибка интерфейса", args.Exception);
+        ShowFatalDialog(Loc.T("Fatal_UiError"), args.Exception);
         args.Handled = true;
 
         // Anti-zombie: fatal before startup completes → an invisible process is pointless.
@@ -135,7 +140,7 @@ public partial class App : Application
         if (args.ExceptionObject is Exception exception)
         {
             Log.Fatal(exception, "Unhandled AppDomain exception. IsTerminating={IsTerminating}", args.IsTerminating);
-            ShowFatalDialog("Критическая ошибка", exception);
+            ShowFatalDialog(Loc.T("Fatal_Critical"), exception);
         }
     }
 
@@ -147,7 +152,7 @@ public partial class App : Application
 
     private void ShowFatalDialog(string title, Exception exception)
     {
-        var message = $"{exception.Message}\n\nПодробности — в логе.";
+        var message = Loc.F("Fatal_Body", exception.Message);
         try
         {
             var mainWindow = _host.Services.GetService<MainWindow>();
@@ -164,7 +169,7 @@ public partial class App : Application
                 {
                     Title = title,
                     Content = message,
-                    CloseButtonText = "Закрыть"
+                    CloseButtonText = Loc.T("Common_Close")
                 });
             });
         }

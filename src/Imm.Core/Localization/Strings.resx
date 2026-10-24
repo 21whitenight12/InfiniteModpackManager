@@ -1,0 +1,792 @@
+<?xml version="1.0" encoding="utf-8"?>
+<root>
+  <xsd:schema id="root" xmlns="" xmlns:xsd="http://www.w3.org/2001/XMLSchema" xmlns:msdata="urn:schemas-microsoft-com:xml-msdata">
+    <xsd:import namespace="http://www.w3.org/XML/1998/namespace" />
+    <xsd:element name="root" msdata:IsDataSet="true">
+      <xsd:complexType>
+        <xsd:choice maxOccurs="unbounded">
+          <xsd:element name="metadata">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" />
+              </xsd:sequence>
+              <xsd:attribute name="name" use="required" type="xsd:string" />
+              <xsd:attribute name="type" type="xsd:string" />
+              <xsd:attribute name="mimetype" type="xsd:string" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="assembly">
+            <xsd:complexType>
+              <xsd:attribute name="alias" type="xsd:string" />
+              <xsd:attribute name="name" type="xsd:string" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="data">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+                <xsd:element name="comment" type="xsd:string" minOccurs="0" msdata:Ordinal="2" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" msdata:Ordinal="1" />
+              <xsd:attribute name="type" type="xsd:string" msdata:Ordinal="3" />
+              <xsd:attribute name="mimetype" type="xsd:string" msdata:Ordinal="4" />
+              <xsd:attribute ref="xml:space" />
+            </xsd:complexType>
+          </xsd:element>
+          <xsd:element name="resheader">
+            <xsd:complexType>
+              <xsd:sequence>
+                <xsd:element name="value" type="xsd:string" minOccurs="0" msdata:Ordinal="1" />
+              </xsd:sequence>
+              <xsd:attribute name="name" type="xsd:string" use="required" />
+            </xsd:complexType>
+          </xsd:element>
+        </xsd:choice>
+      </xsd:complexType>
+    </xsd:element>
+  </xsd:schema>
+  <resheader name="resmimetype">
+    <value>text/microsoft-resx</value>
+  </resheader>
+  <resheader name="version">
+    <value>2.0</value>
+  </resheader>
+  <resheader name="reader">
+    <value>System.Resources.ResXResourceReader, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <resheader name="writer">
+    <value>System.Resources.ResXResourceWriter, System.Windows.Forms, Version=4.0.0.0, Culture=neutral, PublicKeyToken=b77a5c561934e089</value>
+  </resheader>
+  <data name="Common_Open" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="Common_Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="Common_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="Common_Close" xml:space="preserve">
+    <value>Close</value>
+  </data>
+  <data name="Common_Skip" xml:space="preserve">
+    <value>Skip</value>
+  </data>
+  <data name="Common_Yes" xml:space="preserve">
+    <value>yes</value>
+  </data>
+  <data name="Common_No" xml:space="preserve">
+    <value>no</value>
+  </data>
+  <data name="Common_None" xml:space="preserve">
+    <value>—</value>
+  </data>
+  <data name="Common_NotSet" xml:space="preserve">
+    <value>not set</value>
+  </data>
+  <data name="Common_NotFound" xml:space="preserve">
+    <value>not found</value>
+  </data>
+  <data name="Common_NotDetected" xml:space="preserve">
+    <value>not detected</value>
+  </data>
+  <data name="Common_Done" xml:space="preserve">
+    <value>Ready</value>
+  </data>
+  <data name="Common_NameLabel" xml:space="preserve">
+    <value>Name:</value>
+  </data>
+  <data name="Common_Path" xml:space="preserve">
+    <value>Path</value>
+  </data>
+  <data name="Common_Game" xml:space="preserve">
+    <value>Game</value>
+  </data>
+  <data name="Common_Source" xml:space="preserve">
+    <value>Source</value>
+  </data>
+  <data name="Common_Engine" xml:space="preserve">
+    <value>Engine</value>
+  </data>
+  <data name="Common_Notes" xml:space="preserve">
+    <value>NOTES</value>
+  </data>
+  <data name="Common_ProfileMo2" xml:space="preserve">
+    <value>MO2 profile</value>
+  </data>
+  <data name="Common_LaunchFile" xml:space="preserve">
+    <value>Launch file</value>
+  </data>
+  <data name="Common_GameFolder" xml:space="preserve">
+    <value>Game folder</value>
+  </data>
+  <data name="Common_Mo2Instance" xml:space="preserve">
+    <value>MO2 instance</value>
+  </data>
+  <data name="Common_RootBuilder" xml:space="preserve">
+    <value>Root Builder</value>
+  </data>
+  <data name="Common_LooksLikePack" xml:space="preserve">
+    <value>Looks like a pack</value>
+  </data>
+  <data name="Common_Overridden" xml:space="preserve">
+    <value>Overridden manually</value>
+  </data>
+  <data name="Common_InPack" xml:space="preserve">
+    <value>inside the pack</value>
+  </data>
+  <data name="Common_SystemGame" xml:space="preserve">
+    <value>system install</value>
+  </data>
+  <data name="Common_InPackRoot" xml:space="preserve">
+    <value>in the pack root</value>
+  </data>
+  <data name="Common_UnknownGame" xml:space="preserve">
+    <value>Game not detected</value>
+  </data>
+  <data name="Common_NeverLaunched" xml:space="preserve">
+    <value>never launched</value>
+  </data>
+  <data name="Common_LastLaunch" xml:space="preserve">
+    <value>last launch</value>
+  </data>
+  <data name="Common_InGame" xml:space="preserve">
+    <value>in game</value>
+  </data>
+  <data name="Common_Ok" xml:space="preserve">
+    <value>ok</value>
+  </data>
+  <data name="Common_OpenFolder" xml:space="preserve">
+    <value>Open</value>
+  </data>
+  <data name="Plural_Packs_One" xml:space="preserve">
+    <value>pack</value>
+  </data>
+  <data name="Plural_Packs_Few" xml:space="preserve">
+    <value>packs</value>
+  </data>
+  <data name="Plural_Packs_Many" xml:space="preserve">
+    <value>packs</value>
+  </data>
+  <data name="Plural_PacksInLibrary" xml:space="preserve">
+    <value>in the library</value>
+  </data>
+  <data name="Plural_Lines_One" xml:space="preserve">
+    <value>line</value>
+  </data>
+  <data name="Plural_Lines_Few" xml:space="preserve">
+    <value>lines</value>
+  </data>
+  <data name="Plural_Lines_Many" xml:space="preserve">
+    <value>lines</value>
+  </data>
+  <data name="Playtime_Minutes" xml:space="preserve">
+    <value>{0} min</value>
+  </data>
+  <data name="Playtime_HoursMinutes" xml:space="preserve">
+    <value>{0} h {1} min</value>
+  </data>
+  <data name="Nav_Library" xml:space="preserve">
+    <value>Library</value>
+  </data>
+  <data name="Nav_Scanner" xml:space="preserve">
+    <value>Scanner</value>
+  </data>
+  <data name="Nav_Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Nav_Log" xml:space="preserve">
+    <value>Log</value>
+  </data>
+  <data name="Tip_NavLibrary" xml:space="preserve">
+    <value>Your pack collection</value>
+  </data>
+  <data name="Tip_NavScanner" xml:space="preserve">
+    <value>What IMM detects in each pack: facts, warnings, manifest drift</value>
+  </data>
+  <data name="Tip_NavSettings" xml:space="preserve">
+    <value>Application settings</value>
+  </data>
+  <data name="Tip_NavLog" xml:space="preserve">
+    <value>Detailed log window (Information+)</value>
+  </data>
+  <data name="Lib_Title" xml:space="preserve">
+    <value>Library</value>
+  </data>
+  <data name="Lib_Add" xml:space="preserve">
+    <value>Add pack</value>
+  </data>
+  <data name="Lib_AddTip" xml:space="preserve">
+    <value>Add a pack folder to the library</value>
+  </data>
+  <data name="Lib_Rescan" xml:space="preserve">
+    <value>Re-scan</value>
+  </data>
+  <data name="Lib_RescanTip" xml:space="preserve">
+    <value>Re-scan the selected pack</value>
+  </data>
+  <data name="Lib_Search" xml:space="preserve">
+    <value>Search packs…</value>
+  </data>
+  <data name="Lib_GridView" xml:space="preserve">
+    <value>Grid</value>
+  </data>
+  <data name="Lib_ListView" xml:space="preserve">
+    <value>List</value>
+  </data>
+  <data name="Lib_SortName" xml:space="preserve">
+    <value>By name</value>
+  </data>
+  <data name="Lib_SortDate" xml:space="preserve">
+    <value>By last launch</value>
+  </data>
+  <data name="Lib_SortTime" xml:space="preserve">
+    <value>By playtime</value>
+  </data>
+  <data name="Lib_EmptyTitle" xml:space="preserve">
+    <value>Your library is empty</value>
+  </data>
+  <data name="Lib_EmptyHint" xml:space="preserve">
+    <value>Drop a pack folder into the window or press “Add pack”</value>
+  </data>
+  <data name="Lib_PackActions" xml:space="preserve">
+    <value>Pack actions</value>
+  </data>
+  <data name="Det_Launch" xml:space="preserve">
+    <value>LAUNCH</value>
+  </data>
+  <data name="Det_LaunchTip" xml:space="preserve">
+    <value>Launch this pack</value>
+  </data>
+  <data name="Det_Backup" xml:space="preserve">
+    <value>Back up profile</value>
+  </data>
+  <data name="Det_PackFolder" xml:space="preserve">
+    <value>Pack folder</value>
+  </data>
+  <data name="Det_OpenMo2" xml:space="preserve">
+    <value>Open Mod Organizer 2</value>
+  </data>
+  <data name="Det_OpenMo2Tip" xml:space="preserve">
+    <value>Open this pack's Mod Organizer 2 (without the game)</value>
+  </data>
+  <data name="Menu_Profile" xml:space="preserve">
+    <value>Profile</value>
+  </data>
+  <data name="Menu_GameFolder" xml:space="preserve">
+    <value>Set game folder…</value>
+  </data>
+  <data name="Menu_GameFolderTip" xml:space="preserve">
+    <value>The game lives outside the pack — pick the folder manually</value>
+  </data>
+  <data name="Menu_Rename" xml:space="preserve">
+    <value>Rename…</value>
+  </data>
+  <data name="Menu_Cover" xml:space="preserve">
+    <value>Change cover…</value>
+  </data>
+  <data name="Menu_OpenFolder" xml:space="preserve">
+    <value>Open pack folder</value>
+  </data>
+  <data name="Menu_Backup" xml:space="preserve">
+    <value>Create backup…</value>
+  </data>
+  <data name="Menu_BackupTip" xml:space="preserve">
+    <value>zip of the MO2 profile (or the game saves) into Documents</value>
+  </data>
+  <data name="Menu_OpenBackups" xml:space="preserve">
+    <value>Open backups folder</value>
+  </data>
+  <data name="Menu_Rescan" xml:space="preserve">
+    <value>Re-scan</value>
+  </data>
+  <data name="Menu_Remove" xml:space="preserve">
+    <value>Remove from library</value>
+  </data>
+  <data name="Scan_Title" xml:space="preserve">
+    <value>Scanner</value>
+  </data>
+  <data name="Scan_Check" xml:space="preserve">
+    <value>Check</value>
+  </data>
+  <data name="Scan_CheckTip" xml:space="preserve">
+    <value>Scan every pack in the library and compare with its manifest</value>
+  </data>
+  <data name="Scan_Hint" xml:space="preserve">
+    <value>Checking writes nothing — re-scan applies the facts</value>
+  </data>
+  <data name="Scan_EmptyTitle" xml:space="preserve">
+    <value>Nothing to check</value>
+  </data>
+  <data name="Scan_EmptyHint" xml:space="preserve">
+    <value>Add a pack — its detection and warnings will show up here</value>
+  </data>
+  <data name="Scan_ChipGame" xml:space="preserve">
+    <value>GAME</value>
+  </data>
+  <data name="Scan_ChipSource" xml:space="preserve">
+    <value>SOURCE</value>
+  </data>
+  <data name="Scan_ChipProfile" xml:space="preserve">
+    <value>MO2 PROFILE</value>
+  </data>
+  <data name="Scan_ChipLoader" xml:space="preserve">
+    <value>LAUNCHES</value>
+  </data>
+  <data name="Scan_RescanTip" xml:space="preserve">
+    <value>Re-scan the pack and write the facts into its manifest</value>
+  </data>
+  <data name="Scan_GameFolder" xml:space="preserve">
+    <value>Game folder…</value>
+  </data>
+  <data name="Scan_GameFolderTip" xml:space="preserve">
+    <value>The game lives outside the pack — pick the folder manually</value>
+  </data>
+  <data name="Scan_StatusNever" xml:space="preserve">
+    <value>Not checked yet</value>
+  </data>
+  <data name="Scan_StatusBusy" xml:space="preserve">
+    <value>Checking packs…</value>
+  </data>
+  <data name="Scan_StatusEmpty" xml:space="preserve">
+    <value>No packs in the library</value>
+  </data>
+  <data name="Scan_StatusDone" xml:space="preserve">
+    <value>Checked: {0}, with issues: {1}</value>
+  </data>
+  <data name="Scan_StatusFailed" xml:space="preserve">
+    <value>Check failed</value>
+  </data>
+  <data name="Scan_Failed" xml:space="preserve">
+    <value>Could not check the packs: {0}</value>
+  </data>
+  <data name="Badge_FolderMissing" xml:space="preserve">
+    <value>folder missing</value>
+  </data>
+  <data name="Badge_NoManifest" xml:space="preserve">
+    <value>no manifest</value>
+  </data>
+  <data name="Badge_NeedRescan" xml:space="preserve">
+    <value>re-scan needed</value>
+  </data>
+  <data name="Badge_HasIssues" xml:space="preserve">
+    <value>has issues</value>
+  </data>
+  <data name="Set_Title" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="Set_Subtitle" xml:space="preserve">
+    <value>Stored in settings.json next to library.json; pack data stays in each pack's modpack.json</value>
+  </data>
+  <data name="Set_Backups" xml:space="preserve">
+    <value>Backups</value>
+  </data>
+  <data name="Set_Limit" xml:space="preserve">
+    <value>Archives kept per pack</value>
+  </data>
+  <data name="Set_LimitHint" xml:space="preserve">
+    <value>0 = unlimited; a pack's own modpack.json limit wins</value>
+  </data>
+  <data name="Set_BackupsFolder" xml:space="preserve">
+    <value>Backups folder</value>
+  </data>
+  <data name="Set_Logs" xml:space="preserve">
+    <value>Logs</value>
+  </data>
+  <data name="Set_LogsFolder" xml:space="preserve">
+    <value>Logs folder</value>
+  </data>
+  <data name="Set_Data" xml:space="preserve">
+    <value>Data</value>
+  </data>
+  <data name="Set_LibraryFile" xml:space="preserve">
+    <value>Library (library.json)</value>
+  </data>
+  <data name="Set_Mode" xml:space="preserve">
+    <value>Mode</value>
+  </data>
+  <data name="Set_ModePortable" xml:space="preserve">
+    <value>portable (library.json next to the exe)</value>
+  </data>
+  <data name="Set_ModeStandard" xml:space="preserve">
+    <value>standard (%LOCALAPPDATA%\IMM)</value>
+  </data>
+  <data name="Set_Saved" xml:space="preserve">
+    <value>Saved</value>
+  </data>
+  <data name="Set_NotSaved" xml:space="preserve">
+    <value>Not saved</value>
+  </data>
+  <data name="Set_SaveFailed" xml:space="preserve">
+    <value>Could not save the settings: {0}</value>
+  </data>
+  <data name="Set_Language" xml:space="preserve">
+    <value>Language</value>
+  </data>
+  <data name="Set_LanguageHint" xml:space="preserve">
+    <value>Applied immediately</value>
+  </data>
+  <data name="Log_Title" xml:space="preserve">
+    <value>Log — Infinite Modpack Manager</value>
+  </data>
+  <data name="Log_Copy" xml:space="preserve">
+    <value>Copy</value>
+  </data>
+  <data name="Log_CopyTip" xml:space="preserve">
+    <value>Copy the whole log to the clipboard</value>
+  </data>
+  <data name="Log_Pause" xml:space="preserve">
+    <value>Pause</value>
+  </data>
+  <data name="Log_Resume" xml:space="preserve">
+    <value>Resume</value>
+  </data>
+  <data name="Log_PauseTip" xml:space="preserve">
+    <value>Pause updates (logging continues)</value>
+  </data>
+  <data name="Log_Clear" xml:space="preserve">
+    <value>Clear screen</value>
+  </data>
+  <data name="Log_ClearTip" xml:space="preserve">
+    <value>Clear the screen only (the log file is kept)</value>
+  </data>
+  <data name="Log_BufferTip" xml:space="preserve">
+    <value>Lines in the buffer (hard limit 4000)</value>
+  </data>
+  <data name="Log_FileTip" xml:space="preserve">
+    <value>File log: %LOCALAPPDATA%\IMM\logs (or logs\ next to the exe in portable mode)</value>
+  </data>
+  <data name="Msg_Library" xml:space="preserve">
+    <value>Library</value>
+  </data>
+  <data name="Msg_LibraryNotLoaded" xml:space="preserve">
+    <value>Library not loaded</value>
+  </data>
+  <data name="Msg_LibraryLoadFailed" xml:space="preserve">
+    <value>Could not load the library — details in the log (menu “Log”).</value>
+  </data>
+  <data name="Msg_ChoosePackFolder" xml:space="preserve">
+    <value>Select the pack folder</value>
+  </data>
+  <data name="Msg_Scanning" xml:space="preserve">
+    <value>Scanning…</value>
+  </data>
+  <data name="Msg_PackAdded" xml:space="preserve">
+    <value>Pack “{0}” added</value>
+  </data>
+  <data name="Msg_ImportRejected" xml:space="preserve">
+    <value>Cannot import</value>
+  </data>
+  <data name="Msg_ImportError" xml:space="preserve">
+    <value>Import failed</value>
+  </data>
+  <data name="Msg_Rescan" xml:space="preserve">
+    <value>Re-scan</value>
+  </data>
+  <data name="Msg_RescanDone" xml:space="preserve">
+    <value>Game: {0}, engine: {1}</value>
+  </data>
+  <data name="Msg_RescanRejected" xml:space="preserve">
+    <value>Cannot re-scan</value>
+  </data>
+  <data name="Msg_RescanError" xml:space="preserve">
+    <value>Re-scan failed</value>
+  </data>
+  <data name="Msg_Launching" xml:space="preserve">
+    <value>Launching…</value>
+  </data>
+  <data name="Msg_ManifestMissing" xml:space="preserve">
+    <value>Pack manifest not found — run a re-scan.</value>
+  </data>
+  <data name="Msg_Launch" xml:space="preserve">
+    <value>Launch</value>
+  </data>
+  <data name="Msg_Launched" xml:space="preserve">
+    <value>Pack “{0}” launched</value>
+  </data>
+  <data name="Msg_LaunchCancelled" xml:space="preserve">
+    <value>Launch cancelled</value>
+  </data>
+  <data name="Msg_UacLaunchDenied" xml:space="preserve">
+    <value>UAC prompt declined — the game cannot start without administrator rights.</value>
+  </data>
+  <data name="Msg_LaunchRejected" xml:space="preserve">
+    <value>Cannot launch</value>
+  </data>
+  <data name="Msg_LaunchError" xml:space="preserve">
+    <value>Launch failed</value>
+  </data>
+  <data name="Msg_RemoveTitle" xml:space="preserve">
+    <value>Remove this pack from the library?</value>
+  </data>
+  <data name="Msg_RemoveBody" xml:space="preserve">
+    <value>“{0}” will be removed from IMM. The pack folder on disk is not deleted.</value>
+  </data>
+  <data name="Msg_Remove" xml:space="preserve">
+    <value>Remove</value>
+  </data>
+  <data name="Msg_Removed" xml:space="preserve">
+    <value>Pack removed from the library (the folder is untouched)</value>
+  </data>
+  <data name="Msg_RemoveFailed" xml:space="preserve">
+    <value>Could not remove the pack: {0}</value>
+  </data>
+  <data name="Msg_Profile" xml:space="preserve">
+    <value>Profile</value>
+  </data>
+  <data name="Msg_ProfileSet" xml:space="preserve">
+    <value>Profile “{1}” selected for “{0}”</value>
+  </data>
+  <data name="Msg_ProfileFailed" xml:space="preserve">
+    <value>Could not save the profile: {0}</value>
+  </data>
+  <data name="Msg_FolderRejected" xml:space="preserve">
+    <value>This folder does not fit</value>
+  </data>
+  <data name="Msg_FolderRejectedBody" xml:space="preserve">
+    <value>The selected folder has no supported game exe (Skyrim LE/SE, Fallout 4/NV).</value>
+  </data>
+  <data name="Msg_Game" xml:space="preserve">
+    <value>Game</value>
+  </data>
+  <data name="Msg_GameFolderSet" xml:space="preserve">
+    <value>Game folder set for “{0}”: {1}</value>
+  </data>
+  <data name="Msg_GameFolderFailed" xml:space="preserve">
+    <value>Could not save the game folder: {0}</value>
+  </data>
+  <data name="Msg_ChooseGameFolder" xml:space="preserve">
+    <value>Select the game folder</value>
+  </data>
+  <data name="Msg_PackNamePlaceholder" xml:space="preserve">
+    <value>Pack name</value>
+  </data>
+  <data name="Msg_ChooseCover" xml:space="preserve">
+    <value>Choose a cover…</value>
+  </data>
+  <data name="Msg_NoCover" xml:space="preserve">
+    <value>No cover selected (PNG/JPG/WebP)</value>
+  </data>
+  <data name="Msg_ChooseCoverTitle" xml:space="preserve">
+    <value>Choose a cover</value>
+  </data>
+  <data name="Msg_ImageFilter" xml:space="preserve">
+    <value>Images|*.png;*.jpg;*.jpeg;*.webp</value>
+  </data>
+  <data name="Msg_NewPack" xml:space="preserve">
+    <value>New pack</value>
+  </data>
+  <data name="Msg_RenameTitle" xml:space="preserve">
+    <value>Rename pack</value>
+  </data>
+  <data name="Msg_Cover" xml:space="preserve">
+    <value>Cover</value>
+  </data>
+  <data name="Msg_CoverUpdated" xml:space="preserve">
+    <value>Cover of “{0}” updated</value>
+  </data>
+  <data name="Msg_BackupBusy" xml:space="preserve">
+    <value>Creating a backup…</value>
+  </data>
+  <data name="Msg_PackNotFound" xml:space="preserve">
+    <value>Pack not found in the library.</value>
+  </data>
+  <data name="Msg_Backup" xml:space="preserve">
+    <value>Backup</value>
+  </data>
+  <data name="Msg_BackupSaved" xml:space="preserve">
+    <value>Archive saved: {0}</value>
+  </data>
+  <data name="Msg_BackupRejected" xml:space="preserve">
+    <value>Cannot create a backup</value>
+  </data>
+  <data name="Msg_BackupError" xml:space="preserve">
+    <value>Backup failed</value>
+  </data>
+  <data name="Msg_Backups" xml:space="preserve">
+    <value>Backups</value>
+  </data>
+  <data name="Msg_OpenFolderFailed" xml:space="preserve">
+    <value>Could not open the folder: {0}</value>
+  </data>
+  <data name="Msg_Explorer" xml:space="preserve">
+    <value>Explorer</value>
+  </data>
+  <data name="Msg_Mo2ExeMissing" xml:space="preserve">
+    <value>ModOrganizer.exe not found — only portable MO2 instances are supported.</value>
+  </data>
+  <data name="Msg_Mo2Activated" xml:space="preserve">
+    <value>Mod Organizer 2 window brought to the front</value>
+  </data>
+  <data name="Msg_Mo2Started" xml:space="preserve">
+    <value>Mod Organizer 2 started (without the game)</value>
+  </data>
+  <data name="Msg_Mo2NotOpened" xml:space="preserve">
+    <value>MO2 was not opened</value>
+  </data>
+  <data name="Msg_Mo2LaunchError" xml:space="preserve">
+    <value>MO2 launch failed</value>
+  </data>
+  <data name="Msg_UacMo2Denied" xml:space="preserve">
+    <value>UAC prompt declined — MO2 was not started.</value>
+  </data>
+  <data name="Fatal_UiError" xml:space="preserve">
+    <value>Interface error</value>
+  </data>
+  <data name="Fatal_Critical" xml:space="preserve">
+    <value>Critical error</value>
+  </data>
+  <data name="Fatal_Body" xml:space="preserve">
+    <value>{0}
+
+Details are in the log.</value>
+  </data>
+  <data name="Err_FolderMissing" xml:space="preserve">
+    <value>The pack folder does not exist.</value>
+  </data>
+  <data name="Err_PackFolderGone" xml:space="preserve">
+    <value>The pack folder is missing on disk — check the path or remove the pack from the library.</value>
+  </data>
+  <data name="Err_ManifestMissingOrBroken" xml:space="preserve">
+    <value>modpack.json is missing or corrupted — the pack shows as not scanned.</value>
+  </data>
+  <data name="Err_ManifestStale" xml:space="preserve">
+    <value>The manifest differs from the current scan — run a re-scan to apply the facts.</value>
+  </data>
+  <data name="Warn_MultipleMo2" xml:space="preserve">
+    <value>Found several nested MO2 folders ({0}) — pick the instance manually.</value>
+  </data>
+  <data name="Warn_ExeInRootAndPortable" xml:space="preserve">
+    <value>The game exe is present both in the pack root and in the portable game folder — the portable one is used.</value>
+  </data>
+  <data name="Warn_SystemGameMissing" xml:space="preserve">
+    <value>System game install not found — set the game folder manually.</value>
+  </data>
+  <data name="Warn_IniGameFolderMissing" xml:space="preserve">
+    <value>ModOrganizer.ini points to a missing game folder (“{0}”) — pick the game folder manually.</value>
+  </data>
+  <data name="Warn_NoMarkers" xml:space="preserve">
+    <value>No known markers (game exe, MO2) found — the folder does not look like a supported pack.</value>
+  </data>
+  <data name="Warn_RootBuilderNoMods" xml:space="preserve">
+    <value>Root Builder found, but there is no mods folder — check the pack setup.</value>
+  </data>
+  <data name="Warn_NoProfilesFolder" xml:space="preserve">
+    <value>No MO2 profiles folder — pick the profile manually.</value>
+  </data>
+  <data name="Warn_MultipleProfiles" xml:space="preserve">
+    <value>Found several profiles ({0}) — pick the right one manually.</value>
+  </data>
+  <data name="Warn_GameNotRecognized" xml:space="preserve">
+    <value>Game not recognized — set the launch exe manually.</value>
+  </data>
+  <data name="Err_IniNotFound" xml:space="preserve">
+    <value>ModOrganizer.ini not found — only portable MO2 instances are supported.</value>
+  </data>
+  <data name="Err_GamePathNotAbsolute" xml:space="preserve">
+    <value>The new game path must be absolute.</value>
+  </data>
+  <data name="Err_BaseDirectoryKeyMissing" xml:space="preserve">
+    <value>No base_directory key in [General] — unexpected ini structure, the file was not changed.</value>
+  </data>
+  <data name="Err_BaseDirectoryBinary" xml:space="preserve">
+    <value>base_directory is stored in Qt binary form (@ByteArray) — the file was not changed, manual check required.</value>
+  </data>
+  <data name="Err_BaseDirectoryRelative" xml:space="preserve">
+    <value>base_directory holds a relative path (“{0}”) — such paths are not fixed automatically.</value>
+  </data>
+  <data name="Err_IniEncoding" xml:space="preserve">
+    <value>ModOrganizer.ini is saved in an encoding other than UTF-8/UTF-16 (ANSI?) — the file was not changed. Re-save it as UTF-8 and retry.</value>
+  </data>
+  <data name="Err_IniCorrupt" xml:space="preserve">
+    <value>ModOrganizer.ini is corrupted (invalid byte sequence) — the file was not changed. Restore it from a .bak copy.</value>
+  </data>
+  <data name="Err_PackAlreadyInLibrary" xml:space="preserve">
+    <value>This pack is already in the library.</value>
+  </data>
+  <data name="Err_NotAModpack" xml:space="preserve">
+    <value>The folder does not look like a supported pack: no game exe or MO2 found.</value>
+  </data>
+  <data name="Err_EmptyName" xml:space="preserve">
+    <value>The pack name cannot be empty.</value>
+  </data>
+  <data name="Err_PackNotInLibrary" xml:space="preserve">
+    <value>Pack not found in the library.</value>
+  </data>
+  <data name="Err_CoverNotFound" xml:space="preserve">
+    <value>Cover file not found.</value>
+  </data>
+  <data name="Err_CoverFormat" xml:space="preserve">
+    <value>The cover must be PNG, JPG or WebP.</value>
+  </data>
+  <data name="Err_ManifestCorrupt" xml:space="preserve">
+    <value>modpack.json is corrupted or unavailable — re-scan stopped, the file was not changed. Fix or delete it and retry.</value>
+  </data>
+  <data name="Err_BackupNoProfile" xml:space="preserve">
+    <value>MO2 profile folder not found — check the pack profile and run a re-scan.</value>
+  </data>
+  <data name="Err_BackupNoSaves" xml:space="preserve">
+    <value>Game saves folder not found (Documents\My Games\&lt;Game&gt;\Saves) — cannot back up.</value>
+  </data>
+  <data name="Label_BackupProfile" xml:space="preserve">
+    <value>MO2 profile “{0}”</value>
+  </data>
+  <data name="Label_BackupSaves" xml:space="preserve">
+    <value>game saves</value>
+  </data>
+  <data name="Err_Mo2ExeMissing" xml:space="preserve">
+    <value>ModOrganizer.exe not found — only portable MO2 instances are supported.</value>
+  </data>
+  <data name="Err_ProfileNotSelected" xml:space="preserve">
+    <value>MO2 profile is not selected — pick a profile and run a re-scan.</value>
+  </data>
+  <data name="Err_LaunchExeUnknown" xml:space="preserve">
+    <value>Could not determine the game launch exe — check the pack or run a re-scan.</value>
+  </data>
+  <data name="Err_GameFolderMissing" xml:space="preserve">
+    <value>Game folder not found: base_directory points to a missing path and the pack has no game root.</value>
+  </data>
+  <data name="Err_IniGamePathMissing" xml:space="preserve">
+    <value>gamePath in ModOrganizer.ini points to a missing folder (“{0}”) — fix the game path in MO2 manually.</value>
+  </data>
+  <data name="Err_EngineUnsupported" xml:space="preserve">
+    <value>Launch engine “{0}” is not supported.</value>
+  </data>
+  <data name="Err_ProcessNotStarted" xml:space="preserve">
+    <value>The process was not started (the system returned null).</value>
+  </data>
+  <data name="Err_GameFolderGone" xml:space="preserve">
+    <value>Game folder not found — run a re-scan or add the pack again.</value>
+  </data>
+  <data name="Engine_DirectPortable" xml:space="preserve">
+    <value>Direct · portable game</value>
+  </data>
+  <data name="Engine_Mo2Portable" xml:space="preserve">
+    <value>MO2 Portable</value>
+  </data>
+  <data name="Engine_Mo2RootBuilder" xml:space="preserve">
+    <value>MO2 + Root Builder</value>
+  </data>
+  <data name="Engine_Direct" xml:space="preserve">
+    <value>Direct</value>
+  </data>
+  <data name="Source_Portable" xml:space="preserve">
+    <value>portable (game inside the pack)</value>
+  </data>
+  <data name="Game_SkyrimLE" xml:space="preserve">
+    <value>Skyrim LE</value>
+  </data>
+  <data name="Game_SkyrimSE" xml:space="preserve">
+    <value>Skyrim SE</value>
+  </data>
+  <data name="Game_Fallout4" xml:space="preserve">
+    <value>Fallout 4</value>
+  </data>
+  <data name="Game_FalloutNV" xml:space="preserve">
+    <value>Fallout NV</value>
+  </data>
+  <data name="Game_Unknown" xml:space="preserve">
+    <value>not detected</value>
+  </data>
+</root>
