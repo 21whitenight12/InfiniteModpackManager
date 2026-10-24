@@ -51,6 +51,33 @@ public sealed class AppSettingsTests : IDisposable
     }
 
     [Fact]
+    public async Task LastSelectedPack_SurvivesARestart()
+    {
+        var service = CreateService();
+        var pack = Guid.NewGuid();
+        await service.SaveAsync(new AppSettings { Language = "ru", LastSelectedPackId = pack });
+
+        // A fresh read is what the next start does (LoadSync feeds the window before it renders).
+        var loaded = service.LoadSync();
+
+        Assert.Equal(pack, loaded.LastSelectedPackId);
+        Assert.Equal("ru", loaded.Language);
+    }
+
+    [Fact]
+    public async Task OldSettingsFileWithoutSelection_LoadsWithNull()
+    {
+        var service = CreateService();
+        Directory.CreateDirectory(Path.GetDirectoryName(service.FilePath)!);
+        await File.WriteAllTextAsync(service.FilePath, """{"SchemaVersion":1,"MaxBackups":3}""");
+
+        var loaded = await service.LoadAsync();
+
+        Assert.Equal(3, loaded.MaxBackups);
+        Assert.Null(loaded.LastSelectedPackId);
+    }
+
+    [Fact]
     public async Task CorruptFile_FallsBackToDefaultsAndKeepsFile()
     {
         var service = CreateService();

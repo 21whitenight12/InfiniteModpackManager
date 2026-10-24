@@ -432,6 +432,29 @@ public partial class MainViewModel : ObservableObject
         {
             entry.IsSelected = ReferenceEquals(entry, value);
         }
+
+        // Последний выбор переживает выход: при следующем старте открывается та же сборка.
+        if (_settingsLoaded && value is not null && _settings.LastSelectedPackId != value.Id)
+        {
+            _settings.LastSelectedPackId = value.Id;
+            PersistSelection();
+        }
+    }
+
+    /// <summary>Selection is saved on every click, so it must not touch the settings status label.</summary>
+    private void PersistSelection()
+    {
+        _ = Task.Run(async () =>
+        {
+            try
+            {
+                await _appSettings.SaveAsync(_settings).ConfigureAwait(false);
+            }
+            catch (Exception exception)
+            {
+                _logger.Warning(exception, "Saving the last selected pack failed");
+            }
+        });
     }
 
     [RelayCommand]
@@ -467,7 +490,8 @@ public partial class MainViewModel : ObservableObject
                 Entries.Add(new LibraryEntryViewModel(entry, manifest, this));
             }
 
-            SelectedEntry = Entries.FirstOrDefault();
+            SelectedEntry = Entries.FirstOrDefault(entry => entry.Id == _settings.LastSelectedPackId)
+                ?? Entries.FirstOrDefault();
             OnPropertyChanged(nameof(HasNoEntries));
             SetStatus("Common_Done");
         }

@@ -23,6 +23,9 @@ public sealed class AppSettings
 
     /// <summary>UI language: "en" (default) or "ru".</summary>
     public string Language { get; set; } = "en";
+
+    /// <summary>Pack selected in the library when the app was last closed; null = pick the first one.</summary>
+    public Guid? LastSelectedPackId { get; set; }
 }
 
 /// <summary>Persistence for <see cref="AppSettings"/>; a broken file must never block the app.</summary>
