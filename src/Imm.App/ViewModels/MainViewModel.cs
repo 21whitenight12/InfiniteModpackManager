@@ -469,6 +469,13 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _isBusy;
 
+    /// <summary>
+    /// True from a successful launch until the tracked game process is gone: the CTA turns green
+    /// («ЗАПУЩЕНА») and the window stops taking clicks, so nothing can be changed mid-session.
+    /// </summary>
+    [ObservableProperty]
+    private bool _isGameRunning;
+
     private string _statusKey = "Common_Done";
 
     public bool HasNoEntries => Entries.Count == 0;
@@ -653,7 +660,7 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private async Task LaunchAsync(LibraryEntryViewModel? entry)
     {
-        if (entry is null || IsBusy)
+        if (entry is null || IsBusy || IsGameRunning)
         {
             return;
         }
@@ -1248,6 +1255,7 @@ public partial class MainViewModel : ObservableObject
     {
         var expectedGameDirectory = manifest.Source == PackSource.System ? manifest.SystemGamePath : null;
         _openSession = (entry.Id, launchStartedUtc);
+        SetGameRunning(true);
 
         _ = Task.Run(async () =>
         {
@@ -1290,8 +1298,25 @@ public partial class MainViewModel : ObservableObject
             {
                 _openSession = null;
                 process.Dispose();
+                SetGameRunning(false); // the game is gone: the window becomes usable again
             }
         });
+    }
+
+    /// <summary>
+    /// The running flag is raised on the UI thread and lowered from the tracking task's background
+    /// thread, so the notification is marshalled to the dispatcher (a closing app may have none).
+    /// </summary>
+    private void SetGameRunning(bool value)
+    {
+        var dispatcher = System.Windows.Application.Current?.Dispatcher;
+        if (dispatcher is null || dispatcher.CheckAccess())
+        {
+            IsGameRunning = value;
+            return;
+        }
+
+        dispatcher.InvokeAsync(() => IsGameRunning = value);
     }
 
     /// <summary>

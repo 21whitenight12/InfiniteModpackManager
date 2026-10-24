@@ -259,6 +259,9 @@
   <data name="Det_LaunchTip" xml:space="preserve">
     <value>Запустить сборку</value>
   </data>
+  <data name="Det_LaunchRunning" xml:space="preserve">
+    <value>ЗАПУЩЕНА</value>
+  </data>
   <data name="Det_Backup" xml:space="preserve">
     <value>Бэкап профиля</value>
   </data>

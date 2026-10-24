@@ -145,6 +145,57 @@
     </Setter>
   </Style>
 
+  <!-- ══ launch CTA: primary look, green while the pack's game process is alive ══
+       The button's Tag carries IsGameRunning from the page, so the look stays trigger-driven. -->
+  <Style x:Key="ImmLaunchButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource ImmPrimaryButtonStyle}">
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type Button}">
+          <Border x:Name="Bd" CornerRadius="10" BorderThickness="1" BorderBrush="#33FFFFFF"
+                  RenderTransformOrigin="0.5,0.5">
+            <Border.Background>
+              <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                <GradientStop Color="#4B87FF" Offset="0" />
+                <GradientStop Color="#2F6BF0" Offset="1" />
+              </LinearGradientBrush>
+            </Border.Background>
+            <Border.RenderTransform>
+              <ScaleTransform x:Name="Scale" ScaleX="1" ScaleY="1" />
+            </Border.RenderTransform>
+            <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
+                              Margin="{TemplateBinding Padding}" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
+              <Setter TargetName="Bd" Property="Background">
+                <Setter.Value>
+                  <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                    <GradientStop Color="#3FD98A" Offset="0" />
+                    <GradientStop Color="#22A263" Offset="1" />
+                  </LinearGradientBrush>
+                </Setter.Value>
+              </Setter>
+              <Setter TargetName="Bd" Property="BorderBrush" Value="#5535D07F" />
+            </DataTrigger>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Bd" Property="Opacity" Value="0.88" />
+            </Trigger>
+            <Trigger Property="IsPressed" Value="True">
+              <Setter TargetName="Bd" Property="RenderTransform">
+                <Setter.Value>
+                  <ScaleTransform ScaleX="0.985" ScaleY="0.985" />
+                </Setter.Value>
+              </Setter>
+            </Trigger>
+            <Trigger Property="IsEnabled" Value="False">
+              <Setter TargetName="Bd" Property="Opacity" Value="0.45" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
   <!-- ══ quiet button: 4% fill, hairline border ══ -->
   <Style x:Key="ImmGhostButtonStyle" TargetType="{x:Type Button}">
     <Setter Property="Foreground" Value="#C6D2E1" />

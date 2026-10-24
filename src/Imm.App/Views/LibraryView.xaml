@@ -615,14 +615,26 @@
               <Border Grid.Row="1" BorderBrush="{StaticResource ImmLineBrush}" BorderThickness="0,1,0,0"
                       Padding="12">
                 <StackPanel>
-                  <Button Style="{StaticResource ImmPrimaryButtonStyle}" Height="44" FontSize="13.5"
+                  <Button Style="{StaticResource ImmLaunchButtonStyle}" Height="44" FontSize="13.5"
+                          Tag="{Binding DataContext.IsGameRunning, RelativeSource={RelativeSource AncestorType=Page}}"
                           Command="{Binding DataContext.LaunchCommand, RelativeSource={RelativeSource AncestorType=Page}}"
                           CommandParameter="{Binding}"
                           AutomationProperties.Name="{Binding [Det_Launch], Source={x:Static loc:Loc.Instance}}"
                           ToolTip="{Binding [Det_LaunchTip], Source={x:Static loc:Loc.Instance}}">
                     <StackPanel Orientation="Horizontal">
                       <ui:SymbolIcon Symbol="Play24" FontSize="14" Foreground="White" />
-                      <TextBlock Text="{Binding [Det_Launch], Source={x:Static loc:Loc.Instance}}" Margin="8,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" />
+                      <TextBlock Margin="8,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold">
+                        <TextBlock.Style>
+                          <Style TargetType="TextBlock">
+                            <Setter Property="Text" Value="{Binding [Det_Launch], Source={x:Static loc:Loc.Instance}}" />
+                            <Style.Triggers>
+                              <DataTrigger Binding="{Binding DataContext.IsGameRunning, RelativeSource={RelativeSource AncestorType=Page}}" Value="True">
+                                <Setter Property="Text" Value="{Binding [Det_LaunchRunning], Source={x:Static loc:Loc.Instance}}" />
+                              </DataTrigger>
+                            </Style.Triggers>
+                          </Style>
+                        </TextBlock.Style>
+                      </TextBlock>
                     </StackPanel>
                   </Button>
 
@@ -659,5 +671,10 @@
         </ContentControl.Resources>
       </ContentControl>
     </Border>
+
+    <!-- ─────────── LAUNCH LOCK: while the pack's game process is alive the window
+         takes no clicks at all (the CTA above shows the green «ЗАПУЩЕНА» state) ─────────── -->
+    <Border Grid.ColumnSpan="3" Background="Transparent"
+            Visibility="{Binding IsGameRunning, Converter={StaticResource BoolToVisibleConverter}}" />
   </Grid>
 </Page>
