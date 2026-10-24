@@ -674,7 +674,7 @@
 
     <!-- ─────────── LAUNCH LOCK: while the pack's game process is alive the window
          takes no clicks at all (the CTA above shows the green «ЗАПУЩЕНА» state) ─────────── -->
-    <Border Grid.ColumnSpan="3" Background="Transparent"
+    <Border Grid.ColumnSpan="3" Background="#2E060A10"
             Visibility="{Binding IsGameRunning, Converter={StaticResource BoolToVisibleConverter}}" />
   </Grid>
 </Page>

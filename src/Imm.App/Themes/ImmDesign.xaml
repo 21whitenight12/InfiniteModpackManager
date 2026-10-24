@@ -49,6 +49,17 @@
   <SolidColorBrush x:Key="ImmWarnBrush" Color="#F0A33C" />
   <SolidColorBrush x:Key="ImmDangerBrush" Color="#F0553C" />
 
+  <!-- CTA fills: the blue primary and the green "pack is running" state -->
+  <LinearGradientBrush x:Key="ImmPrimaryGradientBrush" StartPoint="0,0" EndPoint="0,1">
+    <GradientStop Color="#4B87FF" Offset="0" />
+    <GradientStop Color="#2F6BF0" Offset="1" />
+  </LinearGradientBrush>
+
+  <LinearGradientBrush x:Key="ImmSuccessGradientBrush" StartPoint="0,0" EndPoint="0,1">
+    <GradientStop Color="#3FD98A" Offset="0" />
+    <GradientStop Color="#22A263" Offset="1" />
+  </LinearGradientBrush>
+
   <!-- window backdrop: near-black graphite with a cold lift at the top-left -->
   <LinearGradientBrush x:Key="ImmBgGradientBrush" StartPoint="0,0" EndPoint="1,1">
     <GradientStop Color="#0C1728" Offset="0" />
@@ -146,37 +157,20 @@
   </Style>
 
   <!-- ══ launch CTA: primary look, green while the pack's game process is alive ══
-       The button's Tag carries IsGameRunning from the page, so the look stays trigger-driven. -->
+       The button's Tag carries IsGameRunning from the page. The fill lives on the BUTTON's
+       Background (style setter + style trigger) and the template just TemplateBinds it: a value
+       written directly on the template's Border would win over any template-trigger setter. -->
   <Style x:Key="ImmLaunchButtonStyle" TargetType="{x:Type Button}" BasedOn="{StaticResource ImmPrimaryButtonStyle}">
+    <Setter Property="Background" Value="{StaticResource ImmPrimaryGradientBrush}" />
     <Setter Property="Template">
       <Setter.Value>
         <ControlTemplate TargetType="{x:Type Button}">
           <Border x:Name="Bd" CornerRadius="10" BorderThickness="1" BorderBrush="#33FFFFFF"
-                  RenderTransformOrigin="0.5,0.5">
-            <Border.Background>
-              <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                <GradientStop Color="#4B87FF" Offset="0" />
-                <GradientStop Color="#2F6BF0" Offset="1" />
-              </LinearGradientBrush>
-            </Border.Background>
-            <Border.RenderTransform>
-              <ScaleTransform x:Name="Scale" ScaleX="1" ScaleY="1" />
-            </Border.RenderTransform>
+                  Background="{TemplateBinding Background}" RenderTransformOrigin="0.5,0.5">
             <ContentPresenter HorizontalAlignment="Center" VerticalAlignment="Center"
                               Margin="{TemplateBinding Padding}" />
           </Border>
           <ControlTemplate.Triggers>
-            <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
-              <Setter TargetName="Bd" Property="Background">
-                <Setter.Value>
-                  <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                    <GradientStop Color="#3FD98A" Offset="0" />
-                    <GradientStop Color="#22A263" Offset="1" />
-                  </LinearGradientBrush>
-                </Setter.Value>
-              </Setter>
-              <Setter TargetName="Bd" Property="BorderBrush" Value="#5535D07F" />
-            </DataTrigger>
             <Trigger Property="IsMouseOver" Value="True">
               <Setter TargetName="Bd" Property="Opacity" Value="0.88" />
             </Trigger>
@@ -194,6 +188,11 @@
         </ControlTemplate>
       </Setter.Value>
     </Setter>
+    <Style.Triggers>
+      <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource Self}}" Value="True">
+        <Setter Property="Background" Value="{StaticResource ImmSuccessGradientBrush}" />
+      </DataTrigger>
+    </Style.Triggers>
   </Style>
 
   <!-- ══ quiet button: 4% fill, hairline border ══ -->
