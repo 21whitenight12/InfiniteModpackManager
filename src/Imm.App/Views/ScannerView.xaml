@@ -5,96 +5,107 @@
              Background="Transparent">
 
   <UserControl.Resources>
-    <!-- Diagnostic value: severity drives the colour (warnings amber, errors red). -->
-    <Style x:Key="DiagnosticValueStyle" TargetType="TextBlock">
-      <Setter Property="FontSize" Value="12" />
-      <Setter Property="Foreground" Value="{StaticResource ImmTextPrimaryBrush}" />
-      <Setter Property="TextWrapping" Value="Wrap" />
-      <Setter Property="TextAlignment" Value="Right" />
-      <Setter Property="HorizontalAlignment" Value="Right" />
-      <Setter Property="MaxWidth" Value="230" />
-      <Style.Triggers>
-        <DataTrigger Binding="{Binding Severity}" Value="Warning">
-          <Setter Property="Foreground" Value="{StaticResource ImmWarnBrush}" />
-        </DataTrigger>
-        <DataTrigger Binding="{Binding Severity}" Value="Error">
-          <Setter Property="Foreground" Value="#E74C3C" />
-        </DataTrigger>
-        <DataTrigger Binding="{Binding Severity}" Value="Info">
-          <Setter Property="Foreground" Value="{StaticResource ImmTextSecondaryBrush}" />
-        </DataTrigger>
-      </Style.Triggers>
+    <!-- one fact chip: label above, value below -->
+    <Style x:Key="FactChipStyle" TargetType="Border">
+      <Setter Property="Background" Value="#08FFFFFF" />
+      <Setter Property="BorderBrush" Value="{StaticResource ImmLineBrush}" />
+      <Setter Property="BorderThickness" Value="1" />
+      <Setter Property="CornerRadius" Value="8" />
+      <Setter Property="Padding" Value="9,6" />
+      <Setter Property="Margin" Value="0,0,8,0" />
     </Style>
 
-    <DataTemplate x:Key="DiagnosticRowTemplate">
-      <Grid Margin="0,4,0,0">
-        <Grid.ColumnDefinitions>
-          <ColumnDefinition Width="Auto" />
-          <ColumnDefinition Width="*" />
-        </Grid.ColumnDefinitions>
-        <TextBlock Text="{Binding Label}" FontSize="12" VerticalAlignment="Top"
-                   Foreground="{StaticResource ImmTextSecondaryBrush}" />
-        <TextBlock Grid.Column="1" Text="{Binding Value}" Style="{StaticResource DiagnosticValueStyle}"
-                   Margin="10,0,0,0" />
-      </Grid>
-    </DataTemplate>
-
-    <!-- One pack: fresh scan facts | stored manifest facts | warnings | actions -->
     <DataTemplate x:Key="PackDiagnosticsTemplate">
-      <Border Background="{StaticResource ImmBgCardBrush}"
-              BorderBrush="{StaticResource ImmCardBorderBrush}" BorderThickness="1"
-              CornerRadius="10" Padding="16" Margin="0,0,0,10">
+      <Border Background="{StaticResource ImmSurface2Brush}"
+              BorderBrush="{StaticResource ImmLineBrush}" BorderThickness="1"
+              CornerRadius="12" Padding="14" Margin="0,0,0,10">
         <StackPanel>
-          <Grid>
-            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
-              <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold"
-                         Foreground="{StaticResource ImmTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
-              <TextBlock Text="{Binding Summary}" FontSize="12" Margin="10,0,0,0" VerticalAlignment="Center"
-                         Foreground="{StaticResource ImmTextSecondaryBrush}" />
-            </StackPanel>
-            <Border HorizontalAlignment="Right" VerticalAlignment="Center"
-                    Background="#33E67E22" CornerRadius="4" Padding="7,2"
-                    Visibility="{Binding ProblemBadge, Converter={StaticResource NullToCollapsedConverter}}">
-              <TextBlock Text="{Binding ProblemBadge}" FontSize="11"
-                         Foreground="{StaticResource ImmWarnBrush}" />
-            </Border>
-          </Grid>
-
-          <TextBlock Text="{Binding RootPath}" FontSize="11" Margin="0,4,0,0"
-                     TextTrimming="CharacterEllipsis"
-                     Foreground="{StaticResource ImmTextSecondaryBrush}" />
-
-          <Separator Background="{StaticResource ImmBorderBrush}" Margin="0,10,0,6" />
-
+          <!-- header: name · engine chip · state -->
           <Grid>
             <Grid.ColumnDefinitions>
               <ColumnDefinition Width="*" />
-              <ColumnDefinition Width="20" />
-              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
             </Grid.ColumnDefinitions>
 
-            <StackPanel>
-              <TextBlock Text="Скан сейчас" FontSize="12" FontWeight="SemiBold"
-                         Foreground="{StaticResource ImmAccentCyanBrush}" />
-              <ItemsControl ItemsSource="{Binding Detected}" ItemTemplate="{StaticResource DiagnosticRowTemplate}" />
+            <StackPanel Grid.Column="0">
+              <StackPanel Orientation="Horizontal">
+                <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold"
+                           Foreground="{StaticResource ImmTextPrimaryBrush}"
+                           TextTrimming="CharacterEllipsis" />
+                <Border Style="{StaticResource ImmChipStyle}" Margin="9,0,0,0" VerticalAlignment="Center">
+                  <StackPanel Orientation="Horizontal">
+                    <Ellipse Width="4" Height="4" VerticalAlignment="Center"
+                             Fill="{StaticResource ImmAccentCyanBrush}" />
+                    <TextBlock Text="{Binding Summary}" FontSize="10.5" Margin="5,0,0,0"
+                               Foreground="{StaticResource ImmTextSecondaryBrush}" />
+                  </StackPanel>
+                </Border>
+              </StackPanel>
+              <TextBlock Text="{Binding RootPath}" FontSize="10.5" Margin="0,4,0,0"
+                         TextTrimming="CharacterEllipsis"
+                         Foreground="{StaticResource ImmTextTertiaryBrush}" />
             </StackPanel>
 
-            <StackPanel Grid.Column="2">
-              <TextBlock Text="В манифесте" FontSize="12" FontWeight="SemiBold"
-                         Foreground="{StaticResource ImmTextSecondaryBrush}" />
-              <ItemsControl ItemsSource="{Binding Stored}" ItemTemplate="{StaticResource DiagnosticRowTemplate}" />
+            <!-- state: amber badge when something is off, quiet green line when clean -->
+            <Border Grid.Column="1" VerticalAlignment="Top" CornerRadius="6" Padding="7,3"
+                    Background="#1FF0A33C" BorderBrush="#4DF0A33C" BorderThickness="1"
+                    Visibility="{Binding IsProblem, Converter={StaticResource BoolToVisibleConverter}}">
+              <TextBlock Text="{Binding ProblemBadge}" FontSize="10.5"
+                         Foreground="{StaticResource ImmWarnBrush}" />
+            </Border>
+            <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Top"
+                        Visibility="{Binding IsClean, Converter={StaticResource BoolToVisibleConverter}}">
+              <Ellipse Width="5" Height="5" VerticalAlignment="Center"
+                       Fill="{StaticResource ImmSuccessBrush}" />
+              <TextBlock Text="в порядке" FontSize="10.5" Margin="6,0,0,0"
+                         Foreground="{StaticResource ImmTextTertiaryBrush}" />
             </StackPanel>
           </Grid>
 
+          <!-- facts as chips -->
+          <WrapPanel Margin="0,12,0,0">
+            <Border Style="{StaticResource FactChipStyle}">
+              <StackPanel>
+                <TextBlock Text="ИГРА" FontSize="9.5" Foreground="{StaticResource ImmTextTertiaryBrush}" />
+                <TextBlock Text="{Binding GameText}" FontSize="11.5" Margin="0,2,0,0"
+                           Foreground="{StaticResource ImmTextPrimaryBrush}" />
+              </StackPanel>
+            </Border>
+            <Border Style="{StaticResource FactChipStyle}">
+              <StackPanel>
+                <TextBlock Text="ИСТОЧНИК" FontSize="9.5" Foreground="{StaticResource ImmTextTertiaryBrush}" />
+                <TextBlock Text="{Binding SourceText}" FontSize="11.5" Margin="0,2,0,0"
+                           Foreground="{StaticResource ImmTextPrimaryBrush}" />
+              </StackPanel>
+            </Border>
+            <Border Style="{StaticResource FactChipStyle}">
+              <StackPanel>
+                <TextBlock Text="ПРОФИЛЬ MO2" FontSize="9.5" Foreground="{StaticResource ImmTextTertiaryBrush}" />
+                <TextBlock Text="{Binding ProfileText}" FontSize="11.5" Margin="0,2,0,0" MaxWidth="220"
+                           TextTrimming="CharacterEllipsis"
+                           Foreground="{StaticResource ImmTextPrimaryBrush}" />
+              </StackPanel>
+            </Border>
+            <Border Style="{StaticResource FactChipStyle}">
+              <StackPanel>
+                <TextBlock Text="ЗАПУСКАЕТСЯ" FontSize="9.5" Foreground="{StaticResource ImmTextTertiaryBrush}" />
+                <TextBlock Text="{Binding LoaderText}" FontSize="11.5" Margin="0,2,0,0" MaxWidth="240"
+                           TextTrimming="CharacterEllipsis"
+                           Foreground="{StaticResource ImmTextPrimaryBrush}" />
+              </StackPanel>
+            </Border>
+          </WrapPanel>
+
+          <!-- warnings -->
           <StackPanel Margin="0,10,0,0"
                       Visibility="{Binding HasWarnings, Converter={StaticResource BoolToVisibleConverter}}">
             <ItemsControl ItemsSource="{Binding Warnings}">
               <ItemsControl.ItemTemplate>
                 <DataTemplate>
-                  <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
-                    <ui:SymbolIcon Symbol="Warning24" FontSize="13"
-                                   Foreground="{StaticResource ImmWarnBrush}" VerticalAlignment="Top" />
-                    <TextBlock Text="{Binding}" FontSize="12" Margin="7,0,0,0" TextWrapping="Wrap"
+                  <StackPanel Orientation="Horizontal" Margin="0,2,0,0">
+                    <ui:SymbolIcon Symbol="Warning24" FontSize="12" VerticalAlignment="Top"
+                                   Foreground="{StaticResource ImmWarnBrush}" />
+                    <TextBlock Text="{Binding}" FontSize="11.5" Margin="7,0,0,0" TextWrapping="Wrap"
                                Foreground="{StaticResource ImmWarnBrush}" />
                   </StackPanel>
                 </DataTemplate>
@@ -102,33 +113,34 @@
             </ItemsControl>
           </StackPanel>
 
+          <!-- actions -->
           <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
-            <Button Style="{StaticResource ImmGhostButtonStyle}" Height="32"
+            <Button Style="{StaticResource ImmGhostButtonStyle}" Height="30"
                     Command="{Binding DataContext.RescanCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     CommandParameter="{Binding Entry}"
                     ToolTip="Пере-сканировать сборку и записать факты в манифест">
               <StackPanel Orientation="Horizontal">
-                <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="14"
+                <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="12"
                                Foreground="{StaticResource ImmTextSecondaryBrush}" />
-                <TextBlock Text="Ре-скан" FontSize="12" Margin="7,0,0,0" VerticalAlignment="Center" />
+                <TextBlock Text="Ре-скан" FontSize="11.5" Margin="6,0,0,0" VerticalAlignment="Center" />
               </StackPanel>
             </Button>
-            <Button Style="{StaticResource ImmGhostButtonStyle}" Height="32" Margin="8,0,0,0"
+            <Button Style="{StaticResource ImmGhostButtonStyle}" Height="30" Margin="8,0,0,0"
                     Command="{Binding Entry.ChooseGameFolderCommand}"
                     ToolTip="Игра лежит отдельно от сборки — указать папку вручную">
               <StackPanel Orientation="Horizontal">
-                <ui:SymbolIcon Symbol="FolderOpen24" FontSize="14"
+                <ui:SymbolIcon Symbol="FolderOpen24" FontSize="12"
                                Foreground="{StaticResource ImmTextSecondaryBrush}" />
-                <TextBlock Text="Папка игры…" FontSize="12" Margin="7,0,0,0" VerticalAlignment="Center" />
+                <TextBlock Text="Папка игры…" FontSize="11.5" Margin="6,0,0,0" VerticalAlignment="Center" />
               </StackPanel>
             </Button>
-            <Button Style="{StaticResource ImmGhostButtonStyle}" Height="32" Margin="8,0,0,0"
+            <Button Style="{StaticResource ImmGhostButtonStyle}" Height="30" Margin="8,0,0,0"
                     Command="{Binding DataContext.OpenPackFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
                     CommandParameter="{Binding Entry}">
               <StackPanel Orientation="Horizontal">
-                <ui:SymbolIcon Symbol="Folder24" FontSize="14"
+                <ui:SymbolIcon Symbol="Folder24" FontSize="12"
                                Foreground="{StaticResource ImmTextSecondaryBrush}" />
-                <TextBlock Text="Папка сборки" FontSize="12" Margin="7,0,0,0" VerticalAlignment="Center" />
+                <TextBlock Text="Папка сборки" FontSize="11.5" Margin="6,0,0,0" VerticalAlignment="Center" />
               </StackPanel>
             </Button>
           </StackPanel>
@@ -145,24 +157,31 @@
     </Grid.RowDefinitions>
 
     <StackPanel Grid.Row="0" Orientation="Horizontal">
-      <TextBlock Text="Сканер" FontSize="24" FontWeight="SemiBold"
+      <TextBlock Text="Сканер" FontSize="26" FontWeight="SemiBold"
                  Foreground="{StaticResource ImmTextPrimaryBrush}" />
-      <TextBlock Text="{Binding DiagnosticsStatus}" FontSize="12" Margin="12,0,0,1" VerticalAlignment="Bottom"
-                 Foreground="{StaticResource ImmTextSecondaryBrush}" />
+      <TextBlock Text="{Binding DiagnosticsStatus}" FontSize="13" Margin="10,0,0,4" VerticalAlignment="Bottom"
+                 Foreground="{StaticResource ImmTextTertiaryBrush}" />
     </StackPanel>
 
-    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,14">
-      <Button Style="{StaticResource ImmPrimaryButtonStyle}" Command="{Binding RefreshDiagnosticsCommand}"
-              ToolTip="Просканировать все сборки библиотеки и сравнить с их манифестами">
-        <StackPanel Orientation="Horizontal">
-          <ui:SymbolIcon Symbol="ScanType24" FontSize="16" Foreground="White" />
-          <TextBlock Text="Проверить" Margin="8,0,0,0" VerticalAlignment="Center" />
-        </StackPanel>
-      </Button>
-      <TextBlock Text="Проверка ничего не записывает: ре-скан применяет факты к манифесту." FontSize="12"
-                 Margin="12,0,0,0" VerticalAlignment="Center"
-                 Foreground="{StaticResource ImmTextSecondaryBrush}" />
-    </StackPanel>
+    <Grid Grid.Row="1" Margin="0,14,0,14">
+      <Grid.ColumnDefinitions>
+        <ColumnDefinition Width="*" />
+        <ColumnDefinition Width="Auto" />
+      </Grid.ColumnDefinitions>
+      <StackPanel Grid.Column="0" Orientation="Horizontal">
+        <Button Style="{StaticResource ImmPrimaryButtonStyle}" Height="34"
+                Command="{Binding RefreshDiagnosticsCommand}"
+                ToolTip="Просканировать все сборки библиотеки и сравнить с их манифестами">
+          <StackPanel Orientation="Horizontal">
+            <ui:SymbolIcon Symbol="ScanType24" FontSize="14" Foreground="White" />
+            <TextBlock Text="Проверить" Margin="7,0,0,0" VerticalAlignment="Center" />
+          </StackPanel>
+        </Button>
+      </StackPanel>
+      <TextBlock Grid.Column="1" VerticalAlignment="Center" FontSize="11.5"
+                 Foreground="{StaticResource ImmTextTertiaryBrush}"
+                 Text="Проверка ничего не записывает — ре-скан применяет факты" />
+    </Grid>
 
     <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
       <ItemsControl ItemsSource="{Binding Diagnostics}"
@@ -171,13 +190,13 @@
 
     <StackPanel Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center"
                 Visibility="{Binding HasNoDiagnostics, Converter={StaticResource BoolToVisibleConverter}}">
-      <ui:SymbolIcon Symbol="ScanType24" FontSize="48" HorizontalAlignment="Center"
-                     Foreground="{StaticResource ImmTextSecondaryBrush}" />
+      <ui:SymbolIcon Symbol="ScanType24" FontSize="44" HorizontalAlignment="Center"
+                     Foreground="{StaticResource ImmTextTertiaryBrush}" />
       <TextBlock Text="Проверять нечего" FontSize="17" FontWeight="SemiBold" Margin="0,14,0,0"
                  HorizontalAlignment="Center" Foreground="{StaticResource ImmTextPrimaryBrush}" />
-      <TextBlock Text="Добавьте сборку в библиотеку — здесь появятся её детект и предупреждения"
-                 FontSize="13" Margin="0,6,0,0" HorizontalAlignment="Center"
-                 Foreground="{StaticResource ImmTextSecondaryBrush}" />
+      <TextBlock Text="Добавьте сборку — здесь появятся её детект и предупреждения"
+                 FontSize="12.5" Margin="0,6,0,0" HorizontalAlignment="Center"
+                 Foreground="{StaticResource ImmTextTertiaryBrush}" />
     </StackPanel>
   </Grid>
 </UserControl>

@@ -54,8 +54,8 @@
                         CommandParameter="{Binding}" />
         </Border.InputBindings>
         <StackPanel>
-          <!-- Cover -->
-          <Grid Height="150">
+          <!-- Cover: 16:9 for a fixed 236px card -->
+          <Grid Height="123">
             <Border CornerRadius="9" ClipToBounds="True" Background="#0A1119">
               <Image x:Name="CoverImage" Source="{Binding CoverImage}" Stretch="UniformToFill"
                      RenderTransformOrigin="0.5,0.5"
@@ -157,6 +157,8 @@
         </DataTrigger>
         <DataTrigger Binding="{Binding IsSelected}" Value="True">
           <Setter TargetName="MoreButton" Property="Visibility" Value="Visible" />
+          <!-- the selection badge owns the corner: shift the button so they never overlap -->
+          <Setter TargetName="MoreButton" Property="Margin" Value="0,7,33,0" />
         </DataTrigger>
       </DataTemplate.Triggers>
     </DataTemplate>
@@ -332,30 +334,38 @@
                      Text="{Binding Entries.Count, StringFormat='{}{0} сборки'}" />
         </StackPanel>
 
-        <!-- toolbar: one 34px baseline -->
+        <!-- toolbar: fixed columns, so the right controls never ride over the left ones -->
         <Grid Grid.Row="1" Margin="0,14,0,14">
-          <StackPanel Orientation="Horizontal">
-            <Button Style="{StaticResource ImmPrimaryButtonStyle}" Command="{Binding ImportCommand}"
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="*" />
+            <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+
+          <StackPanel Grid.Column="0" Orientation="Horizontal">
+            <Button Style="{StaticResource ImmPrimaryButtonStyle}" Height="34" Command="{Binding ImportCommand}"
                     ToolTip="Добавить сборку в библиотеку">
               <StackPanel Orientation="Horizontal">
                 <ui:SymbolIcon Symbol="Add24" FontSize="14" Foreground="White" />
                 <TextBlock Text="Добавить сборку" Margin="7,0,0,0" VerticalAlignment="Center" />
               </StackPanel>
             </Button>
-            <Button Style="{StaticResource ImmGhostButtonStyle}" Width="34" Margin="8,0,0,0"
+            <Button Style="{StaticResource ImmGhostButtonStyle}" Margin="8,0,0,0"
                     Command="{Binding RescanCommand}" CommandParameter="{Binding SelectedEntry}"
-                    ToolTip="Ре-скан выбранной сборки">
-              <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="14"
-                             Foreground="{StaticResource ImmTextSecondaryBrush}" />
+                    ToolTip="Пере-сканировать выбранную сборку">
+              <StackPanel Orientation="Horizontal">
+                <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="13"
+                               Foreground="{StaticResource ImmTextSecondaryBrush}" />
+                <TextBlock Text="Ре-скан" Margin="6,0,0,0" VerticalAlignment="Center" />
+              </StackPanel>
             </Button>
           </StackPanel>
 
-          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+          <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
             <ui:TextBox Icon="{ui:SymbolIcon Search24}" PlaceholderText="Поиск сборок…"
-                        Width="190" Height="34" FontSize="12.5" VerticalContentAlignment="Center"
+                        Width="180" Height="34" FontSize="12.5" VerticalContentAlignment="Center"
                         Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
             <ComboBox ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSortOption}"
-                      Width="140" Height="34" FontSize="12.5" Margin="8,0,0,0"
+                      Width="132" Height="34" FontSize="12.5" Margin="8,0,0,0"
                       VerticalContentAlignment="Center" />
             <Border Background="{StaticResource ImmSurface2Brush}" BorderBrush="{StaticResource ImmLineBrush}"
                     BorderThickness="1" CornerRadius="10" Margin="8,0,0,0" Padding="3">
@@ -376,7 +386,7 @@
         </Grid>
 
         <ListBox Grid.Row="2" x:Name="PacksList" ItemsSource="{Binding EntriesView}"
-                 Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,-14,0"
+                 Background="Transparent" BorderThickness="0" Padding="0"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                  ScrollViewer.VerticalScrollBarVisibility="Auto">
           <ListBox.Style>
@@ -385,7 +395,7 @@
               <Setter Property="ItemsPanel">
                 <Setter.Value>
                   <ItemsPanelTemplate>
-                    <WrapPanel ItemWidth="{Binding CardSlotWidth}" ItemHeight="252" />
+                    <WrapPanel ItemWidth="250" ItemHeight="202" />
                   </ItemsPanelTemplate>
                 </Setter.Value>
               </Setter>
@@ -393,7 +403,7 @@
                 <Setter.Value>
                   <Style TargetType="ListBoxItem">
                     <Setter Property="Background" Value="Transparent" />
-                    <Setter Property="Height" Value="238" />
+                    <Setter Property="Height" Value="188" />
                     <Setter Property="Margin" Value="0,0,14,14" />
                     <Setter Property="HorizontalContentAlignment" Value="Stretch" />
                     <Setter Property="VerticalContentAlignment" Value="Stretch" />

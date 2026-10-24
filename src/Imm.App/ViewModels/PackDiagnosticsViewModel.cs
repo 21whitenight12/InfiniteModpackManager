@@ -39,6 +39,22 @@ public sealed class PackDiagnosticsViewModel
 
     public bool HasWarnings => Diagnostics.Warnings.Count > 0;
 
+    /// <summary>True when nothing is off — the card collapses to a single green line.</summary>
+    public bool IsClean => !Diagnostics.HasProblems;
+
+    public bool IsProblem => !IsClean;
+
+    private string? RowValue(string label) =>
+        Diagnostics.Detected.FirstOrDefault(row => row.Label == label)?.Value;
+
+    public string GameText => RowValue("Игра") ?? "—";
+
+    public string SourceText => RowValue("Источник") ?? "—";
+
+    public string ProfileText => RowValue("Профиль MO2") ?? "—";
+
+    public string LoaderText => RowValue("Запускаемый файл") ?? "—";
+
     /// <summary>Badge text for the card header; null when everything is clean.</summary>
     public string? ProblemBadge => Diagnostics switch
     {
