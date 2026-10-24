@@ -42,9 +42,9 @@
               <TextBlock Text="{Binding [Set_LanguageHint], Source={x:Static loc:Loc.Instance}}"
                          FontSize="12.5" Foreground="{StaticResource ImmTextPrimaryBrush}" />
             </StackPanel>
-            <ComboBox Grid.Column="1" ItemsSource="{Binding Languages}"
-                      SelectedItem="{Binding SelectedLanguage}"
-                      Height="32" FontSize="12.5" VerticalContentAlignment="Center" />
+            <ComboBox Grid.Column="1" Style="{StaticResource ImmComboBoxStyle}"
+                      ItemsSource="{Binding Languages}"
+                      SelectedItem="{Binding SelectedLanguage}" />
           </Grid>
         </StackPanel>
       </Border>

@@ -195,6 +195,87 @@
     </Style.Triggers>
   </Style>
 
+  <!-- ══ combo box: graphite field, hairline border, centred selection text ══
+       The stock template pushes the selection text off-centre at 32px height, so the field is
+       drawn here: a toggle plate + a centred ContentPresenter + a thin vector chevron. -->
+  <Style x:Key="ImmComboBoxItemStyle" TargetType="{x:Type ComboBoxItem}">
+    <Setter Property="Foreground" Value="{StaticResource ImmTextPrimaryBrush}" />
+    <Setter Property="FontSize" Value="12.5" />
+    <Setter Property="Padding" Value="8,0" />
+    <Setter Property="Height" Value="28" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type ComboBoxItem}">
+          <Border x:Name="Bd" CornerRadius="6" Background="Transparent" Margin="4,1">
+            <ContentPresenter Margin="{TemplateBinding Padding}" VerticalAlignment="Center"
+                              HorizontalAlignment="Left" />
+          </Border>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsHighlighted" Value="True">
+              <Setter TargetName="Bd" Property="Background" Value="#14FFFFFF" />
+            </Trigger>
+            <Trigger Property="IsSelected" Value="True">
+              <Setter TargetName="Bd" Property="Background" Value="{StaticResource ImmAccentDimBrush}" />
+            </Trigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
+  <Style x:Key="ImmComboBoxStyle" TargetType="{x:Type ComboBox}">
+    <Setter Property="Foreground" Value="{StaticResource ImmTextPrimaryBrush}" />
+    <Setter Property="FontSize" Value="12.5" />
+    <Setter Property="Height" Value="32" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="ItemContainerStyle" Value="{StaticResource ImmComboBoxItemStyle}" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type ComboBox}">
+          <Grid>
+            <ToggleButton Focusable="False" ClickMode="Press"
+                          IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
+              <ToggleButton.Template>
+                <ControlTemplate TargetType="{x:Type ToggleButton}">
+                  <Border x:Name="Bd" CornerRadius="8" Background="{StaticResource ImmSurface3Brush}"
+                          BorderBrush="{StaticResource ImmLineBrush}" BorderThickness="1" />
+                  <ControlTemplate.Triggers>
+                    <Trigger Property="IsMouseOver" Value="True">
+                      <Setter TargetName="Bd" Property="BorderBrush" Value="{StaticResource ImmLine2Brush}" />
+                    </Trigger>
+                  </ControlTemplate.Triggers>
+                </ControlTemplate>
+              </ToggleButton.Template>
+            </ToggleButton>
+
+            <ContentPresenter x:Name="ContentSite" IsHitTestVisible="False"
+                              Content="{TemplateBinding SelectionBoxItem}"
+                              ContentTemplate="{TemplateBinding SelectionBoxItemTemplate}"
+                              ContentStringFormat="{TemplateBinding SelectionBoxItemStringFormat}"
+                              Margin="11,0,26,0" VerticalAlignment="Center" HorizontalAlignment="Left" />
+
+            <Path Data="M 0 0 L 4.2 4.2 L 8.4 0" Stroke="{StaticResource ImmTextSecondaryBrush}"
+                  StrokeThickness="1.4" StrokeStartLineCap="Round" StrokeEndLineCap="Round"
+                  HorizontalAlignment="Right" VerticalAlignment="Center" Margin="0,0,9,0"
+                  IsHitTestVisible="False" />
+
+            <Popup x:Name="PART_Popup" Placement="Bottom" AllowsTransparency="True" Focusable="False"
+                   IsOpen="{TemplateBinding IsDropDownOpen}" PopupAnimation="Fade">
+              <Border CornerRadius="8" Background="{StaticResource ImmBgCardBrush}"
+                      BorderBrush="{StaticResource ImmLine2Brush}" BorderThickness="1"
+                      MinWidth="{TemplateBinding ActualWidth}" MaxHeight="{TemplateBinding MaxDropDownHeight}"
+                      Margin="0,4,0,10" Padding="0,4">
+                <ScrollViewer VerticalScrollBarVisibility="Auto">
+                  <ItemsPresenter />
+                </ScrollViewer>
+              </Border>
+            </Popup>
+          </Grid>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
   <!-- ══ quiet button: 4% fill, hairline border ══ -->
   <Style x:Key="ImmGhostButtonStyle" TargetType="{x:Type Button}">
     <Setter Property="Foreground" Value="#C6D2E1" />
