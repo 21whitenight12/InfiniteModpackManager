@@ -1,0 +1,92 @@
+name: Bug report
+description: Something in IMM does not work as expected
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thanks for taking the time to report this. The more concrete the details, the faster it can be fixed.
+
+        **Before you post:** please check that the pack starts in Mod Organizer 2 alone (without IMM).
+        If MO2 itself cannot launch it, the problem is in the pack, not in IMM.
+
+  - type: input
+    id: imm-version
+    attributes:
+      label: IMM version
+      description: Shown in Settings, or the file name of the release you downloaded.
+      placeholder: 1.0.0-beta.1
+    validations:
+      required: true
+
+  - type: input
+    id: windows
+    attributes:
+      label: Windows version
+      description: Win + R → `winver`.
+      placeholder: Windows 11 24H2 (build 26100)
+    validations:
+      required: true
+
+  - type: dropdown
+    id: game
+    attributes:
+      label: Game
+      options:
+        - Skyrim SE / AE
+        - Skyrim LE
+        - Fallout 4
+        - Fallout NV
+        - STALKER Anomaly / G.A.M.M.A.
+        - Other / not detected
+    validations:
+      required: true
+
+  - type: dropdown
+    id: engine
+    attributes:
+      label: What does the Scanner show as engine?
+      options:
+        - MO2 + Root Builder
+        - MO2 (standard)
+        - Direct
+        - Not detected
+    validations:
+      required: true
+
+  - type: textarea
+    id: what-happened
+    attributes:
+      label: What happened
+      description: What you did, what you expected, what actually happened. Error text verbatim if there was one.
+    validations:
+      required: true
+
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Add pack folder H:\...
+        2. Press LAUNCH
+        3. ...
+    validations:
+      required: false
+
+  - type: textarea
+    id: logs
+    attributes:
+      label: Log
+      description: |
+        Attach the newest file from `%LOCALAPPDATA%\IMM\logs\` (or `logs\` next to the exe in portable mode).
+        Drag the file into this field to upload it.
+    validations:
+      required: false
+
+  - type: textarea
+    id: diagnostics
+    attributes:
+      label: Scanner output (optional)
+      description: A screenshot of the Scanner section for this pack helps a lot with detection problems.
+    validations:
+      required: false
