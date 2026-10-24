@@ -7,7 +7,10 @@ public enum GameType
     SkyrimLE,
     SkyrimSE,
     Fallout4,
-    FalloutNV
+    FalloutNV,
+
+    /// <summary>STALKER Anomaly / G.A.M.M.A — standalone build, launched by AnomalyLauncher.exe.</summary>
+    StalkerAnomaly
 }
 
 /// <summary>Launch engine: Direct, standard MO2, or MO2 with Root Builder (IMM.md ILaunchStrategy).</summary>

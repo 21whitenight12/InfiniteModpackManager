@@ -219,11 +219,13 @@ public sealed class Mo2LaunchStrategy : ILaunchStrategy
             Loc.F("Err_IniGamePathMissing", gamePath));
     }
 
-    /// <summary>System packs heal towards the detected Steam/GOG install; portable packs use their own game folder.</summary>
+    /// <summary>
+    /// A known absolute game folder wins (portable packs carry it too — e.g. G.A.M.M.A keeps the game
+    /// in a sibling folder of the MO2 instance); otherwise the pack's own game root.
+    /// </summary>
     private static string? ResolveActualGame(ModpackManifest manifest, string packRoot)
     {
-        return manifest.Source == PackSource.System
-            && !string.IsNullOrEmpty(manifest.SystemGamePath)
+        return !string.IsNullOrEmpty(manifest.SystemGamePath)
             && Directory.Exists(LongPath.Normalize(manifest.SystemGamePath))
             ? manifest.SystemGamePath
             : GameRootLocator.FindGameRoot(packRoot);

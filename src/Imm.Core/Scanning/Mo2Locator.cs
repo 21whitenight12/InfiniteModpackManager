@@ -87,6 +87,7 @@ public static class Mo2Locator
             "Skyrim Special Edition" => GameType.SkyrimSE,
             "Fallout 4" => GameType.Fallout4,
             "Fallout: New Vegas" or "Fallout New Vegas" => GameType.FalloutNV,
+            "STALKER Anomaly" or "S.T.A.L.K.E.R. Anomaly" => GameType.StalkerAnomaly,
             _ => null,
         };
     }

@@ -215,10 +215,31 @@ public sealed class ModOrganizerIniPatcher
 
     // ---------- Qt value encoding ----------
 
-    /// <summary>Resolves Qt ini escaping: \\ → backslash, \xHH → char; unknown escapes keep the backslash.</summary>
+    /// <summary>
+    /// Resolves Qt ini escaping: \\ → backslash, \xHH → byte; unknown escapes keep the backslash.
+    /// Qt stores non-Latin-1 text as the UTF-8 bytes of the string (\xd0\x93 = «Г»), so a run of
+    /// \xHH escapes is decoded as UTF-8 — byte-by-byte would turn Cyrillic profile names into
+    /// mojibake and MO2 would never find the profile passed with -p.
+    /// </summary>
     private static string UnescapeQt(string value)
     {
+        if (!value.Contains('\\'))
+        {
+            return value;
+        }
+
         var sb = new StringBuilder(value.Length);
+        var pending = new List<byte>(4);
+
+        void FlushPending()
+        {
+            if (pending.Count > 0)
+            {
+                sb.Append(DecodeUtf8Run(pending));
+                pending.Clear();
+            }
+        }
+
         for (var i = 0; i < value.Length; i++)
         {
             if (value[i] == '\\' && i + 1 < value.Length)
@@ -226,6 +247,7 @@ public sealed class ModOrganizerIniPatcher
                 var next = value[i + 1];
                 if (next == '\\')
                 {
+                    FlushPending();
                     sb.Append('\\');
                     i++;
                     continue;
@@ -233,17 +255,34 @@ public sealed class ModOrganizerIniPatcher
 
                 if (next == 'x' && i + 3 < value.Length && TryParseHex(value.AsSpan(i + 2, 2), out var code))
                 {
-                    sb.Append((char)code);
+                    pending.Add((byte)code);
                     i += 3;
                     continue;
                 }
             }
 
+            FlushPending();
             sb.Append(value[i]);
         }
 
+        FlushPending();
         return sb.ToString();
     }
+
+    /// <summary>UTF-8 first (Qt's own encoding); legacy byte values fall back to Latin-1 instead of throwing.</summary>
+    private static string DecodeUtf8Run(List<byte> bytes)
+    {
+        try
+        {
+            return StrictUtf8.GetString(bytes.ToArray());
+        }
+        catch (DecoderFallbackException)
+        {
+            return Encoding.Latin1.GetString(bytes.ToArray());
+        }
+    }
+
+    private static readonly UTF8Encoding StrictUtf8 = new(encoderShouldEmitUTF8Identifier: false, throwOnInvalidBytes: true);
 
     /// <summary>
     /// Writes the new path in the style of the original value (IMM.md: preserve the original

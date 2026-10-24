@@ -66,7 +66,9 @@
 **Асинхронность:** все дисковые операции — async/await + IProgress<T>, CancellationToken в каждом IO-методе.  
   
 # Detection Markers  
-- **Тип игры по exe в корне сборки:** TESV.exe → Skyrim LE; SkyrimSE.exe → Skyrim SE; Fallout4.exe → Fallout 4; FalloutNV.exe → Fallout NV.  
+- **Тип игры по exe в корне сборки:** TESV.exe → Skyrim LE; SkyrimSE.exe → Skyrim SE; Fallout4.exe → Fallout 4; FalloutNV.exe → Fallout NV; AnomalyLauncher.exe → STALKER Anomaly (G.A.M.M.A).
+- **G.A.M.M.A / STALKER Anomaly:** игра и инстанс MO2 — соседние папки (`<pack>\Anomaly` + `<pack>\GEMMA`), имена произвольные. Факты берутся из ini самого MO2 (`gameName=STALKER Anomaly` → `MapGameName`, `gamePath` → папка игры). Source = Portable, если папка игры лежит внутри корня сборки, но абсолютный путь всё равно пишется в `systemGamePath` (MO2 резолвит игру из него). Запуск — `ModOrganizer.exe -p <профиль> <game>\AnomalyLauncher.exe`: лончер сам поднимает `bin\AnomalyDX11AVX.exe` по своему `AnomalyLauncher.cfg`, поэтому вариант DX/AVX выбирает пользователь, а не IMM. Anomaly не продаётся в сторах — поиск Steam/GOG для неё не запускается и ложного warning «системная установка не найдена» не даёт.
+- **Профиль G.A.M.M.A:** имя профиля не хардкодится. Приоритет — `selected_profile` из ini (у пользователя их несколько), затем ровно одна папка в `profiles\`, иначе ручной выбор в UI.  
 - **MO2:** ModOrganizer.exe рядом с ModOrganizer.ini (строго Portable-инстанс).  
 - **Root Builder:** RootBuilder.dll в plugins\ MO2 + корневые файлы игры (exe игры, binkw*.dll) внутри модов в mods\. Engine = Mo2RootBuilder.  
 - **Source = Portable:** подпапки Stock Game / Game Root / Game Files, содержащие exe игры.  
@@ -86,6 +88,7 @@
 # INI Patching Rules (ModOrganizerIniPatcher)  
 - ModOrganizer.ini — формат Qt QSettings: секция [customExecutables] хранится как size=N + записи N\binary, N\title и т.п. При добавлении/удалении пересчитывать size.  
 - **Парсинг:** Строго свой кастомный построчный парсер. Разделять ключ и значение по первому символу `=`. Не пытаться «нормализовать» служебные структуры Qt (префиксы вроде `@ByteArray(...)` или экранирование `\x20`). Нормализовать только обратные слэши в путях перед сравнением, но сохранять оригинальный стиль записи при перезаписи.  
+- **`@ByteArray(...)`:** серии `\xHH` декодировать как UTF-8 (Qt пишет так не-Latin-1 текст: `\xd0\x93` = «Г»), иначе кириллические имена профилей превращаются в кракозябры и MO2 не находит профиль, переданный через `-p`. Невалидный UTF-8 → фоллбэк Latin-1.  
 - Чинить только абсолютные пути, указывающие на несуществующие расположения. Относительные пути не трогать.  
 - Перед записью: резервная копия <имя>.bak-<timestamp> рядом; кодировку определить по BOM и сохранить.  
 - Патчер идемпотентен.  

@@ -154,6 +154,7 @@ public partial class LibraryEntryViewModel : ObservableObject
         GameType.SkyrimSE => Loc.T("Game_SkyrimSE"),
         GameType.Fallout4 => Loc.T("Game_Fallout4"),
         GameType.FalloutNV => Loc.T("Game_FalloutNV"),
+        GameType.StalkerAnomaly => Loc.T("Game_StalkerAnomaly"),
         _ => Loc.T("Common_UnknownGame"),
     };
 

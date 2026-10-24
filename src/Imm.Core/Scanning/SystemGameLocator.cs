@@ -225,4 +225,10 @@ public sealed class SystemGameLocator
         GameType.FalloutNV => "FalloutNV.exe",
         _ => null,
     };
+
+    /// <summary>
+    /// False for standalone builds no store installs (STALKER Anomaly ships as a folder): there is
+    /// no Steam/GOG lookup to run, so the pack's own folder IS the game (no "system install" warning).
+    /// </summary>
+    internal static bool IsStoreGame(GameType gameType) => GameExecutableName(gameType) is not null;
 }

@@ -12,6 +12,11 @@ internal static class Markers
         ["SkyrimSE.exe"] = GameType.SkyrimSE,
         ["Fallout4.exe"] = GameType.Fallout4,
         ["FalloutNV.exe"] = GameType.FalloutNV,
+
+        // STALKER Anomaly (G.A.M.M.A): the game root holds AnomalyLauncher.exe; the DX renderers
+        // live in bin\ and the launcher picks one itself (AnomalyLauncher.cfg), so IMM launches
+        // the launcher — exactly the GameBinary of MO2's stalkeranomaly basic game plugin.
+        ["AnomalyLauncher.exe"] = GameType.StalkerAnomaly,
     };
 
     public static readonly IReadOnlyList<string> ScriptExtenderLoaders = new[]

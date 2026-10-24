@@ -225,6 +225,7 @@ internal static class Labels
         GameType.SkyrimSE => "Skyrim SE",
         GameType.Fallout4 => "Fallout 4",
         GameType.FalloutNV => "Fallout NV",
+        GameType.StalkerAnomaly => "STALKER Anomaly",
         _ => Loc.T("Game_Unknown"),
     };
 

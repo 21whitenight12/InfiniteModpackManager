@@ -786,6 +786,9 @@
   <data name="Game_FalloutNV" xml:space="preserve">
     <value>Fallout NV</value>
   </data>
+  <data name="Game_StalkerAnomaly" xml:space="preserve">
+    <value>STALKER Anomaly</value>
+  </data>
   <data name="Game_Unknown" xml:space="preserve">
     <value>не определена</value>
   </data>

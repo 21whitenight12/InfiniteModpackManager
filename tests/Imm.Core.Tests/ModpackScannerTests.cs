@@ -173,6 +173,66 @@ public sealed class ModpackScannerTests : IDisposable
     }
 
     [Fact]
+    public async Task GammaLayout_AnomalyNextToMo2Folder_FullDetection()
+    {
+        // G.A.M.M.A real layout: <pack>\Anomaly (the game) + <pack>\GEMMA (portable MO2 instance).
+        // Neither folder name is a known marker, so the facts come from MO2's own ini
+        // (gameName + gamePath), and the profile name arrives as Qt UTF-8 escapes.
+        var game = Path.Combine(_root, "Anomaly");
+        Directory.CreateDirectory(game);
+        File.WriteAllText(Path.Combine(game, "AnomalyLauncher.exe"), string.Empty);
+        CreateDir(@"Anomaly\bin");
+        File.WriteAllText(Path.Combine(game, "bin", "AnomalyDX11AVX.exe"), string.Empty);
+
+        Write(@"GEMMA\ModOrganizer.exe");
+        CreateDir(@"GEMMA\profiles\3 - G.A.M.M.A - ALL DOP+Графпак+GFY");
+        File.WriteAllText(Path.Combine(_root, "GEMMA", "ModOrganizer.ini"),
+            "[General]\n"
+            + "gameName=STALKER Anomaly\n"
+            + $"gamePath=@ByteArray({game.Replace("\\", "\\\\")})\n"
+            + "selected_profile=@ByteArray(3 - G.A.M.M.A - ALL DOP+\\xd0\\x93\\xd1\\x80\\xd0\\xb0\\xd1\\x84\\xd0\\xbf\\xd0\\xb0\\xd0\\xba+GFY)\n");
+
+        var scan = await CreateScanner().ScanAsync(_root);
+
+        Assert.True(scan.LooksLikeModpack);
+        Assert.Equal(GameType.StalkerAnomaly, scan.GameType);
+        Assert.Equal(LaunchEngine.Mo2Standard, scan.Engine);
+        Assert.Equal(PackSource.Portable, scan.Source);   // the game ships inside the pack folder
+        Assert.Equal(game, scan.SystemGamePath);          // MO2 resolves the game folder from this path
+        Assert.Equal("GEMMA", scan.Mo2DirectoryName);
+        Assert.Equal("3 - G.A.M.M.A - ALL DOP+Графпак+GFY", scan.Mo2ProfileName);
+        Assert.Equal("AnomalyLauncher.exe", scan.LaunchExecutable);
+        Assert.Empty(scan.Warnings);
+    }
+
+    [Fact]
+    public async Task StalkerAnomaly_GameFolderDirect_IsPortable()
+    {
+        // No store sells Anomaly: the folder itself is the game, so no "system install" warning.
+        Write(@"AnomalyLauncher.exe");
+        Write(@"bin\AnomalyDX11AVX.exe");
+
+        var scan = await CreateScanner().ScanAsync(_root);
+
+        Assert.Equal(GameType.StalkerAnomaly, scan.GameType);
+        Assert.Equal(LaunchEngine.Direct, scan.Engine);
+        Assert.Equal(PackSource.Portable, scan.Source);
+        Assert.Null(scan.SystemGamePath);
+        Assert.Equal("AnomalyLauncher.exe", scan.LaunchExecutable);
+        Assert.Empty(scan.Warnings);
+    }
+
+    [Theory]
+    [InlineData("STALKER Anomaly")]
+    [InlineData("S.T.A.L.K.E.R. Anomaly")]
+    public void MapGameName_StalkerAnomaly(string gameName) =>
+        Assert.Equal(GameType.StalkerAnomaly, Mo2Locator.MapGameName(gameName));
+
+    [Fact]
+    public void MapGameName_UnsupportedGame_IsNull() =>
+        Assert.Null(Mo2Locator.MapGameName("Minecraft"));
+
+    [Fact]
     public async Task EmptyFolder_NotAModpack_WithWarning()
     {
         var scan = await CreateScanner().ScanAsync(_root);

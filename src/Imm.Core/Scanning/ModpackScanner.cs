@@ -82,6 +82,13 @@ public sealed class ModpackScanner : IModpackScanner
                 gameType = rootGameType;
                 gameFilesDirectory = root;
             }
+            else if (!SystemGameLocator.IsStoreGame(rootGameType))
+            {
+                // Standalone build (STALKER Anomaly): no store install exists, the folder IS the game.
+                source = PackSource.Portable;
+                gameType = rootGameType;
+                gameFilesDirectory = root;
+            }
             else
             {
                 source = PackSource.System;
@@ -120,11 +127,24 @@ public sealed class ModpackScanner : IModpackScanner
                     {
                         systemGamePath = managedGame;
                         gameFilesDirectory = managedGame;
+                        if (IsInside(root, managedGame))
+                        {
+                            // The game ships inside the pack (G.A.M.M.A: <pack>\Anomaly next to the MO2
+                            // folder) — the pack is portable. The absolute path still travels in the
+                            // manifest, because MO2 resolves the game folder from it.
+                            source = PackSource.Portable;
+                        }
+
                         if (!Directory.Exists(LongPath.Normalize(managedGame)))
                         {
                             warnings.Add(
                                 Loc.F("Warn_IniGameFolderMissing", managedGame));
                         }
+                    }
+                    else if (!SystemGameLocator.IsStoreGame(gameType))
+                    {
+                        // Standalone build with no gamePath in the ini: no store to look the game up in.
+                        source = PackSource.Portable;
                     }
                     else
                     {
@@ -217,6 +237,13 @@ public sealed class ModpackScanner : IModpackScanner
         Warnings = [warning],
     };
 
+    /// <summary>True when the candidate sits inside the pack root — the game ships with the pack.</summary>
+    private static bool IsInside(string root, string candidate)
+    {
+        var rootFull = Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        return Path.GetFullPath(candidate).StartsWith(rootFull, StringComparison.OrdinalIgnoreCase);
+    }
+
     /// <summary>Game type by a well-known exe sitting directly in the directory; Unknown when none.</summary>
     private static GameType DetectGameAt(string directory)
     {
@@ -283,6 +310,7 @@ public sealed class ModpackScanner : IModpackScanner
         GameType.SkyrimSE => "SkyrimSE.exe",
         GameType.Fallout4 => "Fallout4.exe",
         GameType.FalloutNV => "FalloutNV.exe",
+        GameType.StalkerAnomaly => "AnomalyLauncher.exe",
         _ => string.Empty,
     };
 

@@ -117,6 +117,38 @@ public sealed class LaunchStrategyTests : IDisposable
     }
 
     [Fact]
+    public async Task Mo2_StalkerAnomaly_LaunchesLauncherFromGameFolder()
+    {
+        // G.A.M.M.A: MO2 instance in <pack>\GEMMA, game in <pack>\Anomaly (sibling folder, known to
+        // MO2 only through its own ini). The launcher sits in the game root and picks the DX renderer.
+        var pack = CreatePack("Gamma", p =>
+        {
+            Directory.CreateDirectory(Path.Combine(p, "GEMMA"));
+            File.WriteAllText(Path.Combine(p, "GEMMA", "ModOrganizer.exe"), string.Empty);
+            var game = Directory.CreateDirectory(Path.Combine(p, "Anomaly")).FullName;
+            File.WriteAllText(Path.Combine(game, "AnomalyLauncher.exe"), string.Empty);
+            File.WriteAllText(Path.Combine(p, "GEMMA", "ModOrganizer.ini"),
+                "[General]\n"
+                + "gameName=STALKER Anomaly\n"
+                + $"gamePath=@ByteArray({game.Replace("\\", "\\\\")})\n"
+                + "selected_profile=G.A.M.M.A\n");
+        });
+
+        var manifest = Manifest(LaunchEngine.Mo2Standard, PackSource.Portable, "G.A.M.M.A");
+        manifest.GameType = GameType.StalkerAnomaly;
+        manifest.Mo2!.Directory = "GEMMA";
+        manifest.Launch.Executable = "AnomalyLauncher.exe";
+
+        var plan = await _mo2.BuildPlanAsync(manifest, pack);
+
+        Assert.Equal(Path.Combine(pack, "GEMMA", "ModOrganizer.exe"), plan.ExecutablePath);
+        Assert.Equal(
+            new[] { "-p", "G.A.M.M.A", Path.Combine(pack, "Anomaly", "AnomalyLauncher.exe") },
+            plan.Arguments);
+        Assert.True(plan.Elevate);
+    }
+
+    [Fact]
     public async Task Mo2_MissingOrganizer_Throws()
     {
         var pack = CreatePack("NoMo2");
