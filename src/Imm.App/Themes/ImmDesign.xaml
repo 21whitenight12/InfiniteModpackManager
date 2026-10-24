@@ -233,7 +233,8 @@
       <Setter.Value>
         <ControlTemplate TargetType="{x:Type ComboBox}">
           <Grid>
-            <ToggleButton Focusable="False" ClickMode="Release"
+            <!-- Style="{x:Null}": WPF-UI's implicit ToggleButton style would shrink this to a 2x2 dot -->
+            <ToggleButton Style="{x:Null}" Focusable="False" ClickMode="Release"
                           IsChecked="{Binding IsDropDownOpen, Mode=TwoWay, RelativeSource={RelativeSource TemplatedParent}}">
               <ToggleButton.Template>
                 <ControlTemplate TargetType="{x:Type ToggleButton}">
