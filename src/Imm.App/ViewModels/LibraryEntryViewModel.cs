@@ -129,6 +129,9 @@ public partial class LibraryEntryViewModel : ObservableObject
         OnPropertyChanged(string.Empty);
     }
 
+    /// <summary>Language switch: card texts are computed, so a plain repaint is enough.</summary>
+    public void NotifyLocalizationChanged() => OnPropertyChanged(string.Empty);
+
     /// <summary>
     /// Applies a user rename to the wrapped entry: the service updates its own deserialized copy,
     /// so the VM's instance must be synced explicitly before the notification.

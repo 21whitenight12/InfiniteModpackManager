@@ -95,7 +95,11 @@ public partial class MainViewModel : ObservableObject
     /// <summary>Sorted view fed to the ItemsControl (Entries is the source of truth).</summary>
     public ICollectionView EntriesView { get; }
 
-    public IReadOnlyList<string> SortOptions { get; } = [Loc.T("Lib_SortName"), Loc.T("Lib_SortDate"), Loc.T("Lib_SortTime")];
+    /// <summary>Rebuilt per language: a stored list would keep the previous language forever.</summary>
+    public IReadOnlyList<string> SortOptions => [Loc.T("Lib_SortName"), Loc.T("Lib_SortDate"), Loc.T("Lib_SortTime")];
+
+    /// <summary>Index, not the label — the label is language-dependent.</summary>
+    private int _sortIndex;
 
     [ObservableProperty]
     private string _selectedSortOption = Loc.T("Lib_SortName");
@@ -254,13 +258,26 @@ public partial class MainViewModel : ObservableObject
     /// <summary>Keeps the chosen sort order across a language switch and repaints VM strings.</summary>
     private void OnLanguageChanged()
     {
-        var index = SelectedSortOption == Loc.T("Lib_SortDate") ? 1
-            : SelectedSortOption == Loc.T("Lib_SortTime") ? 2
-            : 0;
-
-        SelectedSortOption = SortOptions[index];
+        OnPropertyChanged(nameof(SortOptions));
+        SelectedSortOption = SortOptions[Math.Clamp(_sortIndex, 0, SortOptions.Count - 1)];
         ApplySort();
+
+        // Card texts are computed properties on their own VMs — they need their own ping.
+        foreach (var entry in Entries)
+        {
+            entry.NotifyLocalizationChanged();
+        }
+
         OnPropertyChanged(string.Empty);
+    }
+
+    /// <summary>Status bar text; stored as a resource key so a language switch repaints it.</summary>
+    public string StatusText => Loc.T(_statusKey);
+
+    private void SetStatus(string key)
+    {
+        _statusKey = key;
+        OnPropertyChanged(nameof(StatusText));
     }
 
     /// <summary>Localized counts for the header and the sidebar footer.</summary>
@@ -369,17 +386,38 @@ public partial class MainViewModel : ObservableObject
     [RelayCommand]
     private void SetListView() => IsGridView = false;
 
-    partial void OnSelectedSortOptionChanged(string value) => ApplySort();
+    partial void OnSelectedSortOptionChanged(string value)
+    {
+        var index = IndexOfSortOption(value);
+        if (index >= 0)
+        {
+            _sortIndex = index;
+        }
+
+        ApplySort();
+    }
+
+    private int IndexOfSortOption(string? value)
+    {
+        var options = SortOptions;
+        for (var i = 0; i < options.Count; i++)
+        {
+            if (string.Equals(options[i], value, StringComparison.Ordinal))
+            {
+                return i;
+            }
+        }
+
+        return -1;
+    }
 
     private void ApplySort()
     {
         EntriesView.SortDescriptions.Clear();
-        SortDescription description = SelectedSortOption switch
+        SortDescription description = _sortIndex switch
         {
-            var date when date == Loc.T("Lib_SortDate") =>
-                new(nameof(LibraryEntryViewModel.LastPlayedAtUtc), ListSortDirection.Descending),
-            var time when time == Loc.T("Lib_SortTime") =>
-                new(nameof(LibraryEntryViewModel.PlaytimeMinutes), ListSortDirection.Descending),
+            1 => new(nameof(LibraryEntryViewModel.LastPlayedAtUtc), ListSortDirection.Descending),
+            2 => new(nameof(LibraryEntryViewModel.PlaytimeMinutes), ListSortDirection.Descending),
             _ => new(nameof(LibraryEntryViewModel.Name), ListSortDirection.Ascending),
         };
         EntriesView.SortDescriptions.Add(description);
@@ -408,8 +446,7 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _isBusy;
 
-    [ObservableProperty]
-    private string _statusText = Loc.T("Common_Done");
+    private string _statusKey = "Common_Done";
 
     public bool HasNoEntries => Entries.Count == 0;
 
@@ -432,13 +469,13 @@ public partial class MainViewModel : ObservableObject
 
             SelectedEntry = Entries.FirstOrDefault();
             OnPropertyChanged(nameof(HasNoEntries));
-            StatusText = Loc.T("Common_Done");
+            SetStatus("Common_Done");
         }
         catch (Exception exception)
         {
             // Библиотека не должна «молча пустеть»: пользователь видит сообщение, детали — в логе.
             _logger.Error(exception, "Library initialization failed");
-            StatusText = Loc.T("Msg_LibraryNotLoaded");
+            SetStatus("Msg_LibraryNotLoaded");
             _snackbar.Show(
                 Loc.T("Msg_Library"),
                 Loc.T("Msg_LibraryLoadFailed"),
@@ -472,7 +509,7 @@ public partial class MainViewModel : ObservableObject
         }
 
         IsBusy = true;
-        StatusText = Loc.T("Msg_Scanning");
+        SetStatus("Msg_Scanning");
         try
         {
             var entry = await _library.ImportAsync(folderPath).ConfigureAwait(true);
@@ -480,7 +517,7 @@ public partial class MainViewModel : ObservableObject
             var viewModel = new LibraryEntryViewModel(entry, manifest, this);
             Entries.Add(viewModel);
             SelectedEntry = viewModel;
-            StatusText = Loc.T("Common_Done");
+            SetStatus("Common_Done");
 
             // Post-import customization: name + cover (defaults = folder name / no cover).
             var (displayName, coverImagePath) = await ShowImportDialogAsync(viewModel.Name).ConfigureAwait(true);
@@ -598,7 +635,7 @@ public partial class MainViewModel : ObservableObject
         }
 
         IsBusy = true;
-        StatusText = Loc.T("Msg_Launching");
+        SetStatus("Msg_Launching");
         try
         {
             var libraryEntry = await FindEntryAsync(entry.Id).ConfigureAwait(true);
@@ -655,7 +692,7 @@ public partial class MainViewModel : ObservableObject
         finally
         {
             IsBusy = false;
-            StatusText = Loc.T("Common_Done");
+            SetStatus("Common_Done");
         }
     }
 
@@ -695,7 +732,7 @@ public partial class MainViewModel : ObservableObject
                 SelectedEntry = Entries.FirstOrDefault();
             }
 
-            StatusText = Loc.T("Common_Done");
+            SetStatus("Common_Done");
             _snackbar.Show(
                 Loc.T("Msg_Library"),
                 Loc.T("Msg_Removed"),
@@ -1018,7 +1055,7 @@ public partial class MainViewModel : ObservableObject
         }
 
         IsBusy = true;
-        StatusText = Loc.T("Msg_BackupBusy");
+        SetStatus("Msg_BackupBusy");
         try
         {
             var libraryEntry = await FindEntryAsync(entry.Id).ConfigureAwait(true)
@@ -1059,7 +1096,7 @@ public partial class MainViewModel : ObservableObject
         finally
         {
             IsBusy = false;
-            StatusText = Loc.T("Common_Done");
+            SetStatus("Common_Done");
         }
     }
 

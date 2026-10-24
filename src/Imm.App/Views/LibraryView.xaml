@@ -251,6 +251,7 @@
                        IsChecked="{Binding IsLibrarySection, Mode=OneWay}"
                        Command="{Binding ShowSectionCommand}"
                        CommandParameter="{x:Static vm:AppSection.Library}"
+                       AutomationProperties.Name="{Binding [Nav_Library], Source={x:Static loc:Loc.Instance}}"
                        ToolTip="{Binding [Tip_NavLibrary], Source={x:Static loc:Loc.Instance}}">
             <StackPanel Orientation="Horizontal">
               <ui:SymbolIcon Symbol="Library24" FontSize="16"
@@ -264,6 +265,7 @@
                        IsChecked="{Binding IsScannerSection, Mode=OneWay}"
                        Command="{Binding ShowSectionCommand}"
                        CommandParameter="{x:Static vm:AppSection.Scanner}"
+                       AutomationProperties.Name="{Binding [Nav_Scanner], Source={x:Static loc:Loc.Instance}}"
                        ToolTip="{Binding [Tip_NavScanner], Source={x:Static loc:Loc.Instance}}">
             <StackPanel Orientation="Horizontal">
               <ui:SymbolIcon Symbol="ScanType24" FontSize="16"
@@ -277,6 +279,7 @@
                        IsChecked="{Binding IsSettingsSection, Mode=OneWay}"
                        Command="{Binding ShowSectionCommand}"
                        CommandParameter="{x:Static vm:AppSection.Settings}"
+                       AutomationProperties.Name="{Binding [Nav_Settings], Source={x:Static loc:Loc.Instance}}"
                        ToolTip="{Binding [Tip_NavSettings], Source={x:Static loc:Loc.Instance}}">
             <StackPanel Orientation="Horizontal">
               <ui:SymbolIcon Symbol="Settings24" FontSize="16"
@@ -289,6 +292,7 @@
           <RadioButton Style="{StaticResource ImmNavStyle}" GroupName="ImmNav" Margin="0,6,0,0"
                        IsChecked="False"
                        Command="{Binding OpenLogWindowCommand}"
+                       AutomationProperties.Name="{Binding [Nav_Log], Source={x:Static loc:Loc.Instance}}"
                        ToolTip="{Binding [Tip_NavLog], Source={x:Static loc:Loc.Instance}}">
             <StackPanel Orientation="Horizontal">
               <ui:SymbolIcon Symbol="SlideText24" FontSize="16"
