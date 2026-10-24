@@ -7,7 +7,7 @@
       Background="Transparent">
 
   <Page.Resources>
-    <!-- Pack context menu (opened by the '...' button; DataContext = the card's entry VM).
+    <!-- Pack context menu (opened by the '…' button; DataContext = the card's entry VM).
          Declared BEFORE the card templates: StaticResource inside a template cannot forward-reference. -->
     <ContextMenu x:Key="PackMenu"
                  DataContext="{Binding PlacementTarget.DataContext, RelativeSource={RelativeSource Self}}">
@@ -45,141 +45,127 @@
                 Command="{Binding DeleteCommand}" />
     </ContextMenu>
 
-    <!-- ============ GRID CARD (concept: cover, engine badge-pill, tabular meta rows) ============ -->
+    <!-- ═══════════ GRID CARD: cover, engine chip, one meta line ═══════════ -->
     <DataTemplate x:Key="PackCardTemplate" DataType="{x:Type vm:LibraryEntryViewModel}">
-      <Border x:Name="CardRoot" BorderThickness="1"
-              CornerRadius="10" Padding="0"
-              Cursor="Hand">
-        <Border.Style>
-          <Style TargetType="Border">
-            <Setter Property="Background" Value="{StaticResource ImmBgCardBrush}" />
-            <Setter Property="BorderBrush" Value="{StaticResource ImmCardBorderBrush}" />
-            <Style.Triggers>
-              <Trigger Property="IsMouseOver" Value="True">
-                <Setter Property="Background" Value="{StaticResource ImmBgCardHoverBrush}" />
-              </Trigger>
-            </Style.Triggers>
-          </Style>
-        </Border.Style>
+      <Border Style="{StaticResource ImmCardStyle}">
         <Border.InputBindings>
           <MouseBinding Gesture="LeftClick"
                         Command="{Binding DataContext.SelectEntryCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
                         CommandParameter="{Binding}" />
         </Border.InputBindings>
-        <Grid Margin="0">
-          <Grid.RowDefinitions>
-            <RowDefinition Height="*" />
-            <RowDefinition Height="Auto" />
-          </Grid.RowDefinitions>
-
+        <StackPanel>
           <!-- Cover -->
-          <Grid Grid.Row="0" Height="145" Margin="10,10,10,0" ClipToBounds="True">
-            <Border CornerRadius="9" ClipToBounds="True">
-              <Border.Background>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                  <GradientStop Color="#1A2438" Offset="0" />
-                  <GradientStop Color="#0F1626" Offset="1" />
-                </LinearGradientBrush>
-              </Border.Background>
-              <Grid>
-                <Border CornerRadius="9" ClipToBounds="True"
-                        Visibility="{Binding CoverPath, Converter={StaticResource NullToCollapsedConverter}}">
-                  <Border.Background>
-                    <ImageBrush ImageSource="{Binding CoverImage}" Stretch="UniformToFill" />
-                  </Border.Background>
-                </Border>
-                <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
-                            Visibility="{Binding CoverPath, Converter={StaticResource NullToVisibleConverter}}">
-                  <ui:SymbolIcon Symbol="Library24" FontSize="34"
-                                 Foreground="{StaticResource ImmTextSecondaryBrush}"
-                                 HorizontalAlignment="Center" />
-                  <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold"
-                             Foreground="{StaticResource ImmTextSecondaryBrush}"
-                             HorizontalAlignment="Center" Margin="0,8,0,0" />
-                </StackPanel>
-              </Grid>
+          <Grid Height="150">
+            <Border CornerRadius="9" ClipToBounds="True" Background="#0A1119">
+              <Image x:Name="CoverImage" Source="{Binding CoverImage}" Stretch="UniformToFill"
+                     RenderTransformOrigin="0.5,0.5"
+                     Visibility="{Binding CoverPath, Converter={StaticResource NullToCollapsedConverter}}">
+                <Image.RenderTransform>
+                  <ScaleTransform x:Name="CoverScale" ScaleX="1" ScaleY="1" />
+                </Image.RenderTransform>
+              </Image>
             </Border>
-            <!-- Selection badge -->
-            <Border Width="22" Height="22" CornerRadius="11"
-                    Background="{StaticResource ImmAccentBrush}" BorderBrush="#0D1420" BorderThickness="2"
-                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,7,7,0"
-                    Visibility="{Binding IsSelected, Converter={StaticResource BoolToVisibleConverter}}"
-                    IsHitTestVisible="False" Panel.ZIndex="2">
-              <ui:SymbolIcon Symbol="Checkmark24" FontSize="10" Foreground="White" />
-            </Border>
-            <Border CornerRadius="9,9,0,0" BorderBrush="{StaticResource ImmWarnBrush}" BorderThickness="2"
-                    Visibility="{Binding HasWarnings, Converter={StaticResource BoolToVisibleConverter}}"
-                    IsHitTestVisible="False" />
-          </Grid>
-
-          <!-- Card body -->
-          <StackPanel Grid.Row="1" Margin="12,10,12,10">
-            <Grid>
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="*" />
-                <ColumnDefinition Width="Auto" />
-              </Grid.ColumnDefinitions>
-              <TextBlock Text="{Binding Name}" FontSize="14" FontWeight="SemiBold"
-                         Foreground="{StaticResource ImmTextPrimaryBrush}"
-                         TextTrimming="CharacterEllipsis" />
-              <ui:Button Grid.Column="1" Appearance="Secondary" Padding="4,1" Margin="6,0,0,0"
-                         Icon="{ui:SymbolIcon MoreHorizontal24}"
-                         Click="OpenCardMenu"
-                         ContextMenu="{StaticResource PackMenu}"
-                         ToolTip="Действия со сборкой" />
-            </Grid>
-
-            <!-- Engine badge pill + game row -->
-            <StackPanel Orientation="Horizontal" Margin="0,7,0,0">
-              <Border Background="#262E8BFF" CornerRadius="4" Padding="7,2">
-                <TextBlock Text="{Binding EngineDisplayName}" FontSize="11" FontWeight="Medium"
-                           Foreground="{StaticResource ImmAccentCyanBrush}" />
-              </Border>
-              <StackPanel Orientation="Horizontal" Margin="8,0,0,0" VerticalAlignment="Center">
-                <ui:SymbolIcon Symbol="Rocket24" FontSize="13" Foreground="{StaticResource ImmTextSecondaryBrush}" />
-                <TextBlock Text="{Binding GameDisplayName}" FontSize="11" Margin="5,0,0,0"
-                           Foreground="{StaticResource ImmTextSecondaryBrush}" VerticalAlignment="Center" />
-              </StackPanel>
+            <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
+                        Visibility="{Binding CoverPath, Converter={StaticResource NullToVisibleConverter}}">
+              <ui:SymbolIcon Symbol="Library24" FontSize="26" HorizontalAlignment="Center"
+                             Foreground="{StaticResource ImmTextTertiaryBrush}" />
+              <TextBlock Text="{Binding Name}" FontSize="12" FontWeight="SemiBold" Margin="0,7,0,0"
+                         HorizontalAlignment="Center" TextTrimming="CharacterEllipsis" MaxWidth="180"
+                         Foreground="{StaticResource ImmTextTertiaryBrush}" />
             </StackPanel>
 
-            <Separator Background="{StaticResource ImmBorderBrush}" Margin="0,10,0,8" />
+            <!-- hairline over the artwork -->
+            <Border CornerRadius="9" BorderBrush="#1AFFFFFF" BorderThickness="1" IsHitTestVisible="False" />
 
-            <!-- Tabular meta rows -->
-            <Grid>
-              <Grid.ColumnDefinitions>
-                <ColumnDefinition Width="Auto" />
-                <ColumnDefinition Width="*" />
-              </Grid.ColumnDefinitions>
-              <Grid.RowDefinitions>
-                <RowDefinition Height="Auto" />
-                <RowDefinition Height="Auto" />
-              </Grid.RowDefinitions>
-              <TextBlock Grid.Row="0" Grid.Column="0" Text="Последний запуск" FontSize="11"
-                         Foreground="{StaticResource ImmTextSecondaryBrush}" />
-              <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding LastPlayedText}" FontSize="11"
-                         Foreground="{StaticResource ImmTextPrimaryBrush}" HorizontalAlignment="Right" />
-              <TextBlock Grid.Row="1" Grid.Column="0" Text="Время в игре" FontSize="11" Margin="0,3,0,0"
-                         Foreground="{StaticResource ImmTextSecondaryBrush}" />
-              <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding PlaytimeText}" FontSize="11" Margin="0,3,0,0"
-                         Foreground="{StaticResource ImmTextPrimaryBrush}" HorizontalAlignment="Right" />
-            </Grid>
-          </StackPanel>
-        </Grid>
+            <!-- engine chip -->
+            <Border Style="{StaticResource ImmCoverChipStyle}">
+              <StackPanel Orientation="Horizontal">
+                <Ellipse Width="4" Height="4" VerticalAlignment="Center"
+                         Fill="{StaticResource ImmAccentCyanBrush}" />
+                <TextBlock Text="{Binding EngineDisplayName}" FontSize="10.5" Margin="5,0,0,0"
+                           Foreground="#DCE6F4" />
+              </StackPanel>
+            </Border>
+
+            <!-- selection badge -->
+            <Border Width="19" Height="19" CornerRadius="10"
+                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,7,7,0"
+                    Background="{StaticResource ImmAccentBrush}" BorderBrush="#CC060A10" BorderThickness="2"
+                    IsHitTestVisible="False"
+                    Visibility="{Binding IsSelected, Converter={StaticResource BoolToVisibleConverter}}">
+              <ui:SymbolIcon Symbol="Checkmark24" FontSize="9" Foreground="White" />
+            </Border>
+
+            <!-- context menu button: hover / selected only -->
+            <Button x:Name="MoreButton" Style="{StaticResource ImmOverlayButtonStyle}"
+                    HorizontalAlignment="Right" VerticalAlignment="Top" Margin="0,7,7,0"
+                    Click="OpenCardMenu" ContextMenu="{StaticResource PackMenu}"
+                    Visibility="Collapsed" ToolTip="Действия со сборкой">
+              <StackPanel Orientation="Horizontal">
+                <Ellipse Width="2.5" Height="2.5" Fill="{StaticResource ImmTextPrimaryBrush}" />
+                <Ellipse Width="2.5" Height="2.5" Margin="2.5,0" Fill="{StaticResource ImmTextPrimaryBrush}" />
+                <Ellipse Width="2.5" Height="2.5" Fill="{StaticResource ImmTextPrimaryBrush}" />
+              </StackPanel>
+            </Button>
+
+            <!-- warning frame -->
+            <Border CornerRadius="9" BorderBrush="{StaticResource ImmWarnBrush}" BorderThickness="1.5"
+                    IsHitTestVisible="False"
+                    Visibility="{Binding HasWarnings, Converter={StaticResource BoolToVisibleConverter}}" />
+          </Grid>
+
+          <TextBlock Text="{Binding Name}" FontSize="13.5" FontWeight="SemiBold" Margin="3,9,3,0"
+                     TextTrimming="CharacterEllipsis"
+                     Foreground="{StaticResource ImmTextPrimaryBrush}" />
+          <TextBlock Text="{Binding MetaText}" FontSize="11.5" Margin="3,4,3,0"
+                     TextTrimming="CharacterEllipsis"
+                     Foreground="{StaticResource ImmTextTertiaryBrush}" />
+        </StackPanel>
       </Border>
+
       <DataTemplate.Triggers>
+        <DataTrigger Binding="{Binding IsMouseOver, RelativeSource={RelativeSource AncestorType=ListBoxItem}}" Value="True">
+          <Setter TargetName="MoreButton" Property="Visibility" Value="Visible" />
+          <DataTrigger.EnterActions>
+            <BeginStoryboard>
+              <Storyboard>
+                <DoubleAnimation Storyboard.TargetName="CoverScale" Storyboard.TargetProperty="ScaleX"
+                                 To="1.035" Duration="0:0:0.5">
+                  <DoubleAnimation.EasingFunction>
+                    <QuinticEase EasingMode="EaseOut" />
+                  </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+                <DoubleAnimation Storyboard.TargetName="CoverScale" Storyboard.TargetProperty="ScaleY"
+                                 To="1.035" Duration="0:0:0.5">
+                  <DoubleAnimation.EasingFunction>
+                    <QuinticEase EasingMode="EaseOut" />
+                  </DoubleAnimation.EasingFunction>
+                </DoubleAnimation>
+              </Storyboard>
+            </BeginStoryboard>
+          </DataTrigger.EnterActions>
+          <DataTrigger.ExitActions>
+            <BeginStoryboard>
+              <Storyboard>
+                <DoubleAnimation Storyboard.TargetName="CoverScale" Storyboard.TargetProperty="ScaleX"
+                                 To="1" Duration="0:0:0.32" />
+                <DoubleAnimation Storyboard.TargetName="CoverScale" Storyboard.TargetProperty="ScaleY"
+                                 To="1" Duration="0:0:0.32" />
+              </Storyboard>
+            </BeginStoryboard>
+          </DataTrigger.ExitActions>
+        </DataTrigger>
         <DataTrigger Binding="{Binding IsSelected}" Value="True">
-          <Setter TargetName="CardRoot" Property="BorderBrush" Value="{StaticResource ImmAccentBrush}" />
+          <Setter TargetName="MoreButton" Property="Visibility" Value="Visible" />
         </DataTrigger>
       </DataTemplate.Triggers>
     </DataTemplate>
 
-    <!-- ============ LIST ROW ============ -->
+    <!-- ═══════════ LIST ROW ═══════════ -->
     <DataTemplate x:Key="PackRowTemplate" DataType="{x:Type vm:LibraryEntryViewModel}">
-      <Border x:Name="RowRoot"
-              Background="{StaticResource ImmBgCardBrush}"
-              BorderBrush="{StaticResource ImmCardBorderBrush}" BorderThickness="1"
-              CornerRadius="8" Padding="12,8" Margin="0,0,0,8"
-              Cursor="Hand">
+      <Border x:Name="RowRoot" Background="{StaticResource ImmSurface2Brush}"
+              BorderBrush="{StaticResource ImmLineBrush}" BorderThickness="1"
+              CornerRadius="10" Padding="10,8" Margin="0,0,0,8" Cursor="Hand">
         <Border.InputBindings>
           <MouseBinding Gesture="LeftClick"
                         Command="{Binding DataContext.SelectEntryCommand, RelativeSource={RelativeSource AncestorType=ListBox}}"
@@ -187,58 +173,56 @@
         </Border.InputBindings>
         <Grid>
           <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="112" />
-            <ColumnDefinition Width="14" />
+            <ColumnDefinition Width="104" />
+            <ColumnDefinition Width="12" />
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="28" />
+            <ColumnDefinition Width="8" />
             <ColumnDefinition Width="Auto" />
           </Grid.ColumnDefinitions>
-          <Border Grid.Column="0" Height="63" CornerRadius="6" ClipToBounds="True" Background="#1A2438">
+          <Border Grid.Column="0" Height="58" CornerRadius="7" ClipToBounds="True" Background="#0A1119">
             <Image Source="{Binding CoverImage}" Stretch="UniformToFill" />
           </Border>
           <StackPanel Grid.Column="2" VerticalAlignment="Center">
             <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold"
                        Foreground="{StaticResource ImmTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
-            <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
-              <TextBlock Text="{Binding GameDisplayName}" FontSize="12"
-                         Foreground="{StaticResource ImmAccentCyanBrush}" />
-              <TextBlock Text="{Binding EngineDisplayName}" FontSize="12" Margin="10,0,0,0"
-                         Foreground="{StaticResource ImmTextSecondaryBrush}" />
-            </StackPanel>
+            <TextBlock Text="{Binding MetaText}" FontSize="11.5" Margin="0,3,0,0"
+                       Foreground="{StaticResource ImmTextTertiaryBrush}" TextTrimming="CharacterEllipsis" />
           </StackPanel>
-          <TextBlock Grid.Column="3" Text="{Binding LastPlayedText}" FontSize="12" VerticalAlignment="Center"
+          <TextBlock Grid.Column="3" Text="{Binding PlaytimeText}" FontSize="12" VerticalAlignment="Center"
+                     HorizontalAlignment="Right" MinWidth="80" TextAlignment="Right"
                      Foreground="{StaticResource ImmTextSecondaryBrush}" />
-          <TextBlock Grid.Column="4" Text="{Binding PlaytimeText}" FontSize="12" VerticalAlignment="Center"
-                     Margin="24,0,0,0" HorizontalAlignment="Right" MinWidth="90" TextAlignment="Right"
-                     Foreground="{StaticResource ImmTextPrimaryBrush}" />
-          <ui:Button Grid.Column="6" Appearance="Secondary" Padding="4,1" VerticalAlignment="Center"
-                     Icon="{ui:SymbolIcon MoreHorizontal24}"
-                     Click="OpenCardMenu"
-                     ContextMenu="{StaticResource PackMenu}"
-                     ToolTip="Действия со сборкой" />
+          <Button Grid.Column="5" Style="{StaticResource ImmOverlayButtonStyle}" VerticalAlignment="Center"
+                  Click="OpenCardMenu" ContextMenu="{StaticResource PackMenu}"
+                  ToolTip="Действия со сборкой">
+            <StackPanel Orientation="Horizontal">
+              <Ellipse Width="2.5" Height="2.5" Fill="{StaticResource ImmTextPrimaryBrush}" />
+              <Ellipse Width="2.5" Height="2.5" Margin="2.5,0" Fill="{StaticResource ImmTextPrimaryBrush}" />
+              <Ellipse Width="2.5" Height="2.5" Fill="{StaticResource ImmTextPrimaryBrush}" />
+            </StackPanel>
+          </Button>
         </Grid>
       </Border>
       <DataTemplate.Triggers>
         <DataTrigger Binding="{Binding IsSelected}" Value="True">
-          <Setter TargetName="RowRoot" Property="BorderBrush" Value="{StaticResource ImmAccentBrush}" />
+          <Setter TargetName="RowRoot" Property="BorderBrush" Value="#BF3D7BFF" />
+          <Setter TargetName="RowRoot" Property="Background" Value="{StaticResource ImmSurface3Brush}" />
         </DataTrigger>
       </DataTemplate.Triggers>
     </DataTemplate>
   </Page.Resources>
 
-  <!-- ============ 3-COLUMN LAYOUT (276 / * / 380) ============ -->
+  <!-- ══════════════ SHELL: sidebar 236 / content * / details 340 ══════════════ -->
   <Grid>
     <Grid.ColumnDefinitions>
-      <ColumnDefinition Width="276" />
+      <ColumnDefinition Width="236" />
       <ColumnDefinition Width="*" />
-      <ColumnDefinition Width="380" />
+      <ColumnDefinition Width="Auto" />
     </Grid.ColumnDefinitions>
 
-    <!-- ============ LEFT COLUMN ============ -->
-    <Border Grid.Column="0">
-      <Grid Margin="20,24,20,16">
+    <!-- ─────────── LEFT: brand, sections, status ─────────── -->
+    <Border Grid.Column="0" BorderBrush="{StaticResource ImmLineBrush}" BorderThickness="0,0,1,0">
+      <Grid Margin="12,16,12,14">
         <Grid.RowDefinitions>
           <RowDefinition Height="Auto" />
           <RowDefinition Height="Auto" />
@@ -246,409 +230,406 @@
           <RowDefinition Height="Auto" />
         </Grid.RowDefinitions>
 
-        <!-- Logo: gradient ring + glow -->
-        <Grid Grid.Row="0" Margin="2,0,0,28">
-          <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="Auto" />
-            <ColumnDefinition Width="Auto" />
-          </Grid.ColumnDefinitions>
-          <!-- App mark: transparent asset (no tile, no halo) — sits on the gradient like a native logo -->
-          <Image Grid.Column="0" Width="44" Height="44" Margin="0,0,12,0"
-                 Source="/Assets/app-icon-mark.png" Stretch="Uniform"
+        <!-- brand: the real app mark, no tile -->
+        <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="6,0,0,20">
+          <Image Width="34" Height="34" Source="/Assets/app-icon-mark.png" Stretch="Uniform"
                  RenderOptions.BitmapScalingMode="HighQuality" />
-          <StackPanel Grid.Column="1" VerticalAlignment="Center">
-            <TextBlock Text="IMM" FontSize="23" FontWeight="Bold"
+          <StackPanel Margin="10,0,0,0" VerticalAlignment="Center">
+            <TextBlock Text="IMM" FontSize="14" FontWeight="SemiBold"
                        Foreground="{StaticResource ImmTextPrimaryBrush}" />
-            <TextBlock Text="Infinite Modpack Manager" FontSize="14"
-                       Foreground="{StaticResource ImmTextSecondaryBrush}" />
+            <TextBlock Text="Infinite Modpack Manager" FontSize="10.5" Margin="0,2,0,0"
+                       Foreground="{StaticResource ImmTextTertiaryBrush}" />
           </StackPanel>
-        </Grid>
-
-        <!-- Nav: sections (library / scanner / settings) + the log window -->
-        <StackPanel Grid.Row="1">
-          <Button Style="{StaticResource ImmNavButtonStyle}" Tag="{Binding IsLibrarySection}"
-                  Command="{Binding ShowSectionCommand}"
-                  CommandParameter="{x:Static vm:AppSection.Library}"
-                  ToolTip="Коллекция сборок">
-            <StackPanel Orientation="Horizontal">
-              <ui:SymbolIcon Symbol="Library24" FontSize="18"
-                             Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
-              <TextBlock Text="Библиотека" FontSize="14" Margin="10,0,0,0" FontWeight="Medium"
-                         Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
-            </StackPanel>
-          </Button>
-
-          <Button Style="{StaticResource ImmNavButtonStyle}" Tag="{Binding IsScannerSection}"
-                  Command="{Binding ShowSectionCommand}"
-                  CommandParameter="{x:Static vm:AppSection.Scanner}"
-                  ToolTip="Что IMM видит в сборках: детект, предупреждения, расхождения с манифестом">
-            <StackPanel Orientation="Horizontal">
-              <ui:SymbolIcon Symbol="ScanType24" FontSize="18"
-                             Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
-              <TextBlock Text="Сканер" FontSize="14" Margin="10,0,0,0"
-                         Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
-            </StackPanel>
-          </Button>
-
-          <Button Style="{StaticResource ImmNavButtonStyle}" Tag="{Binding IsSettingsSection}"
-                  Command="{Binding ShowSectionCommand}"
-                  CommandParameter="{x:Static vm:AppSection.Settings}"
-                  ToolTip="Настройки приложения">
-            <StackPanel Orientation="Horizontal">
-              <ui:SymbolIcon Symbol="Settings24" FontSize="18"
-                             Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
-              <TextBlock Text="Настройки" FontSize="14" Margin="10,0,0,0"
-                         Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
-            </StackPanel>
-          </Button>
-
-          <Button Style="{StaticResource ImmNavButtonStyle}" Margin="0,4,0,0"
-                  Command="{Binding OpenLogWindowCommand}"
-                  ToolTip="Окно с подробным логом (Information+)">
-            <StackPanel Orientation="Horizontal">
-              <ui:SymbolIcon Symbol="SlideText24" FontSize="18"
-                             Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
-              <TextBlock Text="Лог" FontSize="14" Margin="10,0,0,0"
-                         Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
-            </StackPanel>
-          </Button>
         </StackPanel>
 
-        <!-- Status -->
-        <StackPanel Grid.Row="3" Margin="2,0,0,0">
-          <Separator Background="{StaticResource ImmBorderBrush}" Margin="0,0,0,12" />
+        <!-- sections: RadioButton, checked state drives the accent bar -->
+        <StackPanel Grid.Row="1">
+          <RadioButton Style="{StaticResource ImmNavStyle}" GroupName="ImmNav" Margin="0,0,0,2"
+                       IsChecked="{Binding IsLibrarySection, Mode=OneWay}"
+                       Command="{Binding ShowSectionCommand}"
+                       CommandParameter="{x:Static vm:AppSection.Library}"
+                       ToolTip="Коллекция сборок">
+            <StackPanel Orientation="Horizontal">
+              <ui:SymbolIcon Symbol="Library24" FontSize="16"
+                             Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+              <TextBlock Text="Библиотека" Margin="10,0,0,0" VerticalAlignment="Center"
+                         Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+            </StackPanel>
+          </RadioButton>
+
+          <RadioButton Style="{StaticResource ImmNavStyle}" GroupName="ImmNav" Margin="0,0,0,2"
+                       IsChecked="{Binding IsScannerSection, Mode=OneWay}"
+                       Command="{Binding ShowSectionCommand}"
+                       CommandParameter="{x:Static vm:AppSection.Scanner}"
+                       ToolTip="Что IMM видит в сборках: детект, предупреждения, расхождения с манифестом">
+            <StackPanel Orientation="Horizontal">
+              <ui:SymbolIcon Symbol="ScanType24" FontSize="16"
+                             Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+              <TextBlock Text="Сканер" Margin="10,0,0,0" VerticalAlignment="Center"
+                         Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+            </StackPanel>
+          </RadioButton>
+
+          <RadioButton Style="{StaticResource ImmNavStyle}" GroupName="ImmNav" Margin="0,0,0,2"
+                       IsChecked="{Binding IsSettingsSection, Mode=OneWay}"
+                       Command="{Binding ShowSectionCommand}"
+                       CommandParameter="{x:Static vm:AppSection.Settings}"
+                       ToolTip="Настройки приложения">
+            <StackPanel Orientation="Horizontal">
+              <ui:SymbolIcon Symbol="Settings24" FontSize="16"
+                             Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+              <TextBlock Text="Настройки" Margin="10,0,0,0" VerticalAlignment="Center"
+                         Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+            </StackPanel>
+          </RadioButton>
+
+          <RadioButton Style="{StaticResource ImmNavStyle}" GroupName="ImmNav" Margin="0,6,0,0"
+                       IsChecked="False"
+                       Command="{Binding OpenLogWindowCommand}"
+                       ToolTip="Окно с подробным логом (Information+)">
+            <StackPanel Orientation="Horizontal">
+              <ui:SymbolIcon Symbol="SlideText24" FontSize="16"
+                             Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+              <TextBlock Text="Лог" Margin="10,0,0,0" VerticalAlignment="Center"
+                         Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=RadioButton}}" />
+            </StackPanel>
+          </RadioButton>
+        </StackPanel>
+
+        <!-- status -->
+        <StackPanel Grid.Row="3">
+          <Border Height="1" Background="{StaticResource ImmLineBrush}" Margin="0,0,0,12" />
           <StackPanel Orientation="Horizontal">
-            <Ellipse Width="8" Height="8" Fill="{StaticResource ImmSuccessBrush}"
-                     VerticalAlignment="Center" />
-            <TextBlock Text="{Binding StatusText}" FontSize="12" Margin="8,0,0,0"
-                       Foreground="{StaticResource ImmTextSecondaryBrush}"
-                       TextTrimming="CharacterEllipsis" />
+            <Ellipse Width="6" Height="6" VerticalAlignment="Center"
+                     Fill="{StaticResource ImmSuccessBrush}" />
+            <TextBlock Text="{Binding StatusText}" FontSize="11.5" Margin="8,0,0,0"
+                       VerticalAlignment="Center" TextTrimming="CharacterEllipsis"
+                       Foreground="{StaticResource ImmTextSecondaryBrush}" />
           </StackPanel>
+          <TextBlock Margin="14,5,0,0" FontSize="10.5" Foreground="{StaticResource ImmTextTertiaryBrush}"
+                     Text="{Binding Entries.Count, StringFormat={}{0} сборки в библиотеке}" />
         </StackPanel>
       </Grid>
     </Border>
 
-    <!-- ============ CENTER COLUMN: section host (library / scanner / settings) ============ -->
+    <!-- ─────────── CENTER: section host ─────────── -->
     <Grid Grid.Column="1">
 
-      <Grid Margin="24,20,24,16"
+      <!-- library -->
+      <Grid Margin="22,18,22,16"
             Visibility="{Binding IsLibrarySection, Converter={StaticResource BoolToVisibleConverter}}">
-      <Grid.RowDefinitions>
-        <RowDefinition Height="Auto" />
-        <RowDefinition Height="Auto" />
-        <RowDefinition Height="*" />
-      </Grid.RowDefinitions>
+        <Grid.RowDefinitions>
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="Auto" />
+          <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
 
-      <StackPanel Grid.Row="0" Orientation="Horizontal" Margin="0,0,0,0">
-        <TextBlock Text="Библиотека" FontSize="24" FontWeight="SemiBold"
-                   Foreground="{StaticResource ImmTextPrimaryBrush}" />
-        <TextBlock Margin="10,0,0,1" VerticalAlignment="Bottom" FontSize="12"
-                   Foreground="{StaticResource ImmTextSecondaryBrush}"
-                   Text="{Binding Entries.Count, StringFormat='{}{0} сборки'}" />
-      </StackPanel>
-
-      <!-- Toolbar: import · rescan left / search · sort · views right -->
-      <Grid Grid.Row="1" Margin="0,10,0,14">
-        <StackPanel Orientation="Horizontal">
-          <Button Style="{StaticResource ImmPrimaryButtonStyle}" Command="{Binding ImportCommand}">
-            <StackPanel Orientation="Horizontal">
-              <ui:SymbolIcon Symbol="FolderAdd24" FontSize="16" Foreground="White" />
-              <TextBlock Text="Добавить сборку" Margin="8,0,0,0" VerticalAlignment="Center" />
-            </StackPanel>
-          </Button>
-          <Button Style="{StaticResource ImmGhostButtonStyle}" Height="38" Margin="8,0,0,0"
-                  Command="{Binding RescanCommand}" CommandParameter="{Binding SelectedEntry}"
-                  ToolTip="Ре-скан выбранной сборки">
-            <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="15"
-                           Foreground="{StaticResource ImmTextSecondaryBrush}" />
-          </Button>
+        <StackPanel Grid.Row="0" Orientation="Horizontal">
+          <TextBlock Text="Библиотека" FontSize="26" FontWeight="SemiBold"
+                     Foreground="{StaticResource ImmTextPrimaryBrush}" />
+          <TextBlock Margin="10,0,0,4" VerticalAlignment="Bottom" FontSize="13"
+                     Foreground="{StaticResource ImmTextTertiaryBrush}"
+                     Text="{Binding Entries.Count, StringFormat='{}{0} сборки'}" />
         </StackPanel>
 
-        <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
-          <ui:TextBox Icon="{ui:SymbolIcon Search24}" PlaceholderText="Поиск сборок…"
-                      Width="200" Height="34" FontSize="13" VerticalContentAlignment="Center"
-                      Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
-          <ComboBox ItemsSource="{Binding SortOptions}"
-                    SelectedItem="{Binding SelectedSortOption}"
-                    Width="150" Height="34" FontSize="13" Margin="8,0,0,0"
-                    VerticalContentAlignment="Center" />
-          <Border Background="{StaticResource ImmBgCardBrush}" BorderBrush="{StaticResource ImmBorderBrush}"
-                  BorderThickness="1" CornerRadius="7" Margin="8,0,0,0" Padding="4">
-            <StackPanel Orientation="Horizontal">
-              <Button Style="{StaticResource ImmSegmentButtonStyle}" Command="{Binding SetGridViewCommand}"
-                      Opacity="{Binding IsGridView, Converter={StaticResource BoolToOpacityConverter}}"
-                      ToolTip="Сетка">
-                <ui:SymbolIcon Symbol="GridDots24" FontSize="16"
-                               Foreground="{StaticResource ImmTextPrimaryBrush}" />
-              </Button>
-              <Button Style="{StaticResource ImmSegmentButtonStyle}" Command="{Binding SetListViewCommand}"
-                      Opacity="{Binding IsGridView, Converter={StaticResource BoolToOpacityConverter}, ConverterParameter=invert}"
-                      ToolTip="Список">
-                <ui:SymbolIcon Symbol="TextBulletListLtr24" FontSize="16"
-                               Foreground="{StaticResource ImmTextPrimaryBrush}" />
-              </Button>
-            </StackPanel>
-          </Border>
-        </StackPanel>
-      </Grid>
+        <!-- toolbar: one 34px baseline -->
+        <Grid Grid.Row="1" Margin="0,14,0,14">
+          <StackPanel Orientation="Horizontal">
+            <Button Style="{StaticResource ImmPrimaryButtonStyle}" Command="{Binding ImportCommand}"
+                    ToolTip="Добавить сборку в библиотеку">
+              <StackPanel Orientation="Horizontal">
+                <ui:SymbolIcon Symbol="Add24" FontSize="14" Foreground="White" />
+                <TextBlock Text="Добавить сборку" Margin="7,0,0,0" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+            <Button Style="{StaticResource ImmGhostButtonStyle}" Width="34" Margin="8,0,0,0"
+                    Command="{Binding RescanCommand}" CommandParameter="{Binding SelectedEntry}"
+                    ToolTip="Ре-скан выбранной сборки">
+              <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="14"
+                             Foreground="{StaticResource ImmTextSecondaryBrush}" />
+            </Button>
+          </StackPanel>
 
-      <!-- Cards grid (ListBox + VirtualizingWrapPanel, concept rule) -->
-      <ListBox Grid.Row="2" x:Name="PacksList"
-               ItemsSource="{Binding EntriesView}"
-               Background="Transparent" BorderThickness="0"
-               ScrollViewer.HorizontalScrollBarVisibility="Disabled"
-               ScrollViewer.VerticalScrollBarVisibility="Auto">
-        <ListBox.Style>
-          <Style TargetType="ListBox">
-            <Setter Property="ItemTemplate" Value="{StaticResource PackCardTemplate}" />
-            <Setter Property="ItemsPanel">
-              <Setter.Value>
-                <ItemsPanelTemplate>
-                  <WrapPanel />
-                </ItemsPanelTemplate>
-              </Setter.Value>
-            </Setter>
-            <Setter Property="ItemContainerStyle">
-              <Setter.Value>
-                <Style TargetType="ListBoxItem">
-                  <Setter Property="Background" Value="Transparent" />
-                  <Setter Property="Width" Value="290" />
-                  <Setter Property="Height" Value="350" />
-                  <Setter Property="Margin" Value="0,0,16,12" />
-                  <Setter Property="Template">
+          <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center">
+            <ui:TextBox Icon="{ui:SymbolIcon Search24}" PlaceholderText="Поиск сборок…"
+                        Width="190" Height="34" FontSize="12.5" VerticalContentAlignment="Center"
+                        Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
+            <ComboBox ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSortOption}"
+                      Width="140" Height="34" FontSize="12.5" Margin="8,0,0,0"
+                      VerticalContentAlignment="Center" />
+            <Border Background="{StaticResource ImmSurface2Brush}" BorderBrush="{StaticResource ImmLineBrush}"
+                    BorderThickness="1" CornerRadius="10" Margin="8,0,0,0" Padding="3">
+              <StackPanel Orientation="Horizontal">
+                <Button Style="{StaticResource ImmSegmentButtonStyle}" Command="{Binding SetGridViewCommand}"
+                        ToolTip="Сетка">
+                  <ui:SymbolIcon Symbol="GridDots24" FontSize="14"
+                                 Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                </Button>
+                <Button Style="{StaticResource ImmSegmentButtonStyle}" Command="{Binding SetListViewCommand}"
+                        ToolTip="Список">
+                  <ui:SymbolIcon Symbol="TextBulletListLtr24" FontSize="14"
+                                 Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                </Button>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </Grid>
+
+        <ListBox Grid.Row="2" x:Name="PacksList" ItemsSource="{Binding EntriesView}"
+                 Background="Transparent" BorderThickness="0" Padding="0" Margin="0,0,-14,0"
+                 ScrollViewer.HorizontalScrollBarVisibility="Disabled"
+                 ScrollViewer.VerticalScrollBarVisibility="Auto">
+          <ListBox.Style>
+            <Style TargetType="ListBox">
+              <Setter Property="ItemTemplate" Value="{StaticResource PackCardTemplate}" />
+              <Setter Property="ItemsPanel">
+                <Setter.Value>
+                  <ItemsPanelTemplate>
+                    <WrapPanel ItemWidth="{Binding CardSlotWidth}" ItemHeight="252" />
+                  </ItemsPanelTemplate>
+                </Setter.Value>
+              </Setter>
+              <Setter Property="ItemContainerStyle">
+                <Setter.Value>
+                  <Style TargetType="ListBoxItem">
+                    <Setter Property="Background" Value="Transparent" />
+                    <Setter Property="Height" Value="238" />
+                    <Setter Property="Margin" Value="0,0,14,14" />
+                    <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                    <Setter Property="VerticalContentAlignment" Value="Stretch" />
+                    <Setter Property="Template">
+                      <Setter.Value>
+                        <ControlTemplate TargetType="ListBoxItem">
+                          <ContentPresenter />
+                        </ControlTemplate>
+                      </Setter.Value>
+                    </Setter>
+                  </Style>
+                </Setter.Value>
+              </Setter>
+              <Style.Triggers>
+                <DataTrigger Binding="{Binding IsGridView}" Value="False">
+                  <Setter Property="ItemTemplate" Value="{StaticResource PackRowTemplate}" />
+                  <Setter Property="ItemsPanel">
                     <Setter.Value>
-                      <ControlTemplate TargetType="ListBoxItem">
-                        <ContentPresenter />
-                      </ControlTemplate>
+                      <ItemsPanelTemplate>
+                        <StackPanel />
+                      </ItemsPanelTemplate>
                     </Setter.Value>
                   </Setter>
-                </Style>
-              </Setter.Value>
-            </Setter>
-            <Style.Triggers>
-              <DataTrigger Binding="{Binding IsGridView}" Value="False">
-                <Setter Property="ItemTemplate" Value="{StaticResource PackRowTemplate}" />
-                <Setter Property="ItemsPanel">
-                  <Setter.Value>
-                    <ItemsPanelTemplate>
-                      <StackPanel />
-                    </ItemsPanelTemplate>
-                  </Setter.Value>
-                </Setter>
-                <Setter Property="ItemContainerStyle">
-                  <Setter.Value>
-                    <Style TargetType="ListBoxItem">
-                      <Setter Property="Background" Value="Transparent" />
-                      <Setter Property="HorizontalContentAlignment" Value="Stretch" />
-                      <Setter Property="Margin" Value="0,0,0,8" />
-                      <Setter Property="Template">
-                        <Setter.Value>
-                          <ControlTemplate TargetType="ListBoxItem">
-                            <ContentPresenter />
-                          </ControlTemplate>
-                        </Setter.Value>
-                      </Setter>
-                    </Style>
-                  </Setter.Value>
-                </Setter>
-              </DataTrigger>
-            </Style.Triggers>
-          </Style>
-        </ListBox.Style>
-      </ListBox>
+                  <Setter Property="ItemContainerStyle">
+                    <Setter.Value>
+                      <Style TargetType="ListBoxItem">
+                        <Setter Property="Background" Value="Transparent" />
+                        <Setter Property="HorizontalContentAlignment" Value="Stretch" />
+                        <Setter Property="Margin" Value="0,0,14,0" />
+                        <Setter Property="Template">
+                          <Setter.Value>
+                            <ControlTemplate TargetType="ListBoxItem">
+                              <ContentPresenter />
+                            </ControlTemplate>
+                          </Setter.Value>
+                        </Setter>
+                      </Style>
+                    </Setter.Value>
+                  </Setter>
+                </DataTrigger>
+              </Style.Triggers>
+            </Style>
+          </ListBox.Style>
+        </ListBox>
 
-      <!-- Empty state -->
-      <StackPanel Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center"
-                  Visibility="{Binding HasNoEntries, Converter={StaticResource BoolToVisibleConverter}}">
-        <ui:SymbolIcon Symbol="Library24" FontSize="64"
-                       Foreground="{StaticResource ImmTextSecondaryBrush}"
-                       HorizontalAlignment="Center" />
-        <TextBlock Text="Библиотека пуста" FontSize="18" FontWeight="SemiBold" Margin="0,16,0,0"
-                   Foreground="{StaticResource ImmTextPrimaryBrush}" HorizontalAlignment="Center" />
-        <TextBlock Text="Перетащите папку сборки в окно или нажмите «Добавить сборку»" FontSize="13"
-                   Margin="0,6,0,0" HorizontalAlignment="Center"
-                   Foreground="{StaticResource ImmTextSecondaryBrush}" />
-      </StackPanel>
+        <!-- empty state -->
+        <StackPanel Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center"
+                    Visibility="{Binding HasNoEntries, Converter={StaticResource BoolToVisibleConverter}}">
+          <ui:SymbolIcon Symbol="Library24" FontSize="44" HorizontalAlignment="Center"
+                         Foreground="{StaticResource ImmTextTertiaryBrush}" />
+          <TextBlock Text="Библиотека пуста" FontSize="17" FontWeight="SemiBold" Margin="0,14,0,0"
+                     HorizontalAlignment="Center" Foreground="{StaticResource ImmTextPrimaryBrush}" />
+          <TextBlock Text="Перетащите папку сборки в окно или нажмите «Добавить сборку»" FontSize="12.5"
+                     Margin="0,6,0,0" HorizontalAlignment="Center"
+                     Foreground="{StaticResource ImmTextTertiaryBrush}" />
+        </StackPanel>
       </Grid>
 
-      <views:ScannerView Margin="24,20,24,16"
+      <views:ScannerView Margin="22,18,22,16"
                          Visibility="{Binding IsScannerSection, Converter={StaticResource BoolToVisibleConverter}}" />
 
-      <views:SettingsView Margin="24,20,24,16"
+      <views:SettingsView Margin="22,18,22,16"
                           Visibility="{Binding IsSettingsSection, Converter={StaticResource BoolToVisibleConverter}}" />
     </Grid>
 
-    <!-- ============ RIGHT COLUMN: elevated detail card ============ -->
-    <Border Grid.Column="2" Margin="12,16,16,16"
+    <!-- ─────────── RIGHT: details (library only) ─────────── -->
+    <Border Grid.Column="2" Width="340" Margin="0,18,18,18"
             Background="{StaticResource ImmDetailCardBrush}"
-            BorderBrush="{StaticResource ImmCardBorderBrush}"
-            BorderThickness="1"
-            CornerRadius="14"
-            SnapsToDevicePixels="True">
-      <ContentControl Content="{Binding SelectedEntry}" Margin="20,20,20,16">
+            BorderBrush="{StaticResource ImmLineBrush}" BorderThickness="1"
+            CornerRadius="16" SnapsToDevicePixels="True"
+            Visibility="{Binding IsLibrarySection, Converter={StaticResource BoolToVisibleConverter}}">
+      <ContentControl Content="{Binding SelectedEntry}" Margin="0">
         <ContentControl.Resources>
           <DataTemplate DataType="{x:Type vm:LibraryEntryViewModel}">
-            <ScrollViewer VerticalScrollBarVisibility="Auto">
-              <StackPanel>
-                <!-- Cover -->
-                <Border Height="180" CornerRadius="12" ClipToBounds="True" Margin="0">
-                  <Border.Background>
-                    <LinearGradientBrush StartPoint="0,0" EndPoint="1,1">
-                      <GradientStop Color="#1A2438" Offset="0" />
-                      <GradientStop Color="#0F1626" Offset="1" />
-                    </LinearGradientBrush>
-                  </Border.Background>
-                  <Grid ClipToBounds="True">
-                    <Border CornerRadius="12" ClipToBounds="True"
-                            Visibility="{Binding CoverPath, Converter={StaticResource NullToCollapsedConverter}}">
+            <Grid>
+              <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="Auto" />
+              </Grid.RowDefinitions>
+
+              <ScrollViewer Grid.Row="0" VerticalScrollBarVisibility="Auto" Padding="12,12,12,0">
+                <StackPanel>
+                  <!-- hero: cover + scrim + engine chip + name -->
+                  <Grid Height="168">
+                    <Border CornerRadius="11" ClipToBounds="True" Background="#0A1119">
+                      <Image Source="{Binding CoverImage}" Stretch="UniformToFill" />
+                    </Border>
+                    <Border CornerRadius="11" IsHitTestVisible="False">
                       <Border.Background>
-                      <ImageBrush ImageSource="{Binding CoverImage}" Stretch="UniformToFill" />
+                        <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                          <GradientStop Color="#0006090E" Offset="0.25" />
+                          <GradientStop Color="#8C06090E" Offset="0.66" />
+                          <GradientStop Color="#F206090E" Offset="1" />
+                        </LinearGradientBrush>
                       </Border.Background>
                     </Border>
-                    <StackPanel HorizontalAlignment="Center" VerticalAlignment="Center"
-                                Visibility="{Binding CoverPath, Converter={StaticResource NullToVisibleConverter}}">
-                      <ui:SymbolIcon Symbol="Library24" FontSize="36"
-                                     Foreground="{StaticResource ImmTextSecondaryBrush}"
-                                     HorizontalAlignment="Center" />
-                      <TextBlock Text="{Binding Name}" FontSize="13" FontWeight="SemiBold"
-                                 Foreground="{StaticResource ImmTextSecondaryBrush}"
-                                 HorizontalAlignment="Center" Margin="0,8,0,0" />
-                    </StackPanel>
+                    <Border CornerRadius="11" BorderBrush="#1AFFFFFF" BorderThickness="1" IsHitTestVisible="False" />
+                    <Border Style="{StaticResource ImmCoverChipStyle}" Margin="8,8,0,0">
+                      <StackPanel Orientation="Horizontal">
+                        <Ellipse Width="4" Height="4" VerticalAlignment="Center"
+                                 Fill="{StaticResource ImmAccentCyanBrush}" />
+                        <TextBlock Text="{Binding EngineDisplayName}" FontSize="10.5" Margin="5,0,0,0"
+                                   Foreground="#DCE6F4" />
+                      </StackPanel>
+                    </Border>
+                    <TextBlock Text="{Binding Name}" FontSize="16" FontWeight="SemiBold"
+                               VerticalAlignment="Bottom" Margin="12,0,12,9" TextWrapping="Wrap"
+                               Foreground="{StaticResource ImmTextPrimaryBrush}" />
                   </Grid>
-                </Border>
 
-                <TextBlock Text="{Binding Name}" FontSize="20" FontWeight="SemiBold" Margin="0,14,0,0"
-                           Foreground="{StaticResource ImmTextPrimaryBrush}" TextWrapping="Wrap" />
-
-                <StackPanel Orientation="Horizontal" Margin="0,8,0,0">
-                  <ui:SymbolIcon Symbol="Rocket24" FontSize="15" Foreground="{StaticResource ImmAccentCyanBrush}" />
-                  <TextBlock Text="{Binding GameDisplayName}" FontSize="13" Margin="8,0,0,0"
-                             Foreground="{StaticResource ImmTextPrimaryBrush}" VerticalAlignment="Center" />
-                </StackPanel>
-
-                <Separator Background="{StaticResource ImmBorderBrush}" Margin="0,14,0,10" />
-
-                <!-- Info rows: label left, value right -->
-                <Grid>
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="Auto" />
-                    <ColumnDefinition Width="*" />
-                  </Grid.ColumnDefinitions>
-                  <Grid.RowDefinitions>
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                    <RowDefinition Height="Auto" />
-                  </Grid.RowDefinitions>
-
-                  <TextBlock Grid.Row="0" Grid.Column="0" Text="Движок" FontSize="12"
-                             Foreground="{StaticResource ImmTextSecondaryBrush}" Margin="0,4,0,0" />
-                  <TextBlock Grid.Row="0" Grid.Column="1" Text="{Binding EngineDisplayName}" FontSize="12"
-                             Foreground="{StaticResource ImmTextPrimaryBrush}" HorizontalAlignment="Right" Margin="0,4,0,0" />
-
-                  <TextBlock Grid.Row="1" Grid.Column="0" Text="Источник" FontSize="12"
-                             Foreground="{StaticResource ImmTextSecondaryBrush}" Margin="0,6,0,0" />
-                  <TextBlock Grid.Row="1" Grid.Column="1" Text="{Binding SourceText}" FontSize="12"
-                             Foreground="{StaticResource ImmTextPrimaryBrush}" HorizontalAlignment="Right" Margin="0,6,0,0" />
-
-                  <TextBlock Grid.Row="2" Grid.Column="0" Text="Последний запуск" FontSize="12"
-                             Foreground="{StaticResource ImmTextSecondaryBrush}" Margin="0,6,0,0" />
-                  <TextBlock Grid.Row="2" Grid.Column="1" Text="{Binding LastPlayedText}" FontSize="12"
-                             Foreground="{StaticResource ImmTextPrimaryBrush}" HorizontalAlignment="Right" Margin="0,6,0,0" />
-
-                  <TextBlock Grid.Row="3" Grid.Column="0" Text="Время в игре" FontSize="12"
-                             Foreground="{StaticResource ImmTextSecondaryBrush}" Margin="0,6,0,0" />
-                  <TextBlock Grid.Row="3" Grid.Column="1" Text="{Binding PlaytimeText}" FontSize="12"
-                             Foreground="{StaticResource ImmTextPrimaryBrush}" HorizontalAlignment="Right" Margin="0,6,0,0" />
-
-                  <TextBlock Grid.Row="4" Grid.Column="0" Text="Профиль MO2" FontSize="12"
-                             Foreground="{StaticResource ImmTextSecondaryBrush}" Margin="0,6,0,0"
-                             Visibility="{Binding ProfileText, Converter={StaticResource NullToCollapsedConverter}}" />
-                  <TextBlock Grid.Row="4" Grid.Column="1" Text="{Binding ProfileText}" FontSize="12"
-                             Foreground="{StaticResource ImmTextPrimaryBrush}" HorizontalAlignment="Right" Margin="0,6,0,0"
-                             Visibility="{Binding ProfileText, Converter={StaticResource NullToCollapsedConverter}}" />
-                </Grid>
-
-                <!-- Launch: wide canon accent (strategy wired in Phase 2) -->
-                <Button Style="{StaticResource ImmPrimaryButtonStyle}" Height="44" FontSize="15" FontWeight="Bold"
-                        Margin="0,16,0,0"
-                        Command="{Binding DataContext.LaunchCommand, RelativeSource={RelativeSource AncestorType=Page}}"
-                        CommandParameter="{Binding}"
-                        ToolTip="Запустить сборку">
-                  <StackPanel Orientation="Horizontal">
-                    <ui:SymbolIcon Symbol="Play24" FontSize="16" Foreground="White" />
-                    <TextBlock Text="ЗАПУСТИТЬ" Margin="10,0,0,0" VerticalAlignment="Center" />
-                  </StackPanel>
-                </Button>
-
-                <!-- MO2: activate the running window, otherwise start the instance without a game -->
-                <Button Style="{StaticResource ImmGhostButtonStyle}" Margin="0,8,0,0"
-                        HorizontalContentAlignment="Center"
-                        Command="{Binding DataContext.OpenMo2Command, RelativeSource={RelativeSource AncestorType=Page}}"
-                        CommandParameter="{Binding}"
-                        ToolTip="Открыть Mod Organizer 2 этой сборки (без запуска игры)"
-                        Visibility="{Binding IsMo2, Converter={StaticResource BoolToVisibleConverter}}">
-                  <StackPanel Orientation="Horizontal">
-                    <ui:SymbolIcon Symbol="Settings24" FontSize="14"
-                                   Foreground="{StaticResource ImmTextSecondaryBrush}" />
-                    <TextBlock Text="Открыть MO2" FontSize="12" Margin="7,0,0,0" VerticalAlignment="Center" />
-                  </StackPanel>
-                </Button>
-
-                <Grid Margin="0,10,0,0">
-                  <Grid.ColumnDefinitions>
-                    <ColumnDefinition Width="*" />
-                    <ColumnDefinition Width="8" />
-                    <ColumnDefinition Width="*" />
-                  </Grid.ColumnDefinitions>
-                  <Button Style="{StaticResource ImmGhostButtonStyle}" HorizontalContentAlignment="Center"
-                          Command="{Binding DataContext.OpenPackFolderCommand, RelativeSource={RelativeSource AncestorType=Page}}"
-                          CommandParameter="{Binding}">
-                    <StackPanel Orientation="Horizontal">
-                      <ui:SymbolIcon Symbol="OpenFolder24" FontSize="14"
-                                     Foreground="{StaticResource ImmTextSecondaryBrush}" />
-                      <TextBlock Text="Папка сборки" FontSize="12" Margin="7,0,0,0" VerticalAlignment="Center" />
-                    </StackPanel>
-                  </Button>
-                  <Button Grid.Column="2" Style="{StaticResource ImmGhostButtonStyle}" HorizontalContentAlignment="Center"
-                          Command="{Binding DataContext.RescanCommand, RelativeSource={RelativeSource AncestorType=Page}}"
-                          CommandParameter="{Binding}">
-                    <StackPanel Orientation="Horizontal">
-                      <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="14"
-                                     Foreground="{StaticResource ImmTextSecondaryBrush}" />
-                      <TextBlock Text="Ре-скан" FontSize="12" Margin="7,0,0,0" VerticalAlignment="Center" />
-                    </StackPanel>
-                  </Button>
-                </Grid>
-
-                <!-- Notes -->
-                <StackPanel Margin="0,14,0,0"
-                            Visibility="{Binding NotesText, Converter={StaticResource NullToCollapsedConverter}}">
-                  <Grid>
+                  <!-- two stats -->
+                  <Grid Margin="0,12,0,0">
                     <Grid.ColumnDefinitions>
                       <ColumnDefinition Width="*" />
-                      <ColumnDefinition Width="Auto" />
+                      <ColumnDefinition Width="8" />
+                      <ColumnDefinition Width="*" />
                     </Grid.ColumnDefinitions>
-                    <TextBlock Text="Заметки" FontSize="13" FontWeight="SemiBold"
-                               Foreground="{StaticResource ImmTextPrimaryBrush}" />
-                    <ui:SymbolIcon Grid.Column="1" Symbol="Edit24" FontSize="14"
-                                   Foreground="{StaticResource ImmTextSecondaryBrush}"
-                                   ToolTip="Редактирование заметок появится позже" />
+                    <Border Grid.Column="0" Background="#08FFFFFF" BorderBrush="{StaticResource ImmLineBrush}"
+                            BorderThickness="1" CornerRadius="10" Padding="10,8">
+                      <StackPanel>
+                        <TextBlock Text="{Binding PlaytimeText}" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource ImmTextPrimaryBrush}" />
+                        <TextBlock Text="в игре" FontSize="10.5" Margin="0,3,0,0"
+                                   Foreground="{StaticResource ImmTextTertiaryBrush}" />
+                      </StackPanel>
+                    </Border>
+                    <Border Grid.Column="2" Background="#08FFFFFF" BorderBrush="{StaticResource ImmLineBrush}"
+                            BorderThickness="1" CornerRadius="10" Padding="10,8">
+                      <StackPanel>
+                        <TextBlock Text="{Binding LastPlayedText}" FontSize="14" FontWeight="SemiBold"
+                                   Foreground="{StaticResource ImmTextPrimaryBrush}" />
+                        <TextBlock Text="последний запуск" FontSize="10.5" Margin="0,3,0,0"
+                                   Foreground="{StaticResource ImmTextTertiaryBrush}" />
+                      </StackPanel>
+                    </Border>
                   </Grid>
-                  <Border Background="#101828" BorderBrush="{StaticResource ImmBorderBrush}" BorderThickness="1"
-                          CornerRadius="8" Padding="12,10" Margin="0,8,0,0">
-                    <TextBlock Text="{Binding NotesText}" FontSize="12" TextWrapping="Wrap" LineHeight="17"
-                               Foreground="{StaticResource ImmTextSecondaryBrush}" />
+
+                  <!-- facts -->
+                  <StackPanel Margin="2,12,2,0">
+                    <Grid Margin="0,5">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                      </Grid.ColumnDefinitions>
+                      <TextBlock Text="Игра" FontSize="12" Foreground="{StaticResource ImmTextTertiaryBrush}" />
+                      <TextBlock Grid.Column="1" Text="{Binding GameDisplayName}" FontSize="12"
+                                 HorizontalAlignment="Right" Foreground="#CFD9E6" />
+                    </Grid>
+                    <Grid Margin="0,5"
+                          Visibility="{Binding ProfileText, Converter={StaticResource NullToCollapsedConverter}}">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                      </Grid.ColumnDefinitions>
+                      <TextBlock Text="Профиль MO2" FontSize="12" Foreground="{StaticResource ImmTextTertiaryBrush}" />
+                      <TextBlock Grid.Column="1" Text="{Binding ProfileText}" FontSize="12"
+                                 HorizontalAlignment="Right" Foreground="#CFD9E6" />
+                    </Grid>
+                    <Grid Margin="0,5">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                      </Grid.ColumnDefinitions>
+                      <TextBlock Text="Источник" FontSize="12" Foreground="{StaticResource ImmTextTertiaryBrush}" />
+                      <TextBlock Grid.Column="1" Text="{Binding SourceShortText}" FontSize="12"
+                                 HorizontalAlignment="Right" Foreground="#CFD9E6" />
+                    </Grid>
+                    <Grid Margin="0,5">
+                      <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="*" />
+                      </Grid.ColumnDefinitions>
+                      <TextBlock Text="Путь" FontSize="12" Foreground="{StaticResource ImmTextTertiaryBrush}" />
+                      <TextBlock Grid.Column="1" Text="{Binding RootPath}" FontSize="10.5"
+                                 HorizontalAlignment="Right" TextTrimming="CharacterEllipsis"
+                                 Foreground="{StaticResource ImmTextSecondaryBrush}"
+                                 ToolTip="{Binding RootPath}" />
+                    </Grid>
+                  </StackPanel>
+
+                  <!-- notes -->
+                  <Border Margin="0,12,0,12" Background="#08FFFFFF" BorderBrush="{StaticResource ImmLineBrush}"
+                          BorderThickness="1" CornerRadius="10" Padding="11,10"
+                          Visibility="{Binding NotesText, Converter={StaticResource NullToCollapsedConverter}}">
+                    <StackPanel>
+                      <TextBlock Text="ЗАМЕТКИ" FontSize="10" FontWeight="SemiBold" Margin="0,0,0,5"
+                                 Foreground="{StaticResource ImmTextTertiaryBrush}" />
+                      <TextBlock Text="{Binding NotesText}" FontSize="12" LineHeight="17" TextWrapping="Wrap"
+                                 Foreground="{StaticResource ImmTextSecondaryBrush}" />
+                    </StackPanel>
                   </Border>
                 </StackPanel>
+              </ScrollViewer>
 
-                <TextBlock Text="Путь" FontSize="12" Margin="0,14,0,0"
-                           Foreground="{StaticResource ImmTextSecondaryBrush}" />
-                <TextBlock Text="{Binding RootPath}" FontSize="12" Margin="0,4,0,0" TextWrapping="Wrap"
-                           Foreground="{StaticResource ImmTextPrimaryBrush}" />
-              </StackPanel>
-            </ScrollViewer>
+              <!-- anchored actions: the CTA never scrolls away -->
+              <Border Grid.Row="1" BorderBrush="{StaticResource ImmLineBrush}" BorderThickness="0,1,0,0"
+                      Padding="12">
+                <StackPanel>
+                  <Button Style="{StaticResource ImmPrimaryButtonStyle}" Height="44" FontSize="13.5"
+                          Command="{Binding DataContext.LaunchCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                          CommandParameter="{Binding}" ToolTip="Запустить сборку">
+                    <StackPanel Orientation="Horizontal">
+                      <ui:SymbolIcon Symbol="Play24" FontSize="14" Foreground="White" />
+                      <TextBlock Text="ЗАПУСТИТЬ" Margin="8,0,0,0" VerticalAlignment="Center" FontWeight="SemiBold" />
+                    </StackPanel>
+                  </Button>
+
+                  <Grid Margin="0,8,0,0">
+                    <Grid.ColumnDefinitions>
+                      <ColumnDefinition Width="*" />
+                      <ColumnDefinition Width="8" />
+                      <ColumnDefinition Width="*" />
+                    </Grid.ColumnDefinitions>
+                    <Button Grid.Column="0" Style="{StaticResource ImmGhostButtonStyle}"
+                            Command="{Binding DataContext.CreateBackupCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                            CommandParameter="{Binding}" Content="Бэкап профиля" />
+                    <Button Grid.Column="2" Style="{StaticResource ImmGhostButtonStyle}"
+                            Command="{Binding DataContext.OpenPackFolderCommand, RelativeSource={RelativeSource AncestorType=Page}}"
+                            CommandParameter="{Binding}" Content="Папка сборки" />
+                  </Grid>
+
+                  <Button Style="{StaticResource ImmGhostButtonStyle}" Height="32" Margin="0,8,0,0"
+                          Command="{Binding DataContext.OpenMo2Command, RelativeSource={RelativeSource AncestorType=Page}}"
+                          CommandParameter="{Binding}"
+                          Visibility="{Binding IsMo2, Converter={StaticResource BoolToVisibleConverter}}"
+                          ToolTip="Открыть Mod Organizer 2 этой сборки (без запуска игры)">
+                    <StackPanel Orientation="Horizontal">
+                      <ui:SymbolIcon Symbol="Settings24" FontSize="13"
+                                     Foreground="{StaticResource ImmTextSecondaryBrush}" />
+                      <TextBlock Text="Открыть Mod Organizer 2" FontSize="11.5" Margin="7,0,0,0"
+                                 VerticalAlignment="Center" />
+                    </StackPanel>
+                  </Button>
+                </StackPanel>
+              </Border>
+            </Grid>
           </DataTemplate>
         </ContentControl.Resources>
       </ContentControl>

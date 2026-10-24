@@ -15,6 +15,26 @@ public partial class LibraryView : Page
         AllowDrop = true;
         Drop += OnDrop;
         DragOver += OnDragOver;
+        PacksList.SizeChanged += OnPacksSizeChanged;
+    }
+
+    /// <summary>Cards stretch to fill the row: columns follow the available width (min ~250px each).</summary>
+    private void OnPacksSizeChanged(object sender, SizeChangedEventArgs e)
+    {
+        if (DataContext is not MainViewModel viewModel || e.NewSize.Width <= 0)
+        {
+            return;
+        }
+
+        const double gap = 14;
+        const double minCardWidth = 215;
+        var columns = Math.Clamp((int)((e.NewSize.Width + gap) / (minCardWidth + gap)), 1, 4);
+
+        // Slot = whole number of cells that fit exactly; the card itself leaves the gap as trailing margin.
+        var slot = Math.Floor(e.NewSize.Width / columns);
+
+        viewModel.CardColumns = columns;
+        viewModel.CardSlotWidth = slot;
     }
 
     private void OnDragOver(object sender, DragEventArgs e)

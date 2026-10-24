@@ -6,7 +6,7 @@
                  Width="1400" Height="1000"
                  MinWidth="1100" MinHeight="640"
                  ExtendsContentIntoTitleBar="True"
-                 WindowBackdropType="Acrylic"
+                 WindowBackdropType="Mica"
                  Icon="/Assets/app-icon.png"
                  Background="Transparent">
 

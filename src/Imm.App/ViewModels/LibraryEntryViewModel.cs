@@ -199,6 +199,27 @@ public partial class LibraryEntryViewModel : ObservableObject
         _ => "—",
     };
 
+    /// <summary>Plain-language source for the details pane (no jargon).</summary>
+    public string SourceShortText => Source == PackSource.Portable ? "внутри сборки" : "системная игра";
+
+    /// <summary>One compact line under the card title: game · playtime · last launch.</summary>
+    public string MetaText
+    {
+        get
+        {
+            var parts = new List<string> { GameDisplayName };
+            if (_entry.PlaytimeMinutes > 0)
+            {
+                parts.Add(PlaytimeText);
+            }
+
+            parts.Add(_entry.LastPlayedAtUtc is null
+                ? "ещё не запускалась"
+                : _entry.LastPlayedAtUtc.Value.ToLocalTime().ToString("dd.MM.yyyy"));
+            return string.Join("  ·  ", parts);
+        }
+    }
+
     /// <summary>Sort key by game title.</summary>
     public string GameSortKey => GameDisplayName;
 
@@ -268,5 +289,6 @@ public partial class LibraryEntryViewModel : ObservableObject
         OnPropertyChanged(nameof(PlaytimeText));
         OnPropertyChanged(nameof(LastPlayedAtUtc));
         OnPropertyChanged(nameof(LastPlayedText));
+        OnPropertyChanged(nameof(MetaText));
     }
 }

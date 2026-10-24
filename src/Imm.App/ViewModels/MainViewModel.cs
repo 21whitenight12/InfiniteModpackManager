@@ -94,6 +94,14 @@ public partial class MainViewModel : ObservableObject
     [ObservableProperty]
     private bool _isGridView = true;
 
+    /// <summary>Column count for the card grid; recomputed from the list width in the view.</summary>
+    [ObservableProperty]
+    private int _cardColumns = 3;
+
+    /// <summary>Card slot width (card + gap) for the WrapPanel; keeps cards stretched to the row.</summary>
+    [ObservableProperty]
+    private double _cardSlotWidth = 320;
+
     [ObservableProperty]
     private string _searchText = string.Empty;
 
