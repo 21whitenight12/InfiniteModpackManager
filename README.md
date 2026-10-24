@@ -10,6 +10,16 @@ files, no "why won't it start" evenings.
 
 ---
 
+## Screenshots
+
+**Library** — cards with covers and playtime, plus the detail panel with one-click launch:
+
+![Library](docs/screenshots/library.png)
+
+| Scanner | Settings |
+|---|---|
+| ![Scanner](docs/screenshots/scanner.png) | ![Settings](docs/screenshots/settings.png) |
+
 ## What it does
 
 | | |
