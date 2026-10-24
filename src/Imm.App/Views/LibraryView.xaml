@@ -326,19 +326,46 @@
           <RowDefinition Height="*" />
         </Grid.RowDefinitions>
 
-        <StackPanel Grid.Row="0" Orientation="Horizontal">
-          <TextBlock Text="Библиотека" FontSize="26" FontWeight="SemiBold"
-                     Foreground="{StaticResource ImmTextPrimaryBrush}" />
-          <TextBlock Margin="10,0,0,4" VerticalAlignment="Bottom" FontSize="13"
-                     Foreground="{StaticResource ImmTextTertiaryBrush}"
-                     Text="{Binding Entries.Count, StringFormat='{}{0} сборки'}" />
-        </StackPanel>
-
-        <!-- toolbar: fixed columns, so the right controls never ride over the left ones -->
-        <Grid Grid.Row="1" Margin="0,14,0,14">
+        <Grid Grid.Row="0">
           <Grid.ColumnDefinitions>
             <ColumnDefinition Width="*" />
             <ColumnDefinition Width="Auto" />
+          </Grid.ColumnDefinitions>
+
+          <StackPanel Grid.Column="0" Orientation="Horizontal" VerticalAlignment="Center">
+            <TextBlock Text="Библиотека" FontSize="26" FontWeight="SemiBold"
+                       Foreground="{StaticResource ImmTextPrimaryBrush}" />
+            <TextBlock Margin="10,0,0,4" VerticalAlignment="Bottom" FontSize="13"
+                       Foreground="{StaticResource ImmTextTertiaryBrush}"
+                       Text="{Binding Entries.Count, StringFormat='{}{0} сборки'}" />
+          </StackPanel>
+
+          <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
+            <ComboBox ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSortOption}"
+                      Width="124" Height="34" FontSize="12.5" VerticalContentAlignment="Center" />
+            <Border Background="{StaticResource ImmSurface2Brush}" BorderBrush="{StaticResource ImmLineBrush}"
+                    BorderThickness="1" CornerRadius="10" Margin="8,0,0,0" Padding="3">
+              <StackPanel Orientation="Horizontal">
+                <Button Style="{StaticResource ImmSegmentButtonStyle}" Command="{Binding SetGridViewCommand}"
+                        ToolTip="Сетка">
+                  <ui:SymbolIcon Symbol="GridDots24" FontSize="14"
+                                 Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                </Button>
+                <Button Style="{StaticResource ImmSegmentButtonStyle}" Command="{Binding SetListViewCommand}"
+                        ToolTip="Список">
+                  <ui:SymbolIcon Symbol="TextBulletListLtr24" FontSize="14"
+                                 Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+                </Button>
+              </StackPanel>
+            </Border>
+          </StackPanel>
+        </Grid>
+
+        <!-- toolbar: actions left, search takes whatever is left (never collides) -->
+        <Grid Grid.Row="1" Margin="0,14,0,14">
+          <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="Auto" />
+            <ColumnDefinition Width="*" />
           </Grid.ColumnDefinitions>
 
           <StackPanel Grid.Column="0" Orientation="Horizontal">
@@ -360,33 +387,14 @@
             </Button>
           </StackPanel>
 
-          <StackPanel Grid.Column="1" Orientation="Horizontal" VerticalAlignment="Center">
-            <ui:TextBox Icon="{ui:SymbolIcon Search24}" PlaceholderText="Поиск сборок…"
-                        Width="180" Height="34" FontSize="12.5" VerticalContentAlignment="Center"
-                        Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
-            <ComboBox ItemsSource="{Binding SortOptions}" SelectedItem="{Binding SelectedSortOption}"
-                      Width="132" Height="34" FontSize="12.5" Margin="8,0,0,0"
-                      VerticalContentAlignment="Center" />
-            <Border Background="{StaticResource ImmSurface2Brush}" BorderBrush="{StaticResource ImmLineBrush}"
-                    BorderThickness="1" CornerRadius="10" Margin="8,0,0,0" Padding="3">
-              <StackPanel Orientation="Horizontal">
-                <Button Style="{StaticResource ImmSegmentButtonStyle}" Command="{Binding SetGridViewCommand}"
-                        ToolTip="Сетка">
-                  <ui:SymbolIcon Symbol="GridDots24" FontSize="14"
-                                 Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
-                </Button>
-                <Button Style="{StaticResource ImmSegmentButtonStyle}" Command="{Binding SetListViewCommand}"
-                        ToolTip="Список">
-                  <ui:SymbolIcon Symbol="TextBulletListLtr24" FontSize="14"
-                                 Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
-                </Button>
-              </StackPanel>
-            </Border>
-          </StackPanel>
+          <ui:TextBox Grid.Column="1" Icon="{ui:SymbolIcon Search24}" PlaceholderText="Поиск сборок…"
+                      Height="34" FontSize="12.5" Margin="12,0,0,0" MinWidth="0"
+                      HorizontalAlignment="Stretch" VerticalContentAlignment="Center"
+                      Text="{Binding SearchText, UpdateSourceTrigger=PropertyChanged}" />
         </Grid>
 
         <ListBox Grid.Row="2" x:Name="PacksList" ItemsSource="{Binding EntriesView}"
-                 Background="Transparent" BorderThickness="0" Padding="0"
+                 Background="Transparent" BorderThickness="0" Padding="0,4,0,0"
                  ScrollViewer.HorizontalScrollBarVisibility="Disabled"
                  ScrollViewer.VerticalScrollBarVisibility="Auto">
           <ListBox.Style>
