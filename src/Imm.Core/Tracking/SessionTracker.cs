@@ -66,8 +66,8 @@ public sealed class SessionTracker : ISessionTracker
             return Result(launchStartedUtc);
         }
 
-        var exeName = ModpackScanner.GameExeNameFor(manifest.GameType);
-        if (exeName.Length == 0)
+        var exeNames = ModpackScanner.GameProcessNamesFor(manifest.GameType);
+        if (exeNames.Count == 0)
         {
             _logger.Warning("Session tracking skipped: game type {GameType} is unknown.", manifest.GameType);
             return null;
@@ -78,11 +78,11 @@ public sealed class SessionTracker : ISessionTracker
         {
             cancellationToken.ThrowIfCancellationRequested();
 
-            var game = FindGame(exeName, launchStartedUtc, expectedGameDirectory);
+            var game = FindGame(exeNames, launchStartedUtc, expectedGameDirectory);
             if (game is not null)
             {
-                _logger.Information("Game process found for session tracking: pid={ProcessId} {Exe}", game.ProcessId, exeName);
-                await FollowSessionAsync(game, exeName, launchStartedUtc, expectedGameDirectory, cancellationToken)
+                _logger.Information("Game process found for session tracking: pid={ProcessId} {Exe}", game.ProcessId, game.ExeName);
+                await FollowSessionAsync(game, exeNames, launchStartedUtc, expectedGameDirectory, cancellationToken)
                     .ConfigureAwait(false);
                 return Result(launchStartedUtc);
             }
@@ -90,39 +90,45 @@ public sealed class SessionTracker : ISessionTracker
             await Task.Delay(_pollInterval, cancellationToken).ConfigureAwait(false);
         }
 
-        _logger.Warning("Game process {Exe} did not appear within {Timeout}s; session not counted.", exeName, _gameWaitTimeout.TotalSeconds);
+        _logger.Warning("Game process {Exe} did not appear within {Timeout}s; session not counted.",
+            string.Join("/", exeNames), _gameWaitTimeout.TotalSeconds);
         return null;
     }
 
     /// <summary>
-    /// Follows the game until it is really gone. A loader may hand the session over to a new pid
-    /// (F4SE/SKSE bootstrap, MO2 relaunch), so the end of the first process is not the end of the session.
+    /// Follows the game until it is really gone. A loader may hand the session over to another process
+    /// (F4SE/SKSE bootstrap, MO2 relaunch, STALKER Anomaly's launcher → AnomalyDX*.exe), so the end of
+    /// the first process is not the end of the session.
     /// </summary>
-    private async Task FollowSessionAsync(GameProcessSnapshot game, string exeName, DateTime launchStartedUtc,
-        string? expectedGameDirectory, CancellationToken cancellationToken)
+    private async Task FollowSessionAsync(GameProcessSnapshot game, IReadOnlyList<string> exeNames,
+        DateTime launchStartedUtc, string? expectedGameDirectory, CancellationToken cancellationToken)
     {
         while (true)
         {
             await _probe.WaitForExitAsync(game.ProcessId, cancellationToken).ConfigureAwait(false);
 
-            var next = FindGame(exeName, launchStartedUtc, expectedGameDirectory);
+            var next = FindGame(exeNames, launchStartedUtc, expectedGameDirectory);
             if (next is null || next.ProcessId == game.ProcessId)
             {
                 return;
             }
 
-            _logger.Information("Game session continues in pid={ProcessId} {Exe}", next.ProcessId, exeName);
+            _logger.Information("Game session continues in pid={ProcessId} {Exe}", next.ProcessId, next.ExeName);
             game = next;
         }
     }
 
-    private GameProcessSnapshot? FindGame(string exeName, DateTime launchStartedUtc, string? expectedGameDirectory)
+    private GameProcessSnapshot? FindGame(IReadOnlyList<string> exeNames, DateTime launchStartedUtc,
+        string? expectedGameDirectory)
     {
-        foreach (var candidate in _probe.Snapshot(exeName))
+        foreach (var exeName in exeNames)
         {
-            if (IsOurs(candidate, launchStartedUtc, expectedGameDirectory))
+            foreach (var candidate in _probe.Snapshot(exeName))
             {
-                return candidate;
+                if (IsOurs(candidate, launchStartedUtc, expectedGameDirectory))
+                {
+                    return candidate;
+                }
             }
         }
 
@@ -131,7 +137,8 @@ public sealed class SessionTracker : ISessionTracker
 
     /// <summary>
     /// IMM.md anti-collision: the process must have started after our launch AND/OR live in the
-    /// expected game folder. Both facts are used when available; a foreign session never matches.
+    /// expected game folder (or a subfolder of it — a renderer in game\bin is still the game).
+    /// Both facts are used when available; a foreign session never matches.
     /// </summary>
     internal static bool IsOurs(GameProcessSnapshot candidate, DateTime launchStartedUtc, string? expectedGameDirectory)
     {
@@ -146,11 +153,15 @@ public sealed class SessionTracker : ISessionTracker
         }
 
         var actualDirectory = Path.GetDirectoryName(candidate.MainModulePath);
-        return actualDirectory is null
-            || string.Equals(
-                Path.TrimEndingDirectorySeparator(actualDirectory),
-                Path.TrimEndingDirectorySeparator(expectedGameDirectory),
-                StringComparison.OrdinalIgnoreCase);
+        if (actualDirectory is null)
+        {
+            return true;
+        }
+
+        var expected = Path.TrimEndingDirectorySeparator(expectedGameDirectory);
+        var actual = Path.TrimEndingDirectorySeparator(actualDirectory);
+        return string.Equals(actual, expected, StringComparison.OrdinalIgnoreCase)
+            || actual.StartsWith(expected + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
     }
 
     private static SessionResult Result(DateTime launchStartedUtc)

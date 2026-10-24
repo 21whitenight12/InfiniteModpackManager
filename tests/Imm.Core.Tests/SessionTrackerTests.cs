@@ -24,8 +24,9 @@ public sealed class SessionTrackerTests
         }
     }
 
-    private static GameProcessSnapshot SnapshotOf(DateTime startUtc, string? mainModule = null, int id = 42) =>
-        new(id, "Fallout4.exe", startUtc, mainModule);
+    private static GameProcessSnapshot SnapshotOf(DateTime startUtc, string? mainModule = null, int id = 42,
+        string exeName = "Fallout4.exe") =>
+        new(id, exeName, startUtc, mainModule);
 
     /// <summary>Probe that walks a script of visible-process frames: each WaitForExit advances one frame.</summary>
     private sealed class ScriptedProbe : IGameProcessProbe
@@ -85,6 +86,43 @@ public sealed class SessionTrackerTests
         var launch = new DateTime(2026, 10, 23, 12, 0, 0, DateTimeKind.Utc);
 
         Assert.True(SessionTracker.IsOurs(SnapshotOf(launch.AddSeconds(5)), launch, @"E:\Packs\Test\Stock Game"));
+    }
+
+    [Fact]
+    public void IsOurs_GameExeInSubfolderOfTheGameDirectory_Matches()
+    {
+        // STALKER Anomaly's renderer lives in game\bin — still the pack's game, not a foreign one.
+        var launch = new DateTime(2026, 10, 23, 12, 0, 0, DateTimeKind.Utc);
+
+        Assert.True(SessionTracker.IsOurs(
+            SnapshotOf(launch.AddSeconds(5), @"G:\Gemma\Anomaly\bin\AnomalyDX11AVX.exe"),
+            launch, @"G:\Gemma\Anomaly"));
+
+        // A sibling folder that merely shares the name prefix is a different game.
+        Assert.False(SessionTracker.IsOurs(
+            SnapshotOf(launch.AddSeconds(5), @"G:\Gemma\Anomaly2\bin\AnomalyDX11AVX.exe"),
+            launch, @"G:\Gemma\Anomaly"));
+    }
+
+    [Fact]
+    public async Task TrackAsync_StalkerAnomaly_FollowsLauncherHandoverToTheGameExe()
+    {
+        // AnomalyLauncher.exe starts bin\AnomalyDX11AVX.exe and exits: the session must move on to the
+        // renderer instead of ending with the launcher.
+        var launch = DateTime.UtcNow.AddSeconds(-1);
+        var probe = new ScriptedProbe(
+            [SnapshotOf(launch.AddMilliseconds(300), id: 111, exeName: "AnomalyLauncher.exe")],
+            [SnapshotOf(launch.AddSeconds(20), id: 222, exeName: "AnomalyDX11AVX.exe")],
+            []);
+        var tracker = new SessionTracker(probe, Log.Logger,
+            pollInterval: TimeSpan.FromMilliseconds(10),
+            gameWaitTimeout: TimeSpan.FromSeconds(2));
+        var manifest = new ModpackManifest { Engine = LaunchEngine.Mo2Standard, GameType = GameType.StalkerAnomaly };
+
+        var result = await tracker.TrackAsync(manifest, launch, launchedProcess: null, expectedGameDirectory: null);
+
+        Assert.NotNull(result);
+        Assert.Equal(new[] { 111, 222 }, probe.WaitedFor);
     }
 
     [Fact]

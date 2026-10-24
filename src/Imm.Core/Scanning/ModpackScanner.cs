@@ -324,6 +324,24 @@ public sealed class ModpackScanner : IModpackScanner
         _ => string.Empty,
     };
 
+    /// <summary>
+    /// Process names one session may live in, most specific first. STALKER Anomaly is the reason this is
+    /// a list: its launcher starts the DX renderer from bin\ and exits, so the session moves on to
+    /// AnomalyDX*.exe — following a single name would end the session together with the launcher.
+    /// </summary>
+    internal static IReadOnlyList<string> GameProcessNamesFor(GameType gameType) => gameType switch
+    {
+        GameType.StalkerAnomaly =>
+        [
+            "AnomalyLauncher.exe",
+            "AnomalyDX11AVX.exe", "AnomalyDX11.exe",
+            "AnomalyDX10AVX.exe", "AnomalyDX10.exe",
+            "AnomalyDX9AVX.exe", "AnomalyDX9.exe",
+            "AnomalyDX8AVX.exe", "AnomalyDX8.exe",
+        ],
+        _ => GameExeNameFor(gameType) is { Length: > 0 } exe ? [exe] : [],
+    };
+
     /// <summary>Exactly one profile folder → its name; otherwise null + warning (no silent guessing).</summary>
     private static string? DetectMo2Profile(string root, List<string> warnings)
     {
