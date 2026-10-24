@@ -48,8 +48,44 @@ public sealed class Mo2LaunchStrategy : ILaunchStrategy
             ?? throw new InvalidOperationException(Loc.T("Err_LaunchExeUnknown"));
 
         var mo2Exe = Path.Combine(mo2Directory, Markers.ModOrganizerExe);
-        return Task.FromResult(new LaunchPlan(mo2Exe, mo2Directory, ["-p", profile, executable], Elevate: true));
+        return Task.FromResult(new LaunchPlan(
+            mo2Exe, mo2Directory, BuildArguments(mo2Directory, profile, executable), Elevate: true));
     }
+
+    /// <summary>
+    /// `-p &lt;profile&gt;` is passed only when MO2 does not already have that profile selected (MO2 uses
+    /// its own selected_profile otherwise). MO2 2.5.2 crashes (0xC0000005) when -p carries a non-ASCII
+    /// name — verified live on G.A.M.M.A's «3 - G.A.M.M.A - ALL DOP+Графпак+GFY» — so such a choice is
+    /// written into the ini instead (backup first), exactly the way MO2 itself stores a profile switch.
+    /// </summary>
+    private IReadOnlyList<string> BuildArguments(string mo2Directory, string profile, string executable)
+    {
+        var arguments = new List<string>(3);
+        var iniPath = Path.Combine(mo2Directory, Markers.ModOrganizerIni);
+        var iniExists = File.Exists(LongPath.Normalize(iniPath));
+        var selected = iniExists ? _patcher.ReadSelectedProfile(iniPath) : null;
+
+        if (!string.Equals(selected, profile, StringComparison.OrdinalIgnoreCase))
+        {
+            if (IsAscii(profile) || !iniExists)
+            {
+                arguments.Add("-p");
+                arguments.Add(profile);
+            }
+            else
+            {
+                var patch = _patcher.PatchSelectedProfile(iniPath, profile);
+                _logger.Information(
+                    "MO2 profile '{Profile}' is non-ASCII: selected through the ini instead of -p (backup {Backup})",
+                    profile, patch.BackupPath);
+            }
+        }
+
+        arguments.Add(executable);
+        return arguments;
+    }
+
+    private static bool IsAscii(string value) => value.All(character => character < 128);
 
     /// <summary>Manifest-configured instance directory first; then root, then a single nested instance.</summary>
     private static string? ResolveMo2Directory(ModpackManifest manifest, string packRoot) =>

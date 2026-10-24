@@ -142,10 +142,46 @@ public sealed class LaunchStrategyTests : IDisposable
         var plan = await _mo2.BuildPlanAsync(manifest, pack);
 
         Assert.Equal(Path.Combine(pack, "GEMMA", "ModOrganizer.exe"), plan.ExecutablePath);
-        Assert.Equal(
-            new[] { "-p", "G.A.M.M.A", Path.Combine(pack, "Anomaly", "AnomalyLauncher.exe") },
-            plan.Arguments);
+        // MO2 already has this profile selected in its ini → no -p (it picks the profile itself).
+        Assert.Equal(new[] { Path.Combine(pack, "Anomaly", "AnomalyLauncher.exe") }, plan.Arguments);
         Assert.True(plan.Elevate);
+    }
+
+    [Fact]
+    public async Task Mo2_NonAsciiProfileOverride_SelectedThroughIni_Mo2CrashesOnDashP()
+    {
+        // MO2 2.5.2 dies with 0xC0000005 when -p carries a non-ASCII name (verified live on G.A.M.M.A),
+        // so a manual profile choice is written into the ini — the way MO2 itself stores a switch.
+        var cyrillicProfile = "3 - G.A.M.M.A - ALL DOP+Графпак+GFY";
+        var pack = CreatePack("GammaCyr", p =>
+        {
+            Directory.CreateDirectory(Path.Combine(p, "GEMMA"));
+            File.WriteAllText(Path.Combine(p, "GEMMA", "ModOrganizer.exe"), string.Empty);
+            var game = Directory.CreateDirectory(Path.Combine(p, "Anomaly")).FullName;
+            File.WriteAllText(Path.Combine(game, "AnomalyLauncher.exe"), string.Empty);
+            File.WriteAllText(Path.Combine(p, "GEMMA", "ModOrganizer.ini"),
+                "[General]\n"
+                + "gameName=STALKER Anomaly\n"
+                + $"gamePath=@ByteArray({game.Replace("\\", "\\\\")})\n"
+                + "selected_profile=G.A.M.M.A\n");
+        });
+
+        var manifest = Manifest(LaunchEngine.Mo2Standard, PackSource.Portable, cyrillicProfile);
+        manifest.GameType = GameType.StalkerAnomaly;
+        manifest.Mo2!.Directory = "GEMMA";
+        manifest.Launch.Executable = "AnomalyLauncher.exe";
+
+        var plan = await _mo2.BuildPlanAsync(manifest, pack);
+
+        Assert.Equal(new[] { Path.Combine(pack, "Anomaly", "AnomalyLauncher.exe") }, plan.Arguments);
+        var iniPath = Path.Combine(pack, "GEMMA", "ModOrganizer.ini");
+        Assert.Equal(cyrillicProfile, new ModOrganizerIniPatcher().ReadSelectedProfile(iniPath));
+        Assert.Single(Directory.GetFiles(Path.Combine(pack, "GEMMA"), "ModOrganizer.ini.bak-*"));
+
+        // Idempotent: the second launch writes nothing and still passes no -p.
+        var second = await _mo2.BuildPlanAsync(manifest, pack);
+        Assert.Equal(new[] { Path.Combine(pack, "Anomaly", "AnomalyLauncher.exe") }, second.Arguments);
+        Assert.Single(Directory.GetFiles(Path.Combine(pack, "GEMMA"), "ModOrganizer.ini.bak-*"));
     }
 
     [Fact]

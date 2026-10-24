@@ -165,6 +165,70 @@ public sealed class ModOrganizerIniPatcher
         return new IniPatchResult(Changed: true, BackupPath: backupPath, OldValue: oldValue, NewValue: newBaseDirectory);
     }
 
+    /// <summary>
+    /// Makes <paramref name="profileName"/> MO2's own selection (selected_profile in the ini), stored
+    /// exactly as MO2 stores it: Qt @ByteArray with UTF-8 \xHH escapes. Needed because MO2 2.5.2
+    /// crashes (0xC0000005) when -p receives a non-ASCII profile name — such a profile must be
+    /// selected in the ini instead of on the command line. Idempotent; timestamped backup before writing.
+    /// </summary>
+    public IniPatchResult PatchSelectedProfile(string iniPath, string profileName)
+    {
+        var normalized = LongPath.Normalize(iniPath);
+        if (!File.Exists(normalized))
+        {
+            throw new InvalidOperationException(Loc.T("Err_IniNotFound"));
+        }
+
+        var ini = ReadIni(normalized);
+        var match = FindIniKey(ini.Lines, SelectedProfileKey);
+        var current = match is null
+            ? null
+            : DecodePossibleByteArray(StripTrailingComment(match.Value.ValueRaw));
+
+        if (string.Equals(current, profileName, StringComparison.Ordinal))
+        {
+            return new IniPatchResult(Changed: false, BackupPath: null, OldValue: current, NewValue: profileName);
+        }
+
+        var encoded = "@ByteArray(" + EncodeQtBytes(profileName) + ")";
+        var backupPath = CreateBackup(normalized);
+        if (match is null)
+        {
+            // A portable ini keeps this key in the nameless root section at the very top.
+            ini.Lines.Insert(0, SelectedProfileKey + "=" + encoded);
+        }
+        else
+        {
+            var found = match.Value;
+            var cleanRaw = StripTrailingComment(found.ValueRaw);
+            var commentSuffix = found.ValueRaw[cleanRaw.Length..];
+            ini.Lines[found.Index] = found.LineText[..(found.EqualsIndex + 1)] + encoded + commentSuffix;
+        }
+
+        WriteIni(normalized, ini);
+        return new IniPatchResult(Changed: true, BackupPath: backupPath, OldValue: current, NewValue: profileName);
+    }
+
+    /// <summary>Qt @ByteArray payload: printable ASCII verbatim, every other byte as \xHH of its UTF-8 form.</summary>
+    private static string EncodeQtBytes(string value)
+    {
+        var bytes = Encoding.UTF8.GetBytes(value);
+        var sb = new StringBuilder(bytes.Length * 2);
+        foreach (var b in bytes)
+        {
+            if (b is >= 0x20 and <= 0x7E && b != (byte)'\\')
+            {
+                sb.Append((char)b);
+            }
+            else
+            {
+                sb.Append("\\x").Append(b.ToString("x2", System.Globalization.CultureInfo.InvariantCulture));
+            }
+        }
+
+        return sb.ToString();
+    }
+
     // ---------- parsing ----------
 
     private readonly record struct IniKeyMatch(
