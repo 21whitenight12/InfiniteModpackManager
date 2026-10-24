@@ -132,6 +132,46 @@
     </Setter>
   </Style>
 
+  <!-- Left-nav item: transparent row, accent bar + brighter text when the section is active.
+       Active state comes from Tag bound to a bool (Tag=True). -->
+  <Style x:Key="ImmNavButtonStyle" TargetType="{x:Type Button}">
+    <Setter Property="Background" Value="Transparent" />
+    <Setter Property="Foreground" Value="{StaticResource ImmTextSecondaryBrush}" />
+    <Setter Property="Padding" Value="12,10" />
+    <Setter Property="Margin" Value="0,0,0,4" />
+    <Setter Property="Cursor" Value="Hand" />
+    <Setter Property="HorizontalContentAlignment" Value="Left" />
+    <Setter Property="Template">
+      <Setter.Value>
+        <ControlTemplate TargetType="{x:Type Button}">
+          <Grid>
+            <Border x:Name="Bd" Background="{TemplateBinding Background}" CornerRadius="7" />
+            <Border x:Name="Bar" Width="3" HorizontalAlignment="Left" CornerRadius="2"
+                    Visibility="Collapsed">
+              <Border.Background>
+                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
+                  <GradientStop Color="{StaticResource ImmAccentColor}" Offset="0" />
+                  <GradientStop Color="Transparent" Offset="1" />
+                </LinearGradientBrush>
+              </Border.Background>
+            </Border>
+            <ContentPresenter Margin="{TemplateBinding Padding}" VerticalAlignment="Center" />
+          </Grid>
+          <ControlTemplate.Triggers>
+            <Trigger Property="IsMouseOver" Value="True">
+              <Setter TargetName="Bd" Property="Background" Value="{StaticResource ImmBgCardHoverBrush}" />
+            </Trigger>
+            <DataTrigger Binding="{Binding Tag, RelativeSource={RelativeSource TemplatedParent}}" Value="True">
+              <Setter TargetName="Bd" Property="Background" Value="{StaticResource ImmBgCardHoverBrush}" />
+              <Setter TargetName="Bar" Property="Visibility" Value="Visible" />
+              <Setter Property="Foreground" Value="{StaticResource ImmTextPrimaryBrush}" />
+            </DataTrigger>
+          </ControlTemplate.Triggers>
+        </ControlTemplate>
+      </Setter.Value>
+    </Setter>
+  </Style>
+
   <!-- Flat icon segment (grid/list switch). -->
   <Style x:Key="ImmSegmentButtonStyle" TargetType="{x:Type Button}">
     <Setter Property="Background" Value="Transparent" />

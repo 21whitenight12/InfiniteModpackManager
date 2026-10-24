@@ -6,11 +6,13 @@ using CommunityToolkit.Mvvm.ComponentModel;
 using CommunityToolkit.Mvvm.Input;
 using Imm.App.Services;
 using Imm.Core.Backups;
+using Imm.Core.Diagnostics;
 using Imm.Core.Domain;
 using Imm.Core.IO;
 using Imm.Core.Launch;
 using Imm.Core.Library;
 using Imm.Core.Scanning;
+using Imm.Core.Settings;
 using Imm.Core.Tracking;
 using Microsoft.Win32;
 using Serilog;
@@ -28,10 +30,16 @@ public partial class MainViewModel : ObservableObject
     private readonly IBackupService _backups;
     private readonly ISessionTracker _sessionTracker;
     private readonly IWindowActivationService _windowActivation;
+    private readonly IPackDiagnosticsService _diagnostics;
+    private readonly IAppSettingsService _appSettings;
+    private readonly ImmPaths _paths;
     private readonly ISnackbarService _snackbar;
     private readonly IContentDialogService _dialog;
     private readonly ILogWindowService _logWindow;
     private readonly ILogger _logger;
+
+    private AppSettings _settings = new();
+    private bool _settingsLoaded;
 
     public MainViewModel(
         ILibraryService library,
@@ -39,6 +47,9 @@ public partial class MainViewModel : ObservableObject
         IBackupService backups,
         ISessionTracker sessionTracker,
         IWindowActivationService windowActivation,
+        IPackDiagnosticsService diagnostics,
+        IAppSettingsService appSettings,
+        ImmPaths paths,
         ISnackbarService snackbar,
         IContentDialogService dialog,
         ILogWindowService logWindow,
@@ -49,6 +60,9 @@ public partial class MainViewModel : ObservableObject
         _backups = backups;
         _sessionTracker = sessionTracker;
         _windowActivation = windowActivation;
+        _diagnostics = diagnostics;
+        _appSettings = appSettings;
+        _paths = paths;
         _snackbar = snackbar;
         _dialog = dialog;
         _logWindow = logWindow;
@@ -96,6 +110,204 @@ public partial class MainViewModel : ObservableObject
 
     [RelayCommand]
     private void OpenLogWindow() => _logWindow.Show();
+
+    // ===== Left-nav sections: Library / Scanner / Settings =====
+
+    [ObservableProperty]
+    private AppSection _activeSection = AppSection.Library;
+
+    public bool IsLibrarySection => ActiveSection == AppSection.Library;
+
+    public bool IsScannerSection => ActiveSection == AppSection.Scanner;
+
+    public bool IsSettingsSection => ActiveSection == AppSection.Settings;
+
+    partial void OnActiveSectionChanged(AppSection value)
+    {
+        OnPropertyChanged(nameof(IsLibrarySection));
+        OnPropertyChanged(nameof(IsScannerSection));
+        OnPropertyChanged(nameof(IsSettingsSection));
+
+        // Свежая диагностика на входе в раздел: факты на диске меняются без участия IMM.
+        if (value == AppSection.Scanner)
+        {
+            _ = RefreshDiagnosticsAsync();
+        }
+    }
+
+    [RelayCommand]
+    private void ShowSection(AppSection section) => ActiveSection = section;
+
+    // ===== Scanner screen: what is detected vs what the manifest claims =====
+
+    public ObservableCollection<PackDiagnosticsViewModel> Diagnostics { get; } = [];
+
+    [ObservableProperty]
+    private bool _isDiagnosticsBusy;
+
+    [ObservableProperty]
+    private string _diagnosticsStatus = "Проверка не выполнялась";
+
+    public bool HasNoDiagnostics => Diagnostics.Count == 0;
+
+    [RelayCommand]
+    private async Task RefreshDiagnosticsAsync()
+    {
+        if (IsDiagnosticsBusy)
+        {
+            return;
+        }
+
+        IsDiagnosticsBusy = true;
+        DiagnosticsStatus = "Проверка сборок…";
+        try
+        {
+            var snapshot = Entries.ToArray();
+            var results = new List<PackDiagnosticsViewModel>(snapshot.Length);
+            foreach (var entry in snapshot)
+            {
+                var libraryEntry = await FindEntryAsync(entry.Id).ConfigureAwait(true);
+                if (libraryEntry is null)
+                {
+                    continue;
+                }
+
+                var manifest = await _library.LoadManifestAsync(libraryEntry).ConfigureAwait(true);
+                var diagnostics = await _diagnostics.AnalyzeAsync(libraryEntry, manifest).ConfigureAwait(true);
+                results.Add(new PackDiagnosticsViewModel(entry, diagnostics));
+            }
+
+            Diagnostics.Clear();
+            foreach (var result in results)
+            {
+                Diagnostics.Add(result);
+            }
+
+            DiagnosticsStatus = results.Count == 0
+                ? "В библиотеке нет сборок"
+                : $"Проверено: {results.Count}, с замечаниями: {results.Count(result => result.HasProblems)}";
+        }
+        catch (Exception exception)
+        {
+            _logger.Error(exception, "Diagnostics failed");
+            DiagnosticsStatus = "Проверка не удалась";
+            _snackbar.Show(
+                "Сканер",
+                $"Не удалось проверить сборки: {exception.Message}",
+                ControlAppearance.Danger,
+                new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
+                TimeSpan.FromSeconds(6));
+        }
+        finally
+        {
+            IsDiagnosticsBusy = false;
+            OnPropertyChanged(nameof(HasNoDiagnostics));
+        }
+    }
+
+    // ===== Settings screen (settings.json next to library.json) =====
+
+    [ObservableProperty]
+    private int _backupsLimit;
+
+    partial void OnBackupsLimitChanged(int value)
+    {
+        if (_settingsLoaded)
+        {
+            _ = SaveSettingsAsync();
+        }
+    }
+
+    [ObservableProperty]
+    private string _settingsStatus = string.Empty;
+
+    /// <summary>Archives live in Documents\&lt;packId&gt; — this is the shared root (IMM.md «Бэкапы»).</summary>
+    public string BackupsFolderPath => _paths.DocumentsDirectory;
+
+    public string LogsFolderPath => _paths.LogsDirectory;
+
+    public string LibraryFilePath => _paths.LibraryFilePath;
+
+    public string LibraryFolderPath => Path.GetDirectoryName(_paths.LibraryFilePath) ?? _paths.LibraryFilePath;
+
+    public string LibraryModeText => _paths.Portable
+        ? "портативный (library.json рядом с exe)"
+        : @"обычный (%LOCALAPPDATA%\IMM)";
+
+    private async Task LoadSettingsAsync()
+    {
+        try
+        {
+            _settings = await _appSettings.LoadAsync().ConfigureAwait(true);
+        }
+        catch (Exception exception)
+        {
+            _logger.Warning(exception, "Loading settings failed; defaults used");
+            _settings = new AppSettings();
+        }
+
+        // Загрузка не должна тут же писать файл обратно.
+        _settingsLoaded = false;
+        BackupsLimit = Math.Max(0, _settings.MaxBackups);
+        _settingsLoaded = true;
+
+        OnPropertyChanged(nameof(BackupsFolderPath));
+        OnPropertyChanged(nameof(LogsFolderPath));
+        OnPropertyChanged(nameof(LibraryFilePath));
+        OnPropertyChanged(nameof(LibraryFolderPath));
+        OnPropertyChanged(nameof(LibraryModeText));
+    }
+
+    private async Task SaveSettingsAsync()
+    {
+        try
+        {
+            _settings.MaxBackups = Math.Max(0, BackupsLimit);
+            await _appSettings.SaveAsync(_settings).ConfigureAwait(true);
+            SettingsStatus = "Сохранено";
+        }
+        catch (Exception exception)
+        {
+            _logger.Error(exception, "Saving settings failed");
+            SettingsStatus = "Не сохранено";
+            _snackbar.Show(
+                "Настройки",
+                $"Не удалось сохранить настройки: {exception.Message}",
+                ControlAppearance.Danger,
+                new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
+                TimeSpan.FromSeconds(6));
+        }
+    }
+
+    /// <summary>Opens a folder in Explorer (settings rows).</summary>
+    [RelayCommand]
+    private void OpenFolder(string? path)
+    {
+        if (string.IsNullOrWhiteSpace(path))
+        {
+            return;
+        }
+
+        try
+        {
+            Directory.CreateDirectory(LongPath.Normalize(path));
+            System.Diagnostics.Process.Start(new System.Diagnostics.ProcessStartInfo
+            {
+                FileName = path,
+                UseShellExecute = true,
+            });
+        }
+        catch (Exception exception)
+        {
+            _logger.Error(exception, "Opening folder {Path} failed", path);
+            _snackbar.Show(
+                "Проводник",
+                $"Не удалось открыть папку: {exception.Message}",
+                ControlAppearance.Danger,
+                new SymbolIcon { Symbol = SymbolRegular.Dismiss24 },
+                TimeSpan.FromSeconds(6));
+        }
+    }
 
     [RelayCommand]
     private void SetGridView() => IsGridView = true;
@@ -152,6 +364,7 @@ public partial class MainViewModel : ObservableObject
 
     public async Task InitializeAsync()
     {
+        await LoadSettingsAsync().ConfigureAwait(true);
         try
         {
             var index = await _library.LoadAsync().ConfigureAwait(true);
@@ -287,6 +500,12 @@ public partial class MainViewModel : ObservableObject
                 ControlAppearance.Info,
                 new SymbolIcon { Symbol = SymbolRegular.ArrowClockwise24 },
                 TimeSpan.FromSeconds(4));
+
+            // Экран сканера показывает сравнение с манифестом — после ре-скана оно устарело.
+            if (ActiveSection == AppSection.Scanner)
+            {
+                await RefreshDiagnosticsAsync().ConfigureAwait(true);
+            }
         }
         catch (InvalidOperationException exception)
         {
@@ -751,7 +970,9 @@ public partial class MainViewModel : ObservableObject
             var manifest = await _library.LoadManifestAsync(libraryEntry).ConfigureAwait(true)
                 ?? throw new InvalidOperationException("Манифест сборки не найден — выполните ре-скан.");
 
-            var archive = await _backups.CreateBackupAsync(libraryEntry, manifest).ConfigureAwait(true);
+            var archive = await _backups
+                .CreateBackupAsync(libraryEntry, manifest, retentionOverride: _settings.MaxBackups)
+                .ConfigureAwait(true);
             _snackbar.Show(
                 "Бэкап",
                 $"Архив сохранён: {Path.GetFileName(archive)}",

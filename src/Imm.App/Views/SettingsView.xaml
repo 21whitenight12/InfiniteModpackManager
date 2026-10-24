@@ -1,0 +1,144 @@
+<UserControl x:Class="Imm.App.Views.SettingsView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             Background="Transparent">
+
+  <ScrollViewer VerticalScrollBarVisibility="Auto">
+    <StackPanel>
+      <TextBlock Text="Настройки" FontSize="24" FontWeight="SemiBold"
+                 Foreground="{StaticResource ImmTextPrimaryBrush}" />
+      <TextBlock Text="Хранятся в settings.json рядом с library.json; данные сборок остаются в их modpack.json"
+                 FontSize="12" Margin="0,4,0,16"
+                 Foreground="{StaticResource ImmTextSecondaryBrush}" />
+
+      <!-- Backups -->
+      <Border Background="{StaticResource ImmBgCardBrush}"
+              BorderBrush="{StaticResource ImmCardBorderBrush}" BorderThickness="1"
+              CornerRadius="10" Padding="16" Margin="0,0,0,10">
+        <StackPanel>
+          <StackPanel Orientation="Horizontal">
+            <ui:SymbolIcon Symbol="Archive24" FontSize="18"
+                           Foreground="{StaticResource ImmAccentCyanBrush}" />
+            <TextBlock Text="Бэкапы" FontSize="15" FontWeight="SemiBold" Margin="9,0,0,0"
+                       VerticalAlignment="Center" Foreground="{StaticResource ImmTextPrimaryBrush}" />
+          </StackPanel>
+
+          <Grid Margin="0,14,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="Лимит хранимых архивов на сборку" FontSize="13"
+                         Foreground="{StaticResource ImmTextPrimaryBrush}" />
+              <TextBlock Text="0 — без лимита. Лимит из modpack.json конкретной сборки важнее."
+                         FontSize="11" Margin="0,3,0,0"
+                         Foreground="{StaticResource ImmTextSecondaryBrush}" />
+            </StackPanel>
+            <ui:TextBox Grid.Column="1" Width="80" Height="34" FontSize="13"
+                        VerticalContentAlignment="Center" TextAlignment="Center"
+                        Text="{Binding BackupsLimit, UpdateSourceTrigger=LostFocus}" />
+          </Grid>
+
+          <Grid Margin="0,14,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="Папка бэкапов" FontSize="13"
+                         Foreground="{StaticResource ImmTextPrimaryBrush}" />
+              <TextBlock Text="{Binding BackupsFolderPath}" FontSize="11" Margin="0,3,0,0"
+                         TextTrimming="CharacterEllipsis"
+                         Foreground="{StaticResource ImmTextSecondaryBrush}" />
+            </StackPanel>
+            <Button Grid.Column="1" Style="{StaticResource ImmGhostButtonStyle}" Height="32"
+                    Command="{Binding OpenFolderCommand}"
+                    CommandParameter="{Binding BackupsFolderPath}"
+                    Content="Открыть" />
+          </Grid>
+
+          <TextBlock Text="{Binding SettingsStatus}" FontSize="11" Margin="0,10,0,0"
+                     Foreground="{StaticResource ImmSuccessBrush}" />
+        </StackPanel>
+      </Border>
+
+      <!-- Logs -->
+      <Border Background="{StaticResource ImmBgCardBrush}"
+              BorderBrush="{StaticResource ImmCardBorderBrush}" BorderThickness="1"
+              CornerRadius="10" Padding="16" Margin="0,0,0,10">
+        <StackPanel>
+          <StackPanel Orientation="Horizontal">
+            <ui:SymbolIcon Symbol="SlideText24" FontSize="18"
+                           Foreground="{StaticResource ImmAccentCyanBrush}" />
+            <TextBlock Text="Логи" FontSize="15" FontWeight="SemiBold" Margin="9,0,0,0"
+                       VerticalAlignment="Center" Foreground="{StaticResource ImmTextPrimaryBrush}" />
+          </StackPanel>
+
+          <Grid Margin="0,14,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="Папка логов" FontSize="13"
+                         Foreground="{StaticResource ImmTextPrimaryBrush}" />
+              <TextBlock Text="{Binding LogsFolderPath}" FontSize="11" Margin="0,3,0,0"
+                         TextTrimming="CharacterEllipsis"
+                         Foreground="{StaticResource ImmTextSecondaryBrush}" />
+            </StackPanel>
+            <Button Grid.Column="1" Style="{StaticResource ImmGhostButtonStyle}" Height="32"
+                    Command="{Binding OpenFolderCommand}"
+                    CommandParameter="{Binding LogsFolderPath}"
+                    Content="Открыть" />
+          </Grid>
+        </StackPanel>
+      </Border>
+
+      <!-- Data -->
+      <Border Background="{StaticResource ImmBgCardBrush}"
+              BorderBrush="{StaticResource ImmCardBorderBrush}" BorderThickness="1"
+              CornerRadius="10" Padding="16">
+        <StackPanel>
+          <StackPanel Orientation="Horizontal">
+            <ui:SymbolIcon Symbol="Database24" FontSize="18"
+                           Foreground="{StaticResource ImmAccentCyanBrush}" />
+            <TextBlock Text="Данные" FontSize="15" FontWeight="SemiBold" Margin="9,0,0,0"
+                       VerticalAlignment="Center" Foreground="{StaticResource ImmTextPrimaryBrush}" />
+          </StackPanel>
+
+          <Grid Margin="0,14,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <StackPanel VerticalAlignment="Center">
+              <TextBlock Text="Библиотека (library.json)" FontSize="13"
+                         Foreground="{StaticResource ImmTextPrimaryBrush}" />
+              <TextBlock Text="{Binding LibraryFilePath}" FontSize="11" Margin="0,3,0,0"
+                         TextTrimming="CharacterEllipsis"
+                         Foreground="{StaticResource ImmTextSecondaryBrush}" />
+            </StackPanel>
+            <Button Grid.Column="1" Style="{StaticResource ImmGhostButtonStyle}" Height="32"
+                    Command="{Binding OpenFolderCommand}"
+                    CommandParameter="{Binding LibraryFolderPath}"
+                    Content="Открыть" />
+          </Grid>
+
+          <Grid Margin="0,14,0,0">
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+            <TextBlock Text="Режим" FontSize="13" VerticalAlignment="Center"
+                       Foreground="{StaticResource ImmTextPrimaryBrush}" />
+            <TextBlock Grid.Column="1" Text="{Binding LibraryModeText}" FontSize="12"
+                       VerticalAlignment="Center"
+                       Foreground="{StaticResource ImmTextSecondaryBrush}" />
+          </Grid>
+        </StackPanel>
+      </Border>
+    </StackPanel>
+  </ScrollViewer>
+</UserControl>

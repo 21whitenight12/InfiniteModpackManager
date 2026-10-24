@@ -14,7 +14,11 @@ public sealed record BackupArchive(string Path, DateTime CreatedUtc, long SizeBy
 public interface IBackupService
 {
     /// <summary>Creates an archive and returns its full path (unprefixed — safe to show in the UI).</summary>
-    Task<string> CreateBackupAsync(LibraryEntry entry, ModpackManifest manifest, CancellationToken cancellationToken = default);
+    /// <param name="retentionOverride">
+    /// App-wide limit (settings.json) used only when the pack manifest carries no own limit.
+    /// </param>
+    Task<string> CreateBackupAsync(LibraryEntry entry, ModpackManifest manifest,
+        CancellationToken cancellationToken = default, int retentionOverride = 0);
 
     /// <summary>Archives of a pack, newest first.</summary>
     IReadOnlyList<BackupArchive> List(LibraryEntry entry);
@@ -46,7 +50,7 @@ public sealed class BackupService : IBackupService
 
     /// <inheritdoc />
     public async Task<string> CreateBackupAsync(LibraryEntry entry, ModpackManifest manifest,
-        CancellationToken cancellationToken = default)
+        CancellationToken cancellationToken = default, int retentionOverride = 0)
     {
         var (sourceDirectory, sourceKind) = ResolveSource(manifest, entry.RootPath)
             ?? throw new InvalidOperationException(manifest.Engine is LaunchEngine.Mo2Standard or LaunchEngine.Mo2RootBuilder
@@ -87,7 +91,8 @@ public sealed class BackupService : IBackupService
         }
 
         _logger.Information("Backup created for {Pack}: {Source} -> {Archive}", entry.Name, sourceKind, archivePath);
-        ApplyRetention(directory, manifest.Backups?.MaxBackups ?? 0);
+        var manifestLimit = manifest.Backups?.MaxBackups ?? 0;
+        ApplyRetention(directory, manifestLimit > 0 ? manifestLimit : Math.Max(0, retentionOverride));
         return archivePath;
     }
 

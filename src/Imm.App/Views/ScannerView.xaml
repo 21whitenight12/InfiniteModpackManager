@@ -1,0 +1,183 @@
+<UserControl x:Class="Imm.App.Views.ScannerView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
+             Background="Transparent">
+
+  <UserControl.Resources>
+    <!-- Diagnostic value: severity drives the colour (warnings amber, errors red). -->
+    <Style x:Key="DiagnosticValueStyle" TargetType="TextBlock">
+      <Setter Property="FontSize" Value="12" />
+      <Setter Property="Foreground" Value="{StaticResource ImmTextPrimaryBrush}" />
+      <Setter Property="TextWrapping" Value="Wrap" />
+      <Setter Property="TextAlignment" Value="Right" />
+      <Setter Property="HorizontalAlignment" Value="Right" />
+      <Setter Property="MaxWidth" Value="230" />
+      <Style.Triggers>
+        <DataTrigger Binding="{Binding Severity}" Value="Warning">
+          <Setter Property="Foreground" Value="{StaticResource ImmWarnBrush}" />
+        </DataTrigger>
+        <DataTrigger Binding="{Binding Severity}" Value="Error">
+          <Setter Property="Foreground" Value="#E74C3C" />
+        </DataTrigger>
+        <DataTrigger Binding="{Binding Severity}" Value="Info">
+          <Setter Property="Foreground" Value="{StaticResource ImmTextSecondaryBrush}" />
+        </DataTrigger>
+      </Style.Triggers>
+    </Style>
+
+    <DataTemplate x:Key="DiagnosticRowTemplate">
+      <Grid Margin="0,4,0,0">
+        <Grid.ColumnDefinitions>
+          <ColumnDefinition Width="Auto" />
+          <ColumnDefinition Width="*" />
+        </Grid.ColumnDefinitions>
+        <TextBlock Text="{Binding Label}" FontSize="12" VerticalAlignment="Top"
+                   Foreground="{StaticResource ImmTextSecondaryBrush}" />
+        <TextBlock Grid.Column="1" Text="{Binding Value}" Style="{StaticResource DiagnosticValueStyle}"
+                   Margin="10,0,0,0" />
+      </Grid>
+    </DataTemplate>
+
+    <!-- One pack: fresh scan facts | stored manifest facts | warnings | actions -->
+    <DataTemplate x:Key="PackDiagnosticsTemplate">
+      <Border Background="{StaticResource ImmBgCardBrush}"
+              BorderBrush="{StaticResource ImmCardBorderBrush}" BorderThickness="1"
+              CornerRadius="10" Padding="16" Margin="0,0,0,10">
+        <StackPanel>
+          <Grid>
+            <StackPanel Orientation="Horizontal" VerticalAlignment="Center">
+              <TextBlock Text="{Binding Name}" FontSize="15" FontWeight="SemiBold"
+                         Foreground="{StaticResource ImmTextPrimaryBrush}" TextTrimming="CharacterEllipsis" />
+              <TextBlock Text="{Binding Summary}" FontSize="12" Margin="10,0,0,0" VerticalAlignment="Center"
+                         Foreground="{StaticResource ImmTextSecondaryBrush}" />
+            </StackPanel>
+            <Border HorizontalAlignment="Right" VerticalAlignment="Center"
+                    Background="#33E67E22" CornerRadius="4" Padding="7,2"
+                    Visibility="{Binding ProblemBadge, Converter={StaticResource NullToCollapsedConverter}}">
+              <TextBlock Text="{Binding ProblemBadge}" FontSize="11"
+                         Foreground="{StaticResource ImmWarnBrush}" />
+            </Border>
+          </Grid>
+
+          <TextBlock Text="{Binding RootPath}" FontSize="11" Margin="0,4,0,0"
+                     TextTrimming="CharacterEllipsis"
+                     Foreground="{StaticResource ImmTextSecondaryBrush}" />
+
+          <Separator Background="{StaticResource ImmBorderBrush}" Margin="0,10,0,6" />
+
+          <Grid>
+            <Grid.ColumnDefinitions>
+              <ColumnDefinition Width="*" />
+              <ColumnDefinition Width="20" />
+              <ColumnDefinition Width="*" />
+            </Grid.ColumnDefinitions>
+
+            <StackPanel>
+              <TextBlock Text="Скан сейчас" FontSize="12" FontWeight="SemiBold"
+                         Foreground="{StaticResource ImmAccentCyanBrush}" />
+              <ItemsControl ItemsSource="{Binding Detected}" ItemTemplate="{StaticResource DiagnosticRowTemplate}" />
+            </StackPanel>
+
+            <StackPanel Grid.Column="2">
+              <TextBlock Text="В манифесте" FontSize="12" FontWeight="SemiBold"
+                         Foreground="{StaticResource ImmTextSecondaryBrush}" />
+              <ItemsControl ItemsSource="{Binding Stored}" ItemTemplate="{StaticResource DiagnosticRowTemplate}" />
+            </StackPanel>
+          </Grid>
+
+          <StackPanel Margin="0,10,0,0"
+                      Visibility="{Binding HasWarnings, Converter={StaticResource BoolToVisibleConverter}}">
+            <ItemsControl ItemsSource="{Binding Warnings}">
+              <ItemsControl.ItemTemplate>
+                <DataTemplate>
+                  <StackPanel Orientation="Horizontal" Margin="0,3,0,0">
+                    <ui:SymbolIcon Symbol="Warning24" FontSize="13"
+                                   Foreground="{StaticResource ImmWarnBrush}" VerticalAlignment="Top" />
+                    <TextBlock Text="{Binding}" FontSize="12" Margin="7,0,0,0" TextWrapping="Wrap"
+                               Foreground="{StaticResource ImmWarnBrush}" />
+                  </StackPanel>
+                </DataTemplate>
+              </ItemsControl.ItemTemplate>
+            </ItemsControl>
+          </StackPanel>
+
+          <StackPanel Orientation="Horizontal" Margin="0,12,0,0">
+            <Button Style="{StaticResource ImmGhostButtonStyle}" Height="32"
+                    Command="{Binding DataContext.RescanCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    CommandParameter="{Binding Entry}"
+                    ToolTip="Пере-сканировать сборку и записать факты в манифест">
+              <StackPanel Orientation="Horizontal">
+                <ui:SymbolIcon Symbol="ArrowClockwise24" FontSize="14"
+                               Foreground="{StaticResource ImmTextSecondaryBrush}" />
+                <TextBlock Text="Ре-скан" FontSize="12" Margin="7,0,0,0" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+            <Button Style="{StaticResource ImmGhostButtonStyle}" Height="32" Margin="8,0,0,0"
+                    Command="{Binding Entry.ChooseGameFolderCommand}"
+                    ToolTip="Игра лежит отдельно от сборки — указать папку вручную">
+              <StackPanel Orientation="Horizontal">
+                <ui:SymbolIcon Symbol="FolderOpen24" FontSize="14"
+                               Foreground="{StaticResource ImmTextSecondaryBrush}" />
+                <TextBlock Text="Папка игры…" FontSize="12" Margin="7,0,0,0" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+            <Button Style="{StaticResource ImmGhostButtonStyle}" Height="32" Margin="8,0,0,0"
+                    Command="{Binding DataContext.OpenPackFolderCommand, RelativeSource={RelativeSource AncestorType=UserControl}}"
+                    CommandParameter="{Binding Entry}">
+              <StackPanel Orientation="Horizontal">
+                <ui:SymbolIcon Symbol="Folder24" FontSize="14"
+                               Foreground="{StaticResource ImmTextSecondaryBrush}" />
+                <TextBlock Text="Папка сборки" FontSize="12" Margin="7,0,0,0" VerticalAlignment="Center" />
+              </StackPanel>
+            </Button>
+          </StackPanel>
+        </StackPanel>
+      </Border>
+    </DataTemplate>
+  </UserControl.Resources>
+
+  <Grid>
+    <Grid.RowDefinitions>
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="Auto" />
+      <RowDefinition Height="*" />
+    </Grid.RowDefinitions>
+
+    <StackPanel Grid.Row="0" Orientation="Horizontal">
+      <TextBlock Text="Сканер" FontSize="24" FontWeight="SemiBold"
+                 Foreground="{StaticResource ImmTextPrimaryBrush}" />
+      <TextBlock Text="{Binding DiagnosticsStatus}" FontSize="12" Margin="12,0,0,1" VerticalAlignment="Bottom"
+                 Foreground="{StaticResource ImmTextSecondaryBrush}" />
+    </StackPanel>
+
+    <StackPanel Grid.Row="1" Orientation="Horizontal" Margin="0,10,0,14">
+      <Button Style="{StaticResource ImmPrimaryButtonStyle}" Command="{Binding RefreshDiagnosticsCommand}"
+              ToolTip="Просканировать все сборки библиотеки и сравнить с их манифестами">
+        <StackPanel Orientation="Horizontal">
+          <ui:SymbolIcon Symbol="ScanType24" FontSize="16" Foreground="White" />
+          <TextBlock Text="Проверить" Margin="8,0,0,0" VerticalAlignment="Center" />
+        </StackPanel>
+      </Button>
+      <TextBlock Text="Проверка ничего не записывает: ре-скан применяет факты к манифесту." FontSize="12"
+                 Margin="12,0,0,0" VerticalAlignment="Center"
+                 Foreground="{StaticResource ImmTextSecondaryBrush}" />
+    </StackPanel>
+
+    <ScrollViewer Grid.Row="2" VerticalScrollBarVisibility="Auto">
+      <ItemsControl ItemsSource="{Binding Diagnostics}"
+                    ItemTemplate="{StaticResource PackDiagnosticsTemplate}" />
+    </ScrollViewer>
+
+    <StackPanel Grid.Row="2" HorizontalAlignment="Center" VerticalAlignment="Center"
+                Visibility="{Binding HasNoDiagnostics, Converter={StaticResource BoolToVisibleConverter}}">
+      <ui:SymbolIcon Symbol="ScanType24" FontSize="48" HorizontalAlignment="Center"
+                     Foreground="{StaticResource ImmTextSecondaryBrush}" />
+      <TextBlock Text="Проверять нечего" FontSize="17" FontWeight="SemiBold" Margin="0,14,0,0"
+                 HorizontalAlignment="Center" Foreground="{StaticResource ImmTextPrimaryBrush}" />
+      <TextBlock Text="Добавьте сборку в библиотеку — здесь появятся её детект и предупреждения"
+                 FontSize="13" Margin="0,6,0,0" HorizontalAlignment="Center"
+                 Foreground="{StaticResource ImmTextSecondaryBrush}" />
+    </StackPanel>
+  </Grid>
+</UserControl>

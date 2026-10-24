@@ -3,6 +3,7 @@
       xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
       xmlns:ui="http://schemas.lepo.co/wpfui/2022/xaml"
       xmlns:vm="clr-namespace:Imm.App.ViewModels"
+      xmlns:views="clr-namespace:Imm.App.Views"
       Background="Transparent">
 
   <Page.Resources>
@@ -263,58 +264,54 @@
           </StackPanel>
         </Grid>
 
-        <!-- Nav -->
+        <!-- Nav: sections (library / scanner / settings) + the log window -->
         <StackPanel Grid.Row="1">
-          <Border Background="{StaticResource ImmBgCardHoverBrush}" CornerRadius="7" Padding="12,10" Margin="0,0,0,4">
-            <Border.BorderBrush>
-              <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                <GradientStop Color="{StaticResource ImmAccentColor}" Offset="0" />
-                <GradientStop Color="Transparent" Offset="1" />
-              </LinearGradientBrush>
-            </Border.BorderBrush>
-            <Border BorderThickness="3,0,0,0" Margin="-12,-10,0,-10" Padding="9,10" VerticalAlignment="Stretch">
-              <Border.BorderBrush>
-                <LinearGradientBrush StartPoint="0,0" EndPoint="0,1">
-                  <GradientStop Color="{StaticResource ImmAccentColor}" Offset="0" />
-                  <GradientStop Color="Transparent" Offset="1" />
-                </LinearGradientBrush>
-              </Border.BorderBrush>
-              <StackPanel Orientation="Horizontal">
-                <ui:SymbolIcon Symbol="Library24" FontSize="18" Foreground="{StaticResource ImmAccentBrush}" />
-                <TextBlock Text="Библиотека" FontSize="14" Margin="10,0,0,0" FontWeight="Medium"
-                           Foreground="{StaticResource ImmTextPrimaryBrush}" />
-              </StackPanel>
-            </Border>
-          </Border>
-
-          <Border Padding="12,10" Margin="0,0,0,4" Opacity="0.55">
+          <Button Style="{StaticResource ImmNavButtonStyle}" Tag="{Binding IsLibrarySection}"
+                  Command="{Binding ShowSectionCommand}"
+                  CommandParameter="{x:Static vm:AppSection.Library}"
+                  ToolTip="Коллекция сборок">
             <StackPanel Orientation="Horizontal">
-              <ui:SymbolIcon Symbol="ScanType24" FontSize="18" Foreground="{StaticResource ImmTextSecondaryBrush}" />
+              <ui:SymbolIcon Symbol="Library24" FontSize="18"
+                             Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+              <TextBlock Text="Библиотека" FontSize="14" Margin="10,0,0,0" FontWeight="Medium"
+                         Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+            </StackPanel>
+          </Button>
+
+          <Button Style="{StaticResource ImmNavButtonStyle}" Tag="{Binding IsScannerSection}"
+                  Command="{Binding ShowSectionCommand}"
+                  CommandParameter="{x:Static vm:AppSection.Scanner}"
+                  ToolTip="Что IMM видит в сборках: детект, предупреждения, расхождения с манифестом">
+            <StackPanel Orientation="Horizontal">
+              <ui:SymbolIcon Symbol="ScanType24" FontSize="18"
+                             Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
               <TextBlock Text="Сканер" FontSize="14" Margin="10,0,0,0"
-                         Foreground="{StaticResource ImmTextSecondaryBrush}" />
+                         Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
             </StackPanel>
-          </Border>
+          </Button>
 
-          <Border Padding="12,10" Opacity="0.55">
+          <Button Style="{StaticResource ImmNavButtonStyle}" Tag="{Binding IsSettingsSection}"
+                  Command="{Binding ShowSectionCommand}"
+                  CommandParameter="{x:Static vm:AppSection.Settings}"
+                  ToolTip="Настройки приложения">
             <StackPanel Orientation="Horizontal">
-              <ui:SymbolIcon Symbol="Settings24" FontSize="18" Foreground="{StaticResource ImmTextSecondaryBrush}" />
+              <ui:SymbolIcon Symbol="Settings24" FontSize="18"
+                             Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
               <TextBlock Text="Настройки" FontSize="14" Margin="10,0,0,0"
-                         Foreground="{StaticResource ImmTextSecondaryBrush}" />
+                         Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
             </StackPanel>
-          </Border>
+          </Button>
 
-          <Border Padding="12,10" Margin="0,4,0,0">
-            <Button Style="{StaticResource ImmGhostButtonStyle}"
-                    Command="{Binding OpenLogWindowCommand}"
-                    HorizontalContentAlignment="Left" Padding="0"
-                    ToolTip="Окно с подробным логом (Information+)">
-              <StackPanel Orientation="Horizontal">
-                <ui:SymbolIcon Symbol="SlideText24" FontSize="18" Foreground="{StaticResource ImmTextSecondaryBrush}" />
-                <TextBlock Text="Лог" FontSize="14" Margin="10,0,0,0"
-                           Foreground="{StaticResource ImmTextSecondaryBrush}" />
-              </StackPanel>
-            </Button>
-          </Border>
+          <Button Style="{StaticResource ImmNavButtonStyle}" Margin="0,4,0,0"
+                  Command="{Binding OpenLogWindowCommand}"
+                  ToolTip="Окно с подробным логом (Information+)">
+            <StackPanel Orientation="Horizontal">
+              <ui:SymbolIcon Symbol="SlideText24" FontSize="18"
+                             Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+              <TextBlock Text="Лог" FontSize="14" Margin="10,0,0,0"
+                         Foreground="{Binding Foreground, RelativeSource={RelativeSource AncestorType=Button}}" />
+            </StackPanel>
+          </Button>
         </StackPanel>
 
         <!-- Status -->
@@ -331,8 +328,11 @@
       </Grid>
     </Border>
 
-    <!-- ============ CENTER COLUMN ============ -->
-    <Grid Grid.Column="1" Margin="24,20,24,16">
+    <!-- ============ CENTER COLUMN: section host (library / scanner / settings) ============ -->
+    <Grid Grid.Column="1">
+
+      <Grid Margin="24,20,24,16"
+            Visibility="{Binding IsLibrarySection, Converter={StaticResource BoolToVisibleConverter}}">
       <Grid.RowDefinitions>
         <RowDefinition Height="Auto" />
         <RowDefinition Height="Auto" />
@@ -469,6 +469,13 @@
                    Margin="0,6,0,0" HorizontalAlignment="Center"
                    Foreground="{StaticResource ImmTextSecondaryBrush}" />
       </StackPanel>
+      </Grid>
+
+      <views:ScannerView Margin="24,20,24,16"
+                         Visibility="{Binding IsScannerSection, Converter={StaticResource BoolToVisibleConverter}}" />
+
+      <views:SettingsView Margin="24,20,24,16"
+                          Visibility="{Binding IsSettingsSection, Converter={StaticResource BoolToVisibleConverter}}" />
     </Grid>
 
     <!-- ============ RIGHT COLUMN: elevated detail card ============ -->
