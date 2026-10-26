@@ -6,7 +6,7 @@
     <UseWPF>true</UseWPF>
     <RootNamespace>Imm.App</RootNamespace>
     <ApplicationIcon>Assets\app-icon.ico</ApplicationIcon>
-    <Version>1.0.0-beta.1</Version>
+    <Version>1.0.0-beta.2</Version>
     <Product>Infinite Modpack Manager</Product>
     <Company>21whitenight12</Company>
     <Copyright>Copyright (c) 2026 21whitenight12</Copyright>
