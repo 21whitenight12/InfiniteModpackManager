@@ -41,4 +41,28 @@ internal static class Markers
         "Game Root",
         "Game Files",
     };
+
+    /// <summary>
+    /// Folders of a portable MO2 instance itself — never a game root, even when a game exe copy
+    /// happens to sit inside (mods\, downloads\, overwrite\ …).
+    /// </summary>
+    public static readonly IReadOnlyList<string> Mo2InstanceFolders = new[]
+    {
+        "mods",
+        "downloads",
+        "profiles",
+        "overwrite",
+        "webcache",
+        "plugins",
+        "dlls",
+        "styles",
+        "stylesheets",
+        "qml",
+        "translations",
+        "tutorials",
+        "licenses",
+        "loot",
+        "platforms",
+        "crashDumps",
+    };
 }

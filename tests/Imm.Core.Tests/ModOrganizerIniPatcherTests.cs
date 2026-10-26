@@ -304,4 +304,56 @@ public sealed class ModOrganizerIniPatcherTests : IDisposable
         Assert.Contains(@"base_directory=C:\Games\New", updated);
         Assert.Contains("; migrated 2023", updated);
     }
+
+    [Fact]
+    public void PatchGamePath_WritesQtByteArray_WithBackup()
+    {
+        var path = WriteIni("[General]\ngameName=Skyrim Special Edition\n"
+                            + @"gamePath=@ByteArray(D:\\Other\\Pack)" + "\n");
+
+        var result = _patcher.PatchGamePath(path, @"E:\Packs\Dormant\Skyrim");
+
+        Assert.True(result.Changed);
+        Assert.NotNull(result.BackupPath);
+        Assert.Equal(@"D:\Other\Pack", result.OldValue);
+        Assert.Contains(@"gamePath=@ByteArray(E:\\Packs\\Dormant\\Skyrim)", ReadRaw(path));
+        Assert.Equal(@"E:\Packs\Dormant\Skyrim", _patcher.ReadManagedGameDirectory(path));
+    }
+
+    [Fact]
+    public void PatchGamePath_SameValue_NoBackup()
+    {
+        var path = WriteIni("[General]\n" + @"gamePath=@ByteArray(E:\\Packs\\Skyrim)" + "\n");
+
+        var result = _patcher.PatchGamePath(path, @"E:\Packs\Skyrim");
+
+        Assert.False(result.Changed);
+        Assert.Null(result.BackupPath);
+        Assert.Empty(Directory.GetFiles(_temp, "*.bak-*"));
+    }
+
+    [Fact]
+    public void PatchGamePath_CyrillicPath_WrittenAsUtf8Escapes()
+    {
+        // MO2 stores non-Latin-1 text as UTF-8 \xHH escapes; «С» = \xd0\xa1.
+        var path = WriteIni("[General]\n" + @"gamePath=@ByteArray(D:\\Old)" + "\n");
+
+        _patcher.PatchGamePath(path, @"E:\Сборки\Skyrim");
+
+        Assert.Contains(@"\xd0\xa1", ReadRaw(path));
+        Assert.Equal(@"E:\Сборки\Skyrim", _patcher.ReadManagedGameDirectory(path));
+    }
+
+    [Fact]
+    public void PatchGamePath_MissingKey_IsNotAdded()
+    {
+        // No gamePath at all → MO2 applies its own defaults; the ini must stay untouched.
+        var path = WriteIni("[General]\ngameName=Skyrim Special Edition\n");
+
+        var result = _patcher.PatchGamePath(path, @"E:\Packs\Skyrim");
+
+        Assert.False(result.Changed);
+        Assert.DoesNotContain("gamePath", ReadRaw(path));
+        Assert.Empty(Directory.GetFiles(_temp, "*.bak-*"));
+    }
 }

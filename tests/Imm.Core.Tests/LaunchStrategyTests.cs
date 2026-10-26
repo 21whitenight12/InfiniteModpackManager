@@ -394,4 +394,62 @@ public sealed class LaunchStrategyTests : IDisposable
 
         Assert.Equal(Path.Combine(pack, "ModOrganizer.exe"), plan.ExecutablePath);
     }
+
+    [Fact]
+    public async Task Mo2_GamePathPointingAtAnotherPack_SwitchedToOwnGame()
+    {
+        // Dormant real case: the pack ships its own game in <pack>\Skyrim, but MO2's ini still points
+        // at the previous install — MO2 would mount that pack's Data folder (no DLC masters → error
+        // and instant crash). The launcher switches MO2 to the pack's own game before starting it.
+        var other = Directory.CreateDirectory(Path.Combine(_temp, "OtherPack")).FullName;
+        File.WriteAllText(Path.Combine(other, "SkyrimSE.exe"), string.Empty);
+        var pack = CreatePack("OwnGame", p =>
+        {
+            File.WriteAllText(Path.Combine(p, "ModOrganizer.exe"), string.Empty);
+            File.WriteAllText(Path.Combine(p, "ModOrganizer.ini"),
+                "[General]\ngameName=Skyrim Special Edition\n"
+                + $"gamePath=@ByteArray({other.Replace("\\", "\\\\")})\n");
+            Directory.CreateDirectory(Path.Combine(p, "Skyrim"));
+            File.WriteAllText(Path.Combine(p, "Skyrim", "SkyrimSE.exe"), string.Empty);
+            File.WriteAllText(Path.Combine(p, "Skyrim", "skse64_loader.exe"), string.Empty);
+        });
+
+        var manifest = Manifest(LaunchEngine.Mo2Standard, PackSource.Portable);
+        manifest.GameType = GameType.SkyrimSE;
+        manifest.SystemGamePath = Path.Combine(pack, "Skyrim");
+        manifest.Launch.Executable = "skse64_loader.exe";
+
+        var plan = await _mo2.BuildPlanAsync(manifest, pack);
+
+        var iniPath = Path.Combine(pack, "ModOrganizer.ini");
+        Assert.Equal(Path.Combine(pack, "Skyrim"), new ModOrganizerIniPatcher().ReadManagedGameDirectory(iniPath));
+        Assert.Single(Directory.GetFiles(pack, "ModOrganizer.ini.bak-*"));
+        Assert.Contains(Path.Combine(pack, "Skyrim", "skse64_loader.exe"), plan.Arguments);
+    }
+
+    [Fact]
+    public async Task Mo2_SystemInstallPack_GamePathIsNotTouched()
+    {
+        // Source = System: the game lives in the user's own install, nothing to switch.
+        var game = Directory.CreateDirectory(Path.Combine(_temp, "SteamSkyrim")).FullName;
+        File.WriteAllText(Path.Combine(game, "SkyrimSE.exe"), string.Empty);
+        var pack = CreatePack("SystemPack", p =>
+        {
+            File.WriteAllText(Path.Combine(p, "ModOrganizer.exe"), string.Empty);
+            File.WriteAllText(Path.Combine(p, "ModOrganizer.ini"),
+                "[General]\ngameName=Skyrim Special Edition\n"
+                + $"gamePath=@ByteArray({game.Replace("\\", "\\\\")})\n");
+            File.WriteAllText(Path.Combine(p, "skse64_loader.exe"), string.Empty);
+        });
+
+        var manifest = Manifest(LaunchEngine.Mo2Standard, PackSource.System);
+        manifest.GameType = GameType.SkyrimSE;
+        manifest.SystemGamePath = game;
+        manifest.Launch.Executable = "skse64_loader.exe";
+
+        await _mo2.BuildPlanAsync(manifest, pack);
+
+        Assert.Equal(game, new ModOrganizerIniPatcher().ReadManagedGameDirectory(Path.Combine(pack, "ModOrganizer.ini")));
+        Assert.Empty(Directory.GetFiles(pack, "ModOrganizer.ini.bak-*"));
+    }
 }

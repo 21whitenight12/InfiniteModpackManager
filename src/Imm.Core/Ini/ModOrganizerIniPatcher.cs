@@ -209,6 +209,78 @@ public sealed class ModOrganizerIniPatcher
         return new IniPatchResult(Changed: true, BackupPath: backupPath, OldValue: current, NewValue: profileName);
     }
 
+    /// <summary>
+    /// Makes <paramref name="gameDirectory"/> MO2's game folder (gamePath), written the way MO2 2.5
+    /// stores it: Qt @ByteArray with doubled backslashes and \xHH escapes for non-ASCII bytes.
+    /// Needed when the pack ships its own game but the ini still points at another install — MO2
+    /// resolves the game from its own ini, so leaving it alone would mount the wrong Data folder.
+    /// A missing key is left alone (MO2 then applies its own defaults). Idempotent; backup before writing.
+    /// </summary>
+    public IniPatchResult PatchGamePath(string iniPath, string gameDirectory)
+    {
+        var normalized = LongPath.Normalize(iniPath);
+        if (!File.Exists(normalized))
+        {
+            throw new InvalidOperationException(Loc.T("Err_IniNotFound"));
+        }
+
+        if (!Path.IsPathRooted(gameDirectory))
+        {
+            throw new InvalidOperationException(Loc.T("Err_GamePathNotAbsolute"));
+        }
+
+        var ini = ReadIni(normalized);
+        var match = FindIniKey(ini.Lines, GamePathKey);
+        if (match is null)
+        {
+            return new IniPatchResult(Changed: false, BackupPath: null, OldValue: null, NewValue: gameDirectory);
+        }
+
+        var found = match.Value;
+        var cleanRaw = StripTrailingComment(found.ValueRaw);
+        var current = DecodePossibleByteArray(cleanRaw);
+        if (SamePath(current, gameDirectory))
+        {
+            return new IniPatchResult(Changed: false, BackupPath: null, OldValue: current, NewValue: gameDirectory);
+        }
+
+        var encoded = cleanRaw.TrimStart().StartsWith("@ByteArray(", StringComparison.Ordinal)
+            ? "@ByteArray(" + EncodeQtPath(gameDirectory) + ")"
+            : EncodeLike(cleanRaw, gameDirectory);
+
+        // Хвостовой "; комментарий" — часть пользовательской строки, а не наш мусор: возвращаем его на место.
+        var commentSuffix = found.ValueRaw[cleanRaw.Length..];
+        var backupPath = CreateBackup(normalized);
+        ini.Lines[found.Index] = found.LineText[..(found.EqualsIndex + 1)] + encoded + commentSuffix;
+        WriteIni(normalized, ini);
+
+        return new IniPatchResult(Changed: true, BackupPath: backupPath, OldValue: current, NewValue: gameDirectory);
+    }
+
+    /// <summary>Path inside a Qt @ByteArray value: ASCII verbatim, backslashes doubled, other bytes as \xHH (UTF-8).</summary>
+    private static string EncodeQtPath(string path)
+    {
+        var bytes = Encoding.UTF8.GetBytes(path);
+        var sb = new StringBuilder(bytes.Length * 2);
+        foreach (var b in bytes)
+        {
+            if (b == (byte)'\\')
+            {
+                sb.Append("\\\\");
+            }
+            else if (b is >= 0x20 and <= 0x7E)
+            {
+                sb.Append((char)b);
+            }
+            else
+            {
+                sb.Append("\\x").Append(b.ToString("x2", System.Globalization.CultureInfo.InvariantCulture));
+            }
+        }
+
+        return sb.ToString();
+    }
+
     /// <summary>Qt @ByteArray payload: printable ASCII verbatim, every other byte as \xHH of its UTF-8 form.</summary>
     private static string EncodeQtBytes(string value)
     {

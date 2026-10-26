@@ -54,6 +54,10 @@ public sealed class ModpackScanner : IModpackScanner
             ? root
             : nestedMo2Instances.Count == 1 ? nestedMo2Instances[0] : null;
 
+        // The pack may carry its own game in a first-level folder with an arbitrary name
+        // (<pack>\Skyrim, G.A.M.M.A: <pack>\Anomaly) — a portable "stock game" layout.
+        var packGames = FindPackGameCandidates(root, mo2Directory);
+
         PackSource source;
         string? systemGamePath = null;
         string? gameFilesDirectory;
@@ -106,8 +110,32 @@ public sealed class ModpackScanner : IModpackScanner
                 }
             }
         }
+        else if (packGames.Count == 1)
+        {
+            // The pack's own game wins over ModOrganizer.ini's gamePath: after the pack folder was
+            // moved, the ini often still points at another pack's install, and MO2 would mount that
+            // pack's Data folder (missing masters → error + crash on launch). The launcher switches
+            // MO2 to this folder; the scan only reports the fact.
+            source = PackSource.Portable;
+            gameType = packGames[0].Game;
+            gameFilesDirectory = packGames[0].Path;
+            systemGamePath = packGames[0].Path;
+
+            var iniGame = ReadIniManagedGame(mo2Directory);
+            if (iniGame is not null && !SamePath(iniGame, systemGamePath))
+            {
+                warnings.Add(Loc.F("Warn_PackGameOverridesIni", iniGame, systemGamePath));
+            }
+        }
         else
         {
+            if (packGames.Count > 1)
+            {
+                // Ambiguity: several folders inside the pack look like a game — never a silent guess.
+                warnings.Add(Loc.F("Warn_MultiplePackGames",
+                    string.Join(", ", packGames.Select(candidate => Path.GetFileName(candidate.Path)))));
+            }
+
             source = PackSource.System;
             gameType = GameType.Unknown;
             gameFilesDirectory = null;
@@ -242,6 +270,56 @@ public sealed class ModpackScanner : IModpackScanner
     {
         var rootFull = Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
         return Path.GetFullPath(candidate).StartsWith(rootFull, StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>Two paths naming the same folder (separators and trailing slashes normalised).</summary>
+    private static bool SamePath(string left, string right)
+    {
+        static string Canon(string path) =>
+            Path.GetFullPath(LongPath.Normalize(path)).TrimEnd('\\', '/').Replace('/', '\\');
+
+        return string.Equals(Canon(left), Canon(right), StringComparison.OrdinalIgnoreCase);
+    }
+
+    /// <summary>
+    /// Game installs living in first-level pack subfolders under an arbitrary name (portable "stock
+    /// game": &lt;pack&gt;\Skyrim, G.A.M.M.A: &lt;pack&gt;\Anomaly). MO2's own folders and the MO2
+    /// instance directory never count. Several candidates = ambiguity, the caller warns instead of guessing.
+    /// </summary>
+    private static List<(string Path, GameType Game)> FindPackGameCandidates(string root, string? mo2Directory)
+    {
+        var candidates = new List<(string Path, GameType Game)>();
+        foreach (var directory in Directory.EnumerateDirectories(LongPath.Normalize(root)))
+        {
+            var name = Path.GetFileName(directory);
+            if (Markers.Mo2InstanceFolders.Contains(name, StringComparer.OrdinalIgnoreCase)
+                || (mo2Directory is not null && SamePath(directory, mo2Directory)))
+            {
+                continue;
+            }
+
+            var game = DetectGameAt(directory);
+            if (game != GameType.Unknown)
+            {
+                candidates.Add((directory, game));
+            }
+        }
+
+        return candidates;
+    }
+
+    /// <summary>Game folder as MO2 itself resolves it from its ini; null when there is no ini or no key.</summary>
+    private static string? ReadIniManagedGame(string? mo2Directory)
+    {
+        if (mo2Directory is null)
+        {
+            return null;
+        }
+
+        var iniPath = Path.Combine(mo2Directory, Markers.ModOrganizerIni);
+        return File.Exists(LongPath.Normalize(iniPath))
+            ? new ModOrganizerIniPatcher().ReadManagedGameDirectory(iniPath)
+            : null;
     }
 
     /// <summary>Game type by a well-known exe sitting directly in the directory; Unknown when none.</summary>

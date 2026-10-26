@@ -213,7 +213,8 @@ public sealed class Mo2LaunchStrategy : ILaunchStrategy
     /// <summary>
     /// Self-healing paths (IMM.md MVP #4), MO2-version aware:
     /// - legacy `base_directory` (absolute) pointing nowhere → patched to the real game folder (timestamped backup first);
-    /// - MO2 2.5+ `gamePath` belongs to MO2 — never patched; a stale value stops the launch with a clear message.
+    /// - MO2 2.5+ `gamePath`: a stale value stops the launch with a clear message; a value pointing at
+    ///   another install while the pack carries its own game is switched to that game (backup first).
     /// No game-folder key at all → MO2 applies its own defaults; the ini is not touched.
     /// </summary>
     private void EnsureManagedGameUsable(ModpackManifest manifest, string packRoot, string mo2Directory)
@@ -245,14 +246,57 @@ public sealed class Mo2LaunchStrategy : ILaunchStrategy
         }
 
         var gamePath = _patcher.ReadManagedGameDirectory(iniPath);
-        if (gamePath is null || Directory.Exists(LongPath.Normalize(gamePath)))
+        if (gamePath is null)
         {
-            // No key (MO2 2.5+ default = instance directory) or the path resolves fine.
+            // No key: MO2 2.5+ falls back to its own default (the instance directory) — leave it alone.
             return;
         }
 
-        throw new InvalidOperationException(
-            Loc.F("Err_IniGamePathMissing", gamePath));
+        if (!Directory.Exists(LongPath.Normalize(gamePath)))
+        {
+            throw new InvalidOperationException(
+                Loc.F("Err_IniGamePathMissing", gamePath));
+        }
+
+        // MO2 resolves the game from its own ini, so a gamePath left over from another install
+        // (typical after the pack folder was moved) would mount the wrong Data folder — missing
+        // masters, error, crash. When the pack ships its own game, MO2 is switched to it.
+        var packGame = ResolveOwnGame(manifest, packRoot);
+        if (packGame is not null && !SamePath(gamePath, packGame))
+        {
+            _logger.Information(
+                "MO2 gamePath {Old} points at another install; switching to the pack's own game {New}",
+                gamePath, packGame);
+            _patcher.PatchGamePath(iniPath, packGame);
+        }
+    }
+
+    /// <summary>The game folder that ships inside the pack (Portable source); null for system-install packs.</summary>
+    private static string? ResolveOwnGame(ModpackManifest manifest, string packRoot)
+    {
+        if (manifest.Source != PackSource.Portable || string.IsNullOrEmpty(manifest.SystemGamePath))
+        {
+            return null;
+        }
+
+        return Directory.Exists(LongPath.Normalize(manifest.SystemGamePath)) && IsInside(packRoot, manifest.SystemGamePath)
+            ? manifest.SystemGamePath
+            : null;
+    }
+
+    /// <summary>True when the candidate sits inside the pack root.</summary>
+    private static bool IsInside(string root, string candidate)
+    {
+        var rootFull = Path.GetFullPath(root).TrimEnd(Path.DirectorySeparatorChar) + Path.DirectorySeparatorChar;
+        return Path.GetFullPath(candidate).StartsWith(rootFull, StringComparison.OrdinalIgnoreCase);
+    }
+
+    private static bool SamePath(string left, string right)
+    {
+        static string Canon(string path) =>
+            Path.GetFullPath(LongPath.Normalize(path)).TrimEnd('\\', '/').Replace('/', '\\');
+
+        return string.Equals(Canon(left), Canon(right), StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>

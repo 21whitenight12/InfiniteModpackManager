@@ -319,4 +319,51 @@ public sealed class ModpackScannerTests : IDisposable
 
         await Assert.ThrowsAnyAsync<OperationCanceledException>(() => scanner.ScanAsync(_root, cts.Token));
     }
+
+    [Fact]
+    public async Task PackOwnGame_InSubfolder_WinsOverIniGamePath()
+    {
+        // Real case (Dormant pack): the pack carries a full game in <pack>\Skyrim while MO2's ini
+        // still points at another pack's install left over from a move. The pack's own game wins,
+        // and the mismatch becomes a warning instead of a silently wrong launch.
+        Write(@"ModOrganizer.exe");
+        CreateDir(@"profiles\Default");
+        File.WriteAllText(Path.Combine(_root, "ModOrganizer.ini"),
+            "[General]\n"
+            + "gameName=Skyrim Special Edition\n"
+            + @"gamePath=@ByteArray(D:\\Other Pack)" + "\n"
+            + "selected_profile=Default\n");
+        Write(@"Skyrim\SkyrimSE.exe");
+        Write(@"Skyrim\skse64_loader.exe");
+        CreateDir(@"Skyrim\Data");
+        Write(@"mods\SomeMod\meta.ini");
+
+        var scan = await CreateScanner().ScanAsync(_root);
+
+        Assert.True(scan.LooksLikeModpack);
+        Assert.Equal(GameType.SkyrimSE, scan.GameType);
+        Assert.Equal(LaunchEngine.Mo2Standard, scan.Engine);
+        Assert.Equal(PackSource.Portable, scan.Source);
+        Assert.Equal(Path.Combine(_root, "Skyrim"), scan.SystemGamePath);
+        Assert.Equal("skse64_loader.exe", scan.LaunchExecutable);
+        Assert.Contains(scan.Warnings, warning => warning.Contains("Other Pack") && warning.Contains("Skyrim"));
+    }
+
+    [Fact]
+    public async Task TwoGameFolders_Ambiguous_WarnsAndKeepsIniFacts()
+    {
+        // Two first-level folders look like games: no silent guess — a warning, and the ini stays the source.
+        Write(@"ModOrganizer.exe");
+        File.WriteAllText(Path.Combine(_root, "ModOrganizer.ini"),
+            "[General]\ngameName=Fallout 4\ngamePath=@ByteArray(D:\\Games\\FO4)\n");
+        Write(@"Skyrim\SkyrimSE.exe");
+        Write(@"Fallout4\Fallout4.exe");
+
+        var scan = await CreateScanner().ScanAsync(_root);
+
+        Assert.Contains(scan.Warnings, warning => warning.Contains("Skyrim") && warning.Contains("Fallout4"));
+        Assert.Equal(GameType.Fallout4, scan.GameType);   // from the ini's gameName, not a folder pick
+        Assert.NotEqual(Path.Combine(_root, "Skyrim"), scan.SystemGamePath);
+        Assert.NotEqual(Path.Combine(_root, "Fallout4"), scan.SystemGamePath);
+    }
 }
