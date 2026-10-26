@@ -345,15 +345,17 @@ public sealed class ModOrganizerIniPatcherTests : IDisposable
     }
 
     [Fact]
-    public void PatchGamePath_MissingKey_IsNotAdded()
+    public void PatchGamePath_MissingKey_IsAddedInRootSection()
     {
-        // No gamePath at all → MO2 applies its own defaults; the ini must stay untouched.
+        // No gamePath at all: MO2 would fall back to the instance directory, so the key is written
+        // (timestamped backup first) in the same style MO2 uses.
         var path = WriteIni("[General]\ngameName=Skyrim Special Edition\n");
 
         var result = _patcher.PatchGamePath(path, @"E:\Packs\Skyrim");
 
-        Assert.False(result.Changed);
-        Assert.DoesNotContain("gamePath", ReadRaw(path));
-        Assert.Empty(Directory.GetFiles(_temp, "*.bak-*"));
+        Assert.True(result.Changed);
+        Assert.Null(result.OldValue);
+        Assert.Single(Directory.GetFiles(_temp, "*.bak-*"));
+        Assert.Equal(@"E:\Packs\Skyrim", _patcher.ReadManagedGameDirectory(path));
     }
 }

@@ -673,7 +673,7 @@ Details are in the log.</value>
     <value>ModOrganizer.ini points at another game folder (“{0}”), but the pack ships its own game ({1}) — MO2 will be switched to it on launch.</value>
   </data>
   <data name="Warn_MultiplePackGames" xml:space="preserve">
-    <value>Several folders inside the pack look like a game install ({0}) — pick the game folder manually.</value>
+    <value>Several folders inside the pack look like a game install ({0}) — {1} is used.</value>
   </data>
   <data name="Warn_NoMarkers" xml:space="preserve">
     <value>No known markers (game exe, MO2) found — the folder does not look like a supported pack.</value>

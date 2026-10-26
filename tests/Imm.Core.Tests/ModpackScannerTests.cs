@@ -350,9 +350,10 @@ public sealed class ModpackScannerTests : IDisposable
     }
 
     [Fact]
-    public async Task TwoGameFolders_Ambiguous_WarnsAndKeepsIniFacts()
+    public async Task TwoGameFolders_PicksTheOneMatchingIniGameName()
     {
-        // Two first-level folders look like games: no silent guess — a warning, and the ini stays the source.
+        // Two first-level folders look like games: the choice is made, not guessed — the folder whose
+        // game type matches MO2's own gameName wins, and the pick is reported as a warning.
         Write(@"ModOrganizer.exe");
         File.WriteAllText(Path.Combine(_root, "ModOrganizer.ini"),
             "[General]\ngameName=Fallout 4\ngamePath=@ByteArray(D:\\Games\\FO4)\n");
@@ -361,9 +362,26 @@ public sealed class ModpackScannerTests : IDisposable
 
         var scan = await CreateScanner().ScanAsync(_root);
 
+        Assert.Equal(GameType.Fallout4, scan.GameType);
+        Assert.Equal(PackSource.Portable, scan.Source);
+        Assert.Equal(Path.Combine(_root, "Fallout4"), scan.SystemGamePath);
         Assert.Contains(scan.Warnings, warning => warning.Contains("Skyrim") && warning.Contains("Fallout4"));
-        Assert.Equal(GameType.Fallout4, scan.GameType);   // from the ini's gameName, not a folder pick
-        Assert.NotEqual(Path.Combine(_root, "Skyrim"), scan.SystemGamePath);
-        Assert.NotEqual(Path.Combine(_root, "Fallout4"), scan.SystemGamePath);
+    }
+
+    [Fact]
+    public async Task TwoGameFolders_CompleteInstallWinsOverBareExe()
+    {
+        // No gameName in the ini: a full install (Data + script extender) beats a folder holding just an exe.
+        Write(@"ModOrganizer.exe");
+        Write(@"ModOrganizer.ini");
+        Write(@"Skyrim\SkyrimSE.exe");
+        Write(@"Skyrim\skse64_loader.exe");
+        CreateDir(@"Skyrim\Data");
+        Write(@"Old Game\SkyrimSE.exe");
+
+        var scan = await CreateScanner().ScanAsync(_root);
+
+        Assert.Equal(PackSource.Portable, scan.Source);
+        Assert.Equal(Path.Combine(_root, "Skyrim"), scan.SystemGamePath);
     }
 }

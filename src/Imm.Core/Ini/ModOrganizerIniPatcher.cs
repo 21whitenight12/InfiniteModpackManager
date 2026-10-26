@@ -214,7 +214,7 @@ public sealed class ModOrganizerIniPatcher
     /// stores it: Qt @ByteArray with doubled backslashes and \xHH escapes for non-ASCII bytes.
     /// Needed when the pack ships its own game but the ini still points at another install — MO2
     /// resolves the game from its own ini, so leaving it alone would mount the wrong Data folder.
-    /// A missing key is left alone (MO2 then applies its own defaults). Idempotent; backup before writing.
+    /// The key is added when absent. Idempotent; timestamped backup before writing.
     /// </summary>
     public IniPatchResult PatchGamePath(string iniPath, string gameDirectory)
     {
@@ -233,7 +233,11 @@ public sealed class ModOrganizerIniPatcher
         var match = FindIniKey(ini.Lines, GamePathKey);
         if (match is null)
         {
-            return new IniPatchResult(Changed: false, BackupPath: null, OldValue: null, NewValue: gameDirectory);
+            // A portable ini keeps such keys in the nameless root section at the very top.
+            var insertBackup = CreateBackup(normalized);
+            ini.Lines.Insert(0, GamePathKey + "=@ByteArray(" + EncodeQtPath(gameDirectory) + ")");
+            WriteIni(normalized, ini);
+            return new IniPatchResult(Changed: true, BackupPath: insertBackup, OldValue: null, NewValue: gameDirectory);
         }
 
         var found = match.Value;

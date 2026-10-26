@@ -308,21 +308,75 @@ public sealed class LaunchStrategyTests : IDisposable
     }
 
     [Fact]
-    public async Task Mo2_GamePathStale_ThrowsWithoutTouchingIni()
+    public async Task Mo2_GamePathStale_HealedToThePackGame()
     {
-        // gamePath belongs to MO2 2.5+ — stale value stops the launch, ini is never patched.
+        // A gamePath pointing nowhere is repaired by the launcher itself: the game ships with the pack
+        // (exe in the pack root here), so MO2 is switched to that folder instead of asking the user.
         var pack = CreatePack("GamePathStale", p =>
         {
             File.WriteAllText(Path.Combine(p, "ModOrganizer.exe"), string.Empty);
-            File.WriteAllText(Path.Combine(p, "ModOrganizer.ini"), "[General]\ngamePath=@ByteArray(C:\\\\Games\\\\Gone\\\\)\n");
+            File.WriteAllText(Path.Combine(p, "ModOrganizer.ini"),
+                "[General]\ngameName=Fallout 4\n" + @"gamePath=@ByteArray(C:\\Games\\Gone)" + "\n");
             WriteGameExe(p);
         });
 
-        var ex = await Assert.ThrowsAsync<InvalidOperationException>(() => _mo2.BuildPlanAsync(Manifest(LaunchEngine.Mo2Standard), pack));
+        await _mo2.BuildPlanAsync(Manifest(LaunchEngine.Mo2Standard), pack);
 
-        Assert.Contains("gamePath", ex.Message);
+        var iniPath = Path.Combine(pack, "ModOrganizer.ini");
+        Assert.Equal(pack, new ModOrganizerIniPatcher().ReadManagedGameDirectory(iniPath));
+        Assert.Single(Directory.GetFiles(pack, "ModOrganizer.ini.bak-*"));
+    }
+
+    [Fact]
+    public async Task Mo2_NoGamePathKey_WrittenForThePacksOwnGame()
+    {
+        // No gamePath at all + a game inside the pack: the key is added, otherwise MO2 would use
+        // its default (the instance directory) and mount the wrong Data folder.
+        var pack = CreatePack("NoGamePathKey", p =>
+        {
+            File.WriteAllText(Path.Combine(p, "ModOrganizer.exe"), string.Empty);
+            File.WriteAllText(Path.Combine(p, "ModOrganizer.ini"), "[General]\ngameName=Skyrim Special Edition\n");
+            Directory.CreateDirectory(Path.Combine(p, "Skyrim"));
+            File.WriteAllText(Path.Combine(p, "Skyrim", "SkyrimSE.exe"), string.Empty);
+            File.WriteAllText(Path.Combine(p, "Skyrim", "skse64_loader.exe"), string.Empty);
+        });
+
+        var manifest = Manifest(LaunchEngine.Mo2Standard, PackSource.Portable);
+        manifest.GameType = GameType.SkyrimSE;
+        manifest.SystemGamePath = Path.Combine(pack, "Skyrim");
+        manifest.Launch.Executable = "skse64_loader.exe";
+
+        var plan = await _mo2.BuildPlanAsync(manifest, pack);
+
+        Assert.Equal(Path.Combine(pack, "Skyrim"),
+            new ModOrganizerIniPatcher().ReadManagedGameDirectory(Path.Combine(pack, "ModOrganizer.ini")));
+        Assert.Contains(Path.Combine(pack, "Skyrim", "skse64_loader.exe"), plan.Arguments);
+    }
+
+    [Fact]
+    public async Task Mo2_WorkingForeignInstall_LeftAlone()
+    {
+        // The user pointed MO2 at a working install of the same game on purpose — that stays untouched.
+        var other = Directory.CreateDirectory(Path.Combine(_temp, "MySkyrim")).FullName;
+        File.WriteAllText(Path.Combine(other, "SkyrimSE.exe"), string.Empty);
+        var pack = CreatePack("ForeignOk", p =>
+        {
+            File.WriteAllText(Path.Combine(p, "ModOrganizer.exe"), string.Empty);
+            File.WriteAllText(Path.Combine(p, "ModOrganizer.ini"),
+                "[General]\ngameName=Skyrim Special Edition\n"
+                + $"gamePath=@ByteArray({other.Replace("\\", "\\\\")})\n");
+            File.WriteAllText(Path.Combine(p, "skse64_loader.exe"), string.Empty);
+        });
+
+        var manifest = Manifest(LaunchEngine.Mo2Standard, PackSource.System);
+        manifest.GameType = GameType.SkyrimSE;
+        manifest.SystemGamePath = other;
+        manifest.Launch.Executable = "skse64_loader.exe";
+
+        await _mo2.BuildPlanAsync(manifest, pack);
+
+        Assert.Equal(other, new ModOrganizerIniPatcher().ReadManagedGameDirectory(Path.Combine(pack, "ModOrganizer.ini")));
         Assert.Empty(Directory.GetFiles(pack, "ModOrganizer.ini.bak-*"));
-        Assert.Contains("gamePath", File.ReadAllText(Path.Combine(pack, "ModOrganizer.ini")));
     }
 
     [Fact]

@@ -57,6 +57,9 @@ public sealed class ModpackScanner : IModpackScanner
         // The pack may carry its own game in a first-level folder with an arbitrary name
         // (<pack>\Skyrim, G.A.M.M.A: <pack>\Anomaly) — a portable "stock game" layout.
         var packGames = FindPackGameCandidates(root, mo2Directory);
+        var iniGame = ReadIniManagedGame(mo2Directory);
+        var iniGameType = ReadIniGameType(mo2Directory);
+        var ownGame = PickPackGame(packGames, iniGame, iniGameType);
 
         PackSource source;
         string? systemGamePath = null;
@@ -110,18 +113,24 @@ public sealed class ModpackScanner : IModpackScanner
                 }
             }
         }
-        else if (packGames.Count == 1)
+        else if (ownGame is not null)
         {
             // The pack's own game wins over ModOrganizer.ini's gamePath: after the pack folder was
             // moved, the ini often still points at another pack's install, and MO2 would mount that
             // pack's Data folder (missing masters → error + crash on launch). The launcher switches
-            // MO2 to this folder; the scan only reports the fact.
+            // MO2 to this folder; the scan only reports the facts.
             source = PackSource.Portable;
-            gameType = packGames[0].Game;
-            gameFilesDirectory = packGames[0].Path;
-            systemGamePath = packGames[0].Path;
+            gameType = ownGame.Value.Game;
+            gameFilesDirectory = ownGame.Value.Path;
+            systemGamePath = ownGame.Value.Path;
 
-            var iniGame = ReadIniManagedGame(mo2Directory);
+            if (packGames.Count > 1)
+            {
+                warnings.Add(Loc.F("Warn_MultiplePackGames",
+                    string.Join(", ", packGames.Select(candidate => Path.GetFileName(candidate.Path))),
+                    Path.GetFileName(systemGamePath)));
+            }
+
             if (iniGame is not null && !SamePath(iniGame, systemGamePath))
             {
                 warnings.Add(Loc.F("Warn_PackGameOverridesIni", iniGame, systemGamePath));
@@ -129,13 +138,6 @@ public sealed class ModpackScanner : IModpackScanner
         }
         else
         {
-            if (packGames.Count > 1)
-            {
-                // Ambiguity: several folders inside the pack look like a game — never a silent guess.
-                warnings.Add(Loc.F("Warn_MultiplePackGames",
-                    string.Join(", ", packGames.Select(candidate => Path.GetFileName(candidate.Path)))));
-            }
-
             source = PackSource.System;
             gameType = GameType.Unknown;
             gameFilesDirectory = null;
@@ -320,6 +322,74 @@ public sealed class ModpackScanner : IModpackScanner
         return File.Exists(LongPath.Normalize(iniPath))
             ? new ModOrganizerIniPatcher().ReadManagedGameDirectory(iniPath)
             : null;
+    }
+
+    /// <summary>Game type MO2 declares in its ini (gameName), Unknown when absent or unsupported.</summary>
+    private static GameType ReadIniGameType(string? mo2Directory)
+    {
+        if (mo2Directory is null)
+        {
+            return GameType.Unknown;
+        }
+
+        var iniPath = Path.Combine(mo2Directory, Markers.ModOrganizerIni);
+        return File.Exists(LongPath.Normalize(iniPath))
+            ? Mo2Locator.MapGameName(new ModOrganizerIniPatcher().ReadGameName(iniPath)) ?? GameType.Unknown
+            : GameType.Unknown;
+    }
+
+    /// <summary>
+    /// One game folder out of the candidates — a decision, not a guess: the folder MO2's own ini
+    /// names, then the game type the ini declares, then a complete install (Data + script extender),
+    /// then the one with Data, then the freshest game exe. The chosen folder is reported as a warning.
+    /// </summary>
+    private static (string Path, GameType Game)? PickPackGame(
+        List<(string Path, GameType Game)> candidates, string? iniGame, GameType iniGameType)
+    {
+        if (candidates.Count == 0)
+        {
+            return null;
+        }
+
+        if (candidates.Count == 1)
+        {
+            return candidates[0];
+        }
+
+        var ranked = candidates
+            .OrderByDescending(candidate => iniGame is not null && SamePath(candidate.Path, iniGame))
+            .ThenByDescending(candidate => iniGameType != GameType.Unknown && candidate.Game == iniGameType)
+            .ThenByDescending(candidate => HasDataFolder(candidate.Path)
+                                           && File.Exists(LongPath.Normalize(Path.Combine(
+                                               candidate.Path, ScriptExtenderNameFor(candidate.Game)))))
+            .ThenByDescending(candidate => HasDataFolder(candidate.Path))
+            .ThenByDescending(candidate => GameExeTimestamp(candidate.Path, candidate.Game))
+            .ToList();
+
+        return ranked[0];
+    }
+
+    private static bool HasDataFolder(string directory) =>
+        Directory.Exists(LongPath.Normalize(Path.Combine(directory, Markers.GameDataFolder)));
+
+    /// <summary>Last write time of the game's own exe — the freshest install wins a remaining tie.</summary>
+    private static DateTime GameExeTimestamp(string directory, GameType gameType)
+    {
+        foreach (var pair in Markers.GameExecutables)
+        {
+            if (pair.Value != gameType)
+            {
+                continue;
+            }
+
+            var path = LongPath.Normalize(Path.Combine(directory, pair.Key));
+            if (File.Exists(path))
+            {
+                return File.GetLastWriteTimeUtc(path);
+            }
+        }
+
+        return DateTime.MinValue;
     }
 
     /// <summary>Game type by a well-known exe sitting directly in the directory; Unknown when none.</summary>

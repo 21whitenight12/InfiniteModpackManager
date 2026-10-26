@@ -246,33 +246,52 @@ public sealed class Mo2LaunchStrategy : ILaunchStrategy
         }
 
         var gamePath = _patcher.ReadManagedGameDirectory(iniPath);
-        if (gamePath is null)
+        var ownGame = OwnGameInPack(manifest, packRoot);
+        var target = ownGame ?? ResolveGameToUse(manifest, packRoot);
+
+        if (target is null)
         {
-            // No key: MO2 2.5+ falls back to its own default (the instance directory) — leave it alone.
+            // The pack knows no game at all: nothing to point MO2 at, so a broken path stays a hard stop.
+            if (gamePath is not null && !Directory.Exists(LongPath.Normalize(gamePath)))
+            {
+                throw new InvalidOperationException(
+                    Loc.F("Err_IniGamePathMissing", gamePath));
+            }
+
             return;
         }
 
-        if (!Directory.Exists(LongPath.Normalize(gamePath)))
+        if (gamePath is not null && SamePath(gamePath, target))
         {
-            throw new InvalidOperationException(
-                Loc.F("Err_IniGamePathMissing", gamePath));
+            return;
         }
 
-        // MO2 resolves the game from its own ini, so a gamePath left over from another install
-        // (typical after the pack folder was moved) would mount the wrong Data folder — missing
-        // masters, error, crash. When the pack ships its own game, MO2 is switched to it.
-        var packGame = ResolveOwnGame(manifest, packRoot);
-        if (packGame is not null && !SamePath(gamePath, packGame))
+        if (ownGame is null
+            && gamePath is not null
+            && Directory.Exists(LongPath.Normalize(gamePath))
+            && GameRootLocator.ContainsGameExe(gamePath))
         {
-            _logger.Information(
-                "MO2 gamePath {Old} points at another install; switching to the pack's own game {New}",
-                gamePath, packGame);
-            _patcher.PatchGamePath(iniPath, packGame);
+            // The pack has no game of its own and MO2 points at a working install — the user's choice.
+            return;
         }
+
+        if (gamePath is null && SamePath(target, mo2Directory))
+        {
+            // No key = MO2's default is the instance directory; writing the same folder changes nothing.
+            return;
+        }
+
+        _logger.Information(
+            "MO2 gamePath {Old} is unusable; switching ModOrganizer.ini to the resolved game folder {New}",
+            gamePath ?? "(none)", target);
+        _patcher.PatchGamePath(iniPath, target);
     }
 
-    /// <summary>The game folder that ships inside the pack (Portable source); null for system-install packs.</summary>
-    private static string? ResolveOwnGame(ModpackManifest manifest, string packRoot)
+    /// <summary>
+    /// The game that ships inside the pack (Portable source, folder inside the pack root) — it always
+    /// wins over MO2's ini, because the ini may point at whatever install the pack was built next to.
+    /// </summary>
+    private static string? OwnGameInPack(ModpackManifest manifest, string packRoot)
     {
         if (manifest.Source != PackSource.Portable || string.IsNullOrEmpty(manifest.SystemGamePath))
         {
@@ -282,6 +301,21 @@ public sealed class Mo2LaunchStrategy : ILaunchStrategy
         return Directory.Exists(LongPath.Normalize(manifest.SystemGamePath)) && IsInside(packRoot, manifest.SystemGamePath)
             ? manifest.SystemGamePath
             : null;
+    }
+
+    /// <summary>
+    /// Fallback game folder: the resolved system install, then the pack's game root
+    /// (Stock Game / game-as-root). Null when the pack knows no game.
+    /// </summary>
+    private static string? ResolveGameToUse(ModpackManifest manifest, string packRoot)
+    {
+        if (!string.IsNullOrEmpty(manifest.SystemGamePath)
+            && Directory.Exists(LongPath.Normalize(manifest.SystemGamePath)))
+        {
+            return manifest.SystemGamePath;
+        }
+
+        return GameRootLocator.FindGameRoot(packRoot);
     }
 
     /// <summary>True when the candidate sits inside the pack root.</summary>
