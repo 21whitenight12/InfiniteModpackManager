@@ -1,5 +1,6 @@
 using System.Diagnostics;
 using Imm.Core.Domain;
+using Imm.Core.Scanning;
 using Imm.Core.Tracking;
 using Serilog;
 using Xunit;
@@ -102,6 +103,21 @@ public sealed class SessionTrackerTests
         Assert.False(SessionTracker.IsOurs(
             SnapshotOf(launch.AddSeconds(5), @"G:\Gemma\Anomaly2\bin\AnomalyDX11AVX.exe"),
             launch, @"G:\Gemma\Anomaly"));
+    }
+
+    [Fact]
+    public void GameProcessNamesFor_StalkerAnomaly_CoversEveryRendererVariant()
+    {
+        // A DX12 renderer (AnomalyDX12.exe) must keep the session alive just like DX8..DX11.
+        var names = ModpackScanner.GameProcessNamesFor(GameType.StalkerAnomaly);
+
+        Assert.Contains("AnomalyLauncher.exe", names);
+
+        foreach (var dx in new[] { 8, 9, 10, 11, 12 })
+        {
+            Assert.Contains($"AnomalyDX{dx}.exe", names);
+            Assert.Contains($"AnomalyDX{dx}AVX.exe", names);
+        }
     }
 
     [Fact]

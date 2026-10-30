@@ -482,6 +482,7 @@ public sealed class ModpackScanner : IModpackScanner
         GameType.StalkerAnomaly =>
         [
             "AnomalyLauncher.exe",
+            "AnomalyDX12AVX.exe", "AnomalyDX12.exe",
             "AnomalyDX11AVX.exe", "AnomalyDX11.exe",
             "AnomalyDX10AVX.exe", "AnomalyDX10.exe",
             "AnomalyDX9AVX.exe", "AnomalyDX9.exe",
